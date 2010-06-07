@@ -1,0 +1,47 @@
+Supported Build Platforms:
+
+1.) Mac OSX
+2.) Windows with MinGW (see Boost Science Package) - incomplete
+
+What does this environment does:
+This clEnvironment API allows you to precompile your OpenCL kernels into
+binaries then import them into you C/C++ code as statically defined arrays of
+data which can then be re-used with the clCreateEnvironmentFromBins API. The
+make system herein also forces the %.cl to %.h conversion to be a dependency
+on the successful creation of your program/library/shared object. This means
+that if your .cl files do not compile correctly you can not build your target,
+thus pushing the run-time OpenCL build stages back into build-time builds. It
+also allows you to completely specify a generic OpenCL Kernel call via predefined
+structures, thus freeing you to not worry about how to queue/call/pass args/etc.
+
+Compiling:
+
+$ make clean
+$ make
+
+Testing:
+$ make test
+
+What's contained herein:
+1.) clEnvironment API
+2.) clCompiler which utilizes the clEnvironment API
+3.) clQuery which can extract lots of information about your local
+    implementation of OpenCL.
+4.) YUV Kernel which can convert a YUV triplet of floats into/from RGB triplets
+    of floats in 1 dimension.
+5.) PID Kernel (Proportional Integral and Derivative) control loop calculator.
+6.) ImgFilter - Implements a 3x3 edge filter on input LUMA (B/W) images.
+7.) NBody - an implementation of the famous N-body gravity simulator.
+
+What's left to do (@see make todo)
+TODO - Complete the ImgFilter implementation via cl_kernel_call_t
+TODO - Complete the YUV implementation via cl_kernel_call_t
+TODO - Complete the YUV conversions for file based images (YUV to RGB)
+TODO - Attach the Nbody demo to an OpenGL display to show how the bodies simulate over time.
+TODO - Add more query targets (queues, kernels, etc)
+TODO - Make clQuery a library which can be linked to for all it's querying features.
+TODO - Allow clCompiler to specify the Class of device (CPU/GPU/ACCELERATOR) - currently uses default.
+TODO - Add 2D/3D Buffer types to clKernelCall
+TODO - Add chaining to clKernelCall (and intermediates buffers which may or may not be read out)
+
+
