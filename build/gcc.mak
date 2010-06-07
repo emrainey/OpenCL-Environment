@@ -185,9 +185,3 @@ info:
 	@echo KERNELS=$(KERNELS)
 	@echo KOPTIONS=$(KOPTIONS)
 
-#else
-#all:
-#	@echo Building skipped for target $(TARGET)
-#
-#endif
-

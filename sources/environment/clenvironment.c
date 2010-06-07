@@ -79,9 +79,10 @@ void clDeleteEnvironment(cl_environment_t *pEnv)
     if (pEnv)
     {
         cl_uint i = 0;
-        if (pEnv->kernels) {
-            //for(i = 0; i < pEnv->numKernels; i++)
-            //    clReleaseKernel(pEnv->kernels[i]);
+        if (pEnv->kernels)
+        {
+            for(i = 0; i < pEnv->numKernels; i++)
+                clReleaseKernel(pEnv->kernels[i]);
             cl_free(pEnv->kernels);
         }
         if (pEnv->retCodes)
@@ -165,7 +166,7 @@ cl_byte *cl_serialize_kernels(cl_kernel_bin_t *bins, size_t *pNumBytes)
 #ifdef CL_DEBUG
     printf("There are %lu total bytes to serialize\n",*pNumBytes);
 #endif
-    bin = (cl_byte *)cl_malloc(*pNumBytes);
+    bin = cl_malloc_array(cl_byte,(*pNumBytes));
     if (bin)
     {
         cl_uint offset = 0;
@@ -211,6 +212,7 @@ void cl_delete_kernel_bin(cl_kernel_bin_t *bins)
             cl_free(bins->sizes);
             bins->sizes = NULL;
         }
+        // @TODO Fill in the structure with a bunch of garbage which will cause an abort later if dereferenced.
         //memset(bins, 0xFE, sizeof(cl_kernel_bin_t));
         cl_free(bins);
     }
@@ -407,7 +409,6 @@ void cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
     if (fo != NULL)
     {
         cl_uint d, b;
-        fprintf(fo, "/** Copyright (C) %s Erik Rainey. Public Domain. */\n", __DATE__);
         fprintf(fo, "// PRECOMPILED HEADER, DO NOT MODIFY!\n");
         fprintf(fo, "#include <clenvironment.h>\n");
         fprintf(fo, "static size_t gKernelBinarySizes[%lu] = {\n",bins->numDevices);
@@ -582,8 +583,8 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                         printf("Allocated room for %u kernels\n",pEnv->numKernels);
 #endif
                         err = clCreateKernelsInProgram(pEnv->program, pEnv->numKernels, pEnv->kernels, &pEnv->numKernels);
-                        if (err == CL_SUCCESS) {
-                            //cl_kernel_info cl_kernel_queries[] = {CL_KERNEL_FUNCTION_NAME, CL_KERNEL_NUM_ARGS};
+                        if (err == CL_SUCCESS)
+                        {
                             cl_uint j;
                             char function_name[CL_MAX_STRING];
                             size_t len;
@@ -600,8 +601,6 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                         }
                         else if (err == CL_INVALID_VALUE)
                         {
-                            //printf("Warning: More kernels are present than were supplied (%u), trying to allocate again!\n",pEnv->numKernels);
-                            //pEnv->numKernels++;
                             if (pEnv->kernels[0] != NULL)
                                 printf("WARNING! Some Kernel Values were filled in!\n");
                             cl_free(pEnv->kernels);
@@ -771,8 +770,8 @@ cl_environment_t *clCreateEnvironment(char *filename,
                         printf("Allocated room for %u kernels\n",pEnv->numKernels);
 #endif
                         err = clCreateKernelsInProgram(pEnv->program, pEnv->numKernels, pEnv->kernels, &pEnv->numKernels);
-                        if (err == CL_SUCCESS) {
-                            //cl_kernel_info cl_kernel_queries[] = {CL_KERNEL_FUNCTION_NAME, CL_KERNEL_NUM_ARGS};
+                        if (err == CL_SUCCESS)
+                        {
                             cl_uint j;
                             char function_name[CL_MAX_STRING];
                             size_t len;
@@ -789,8 +788,6 @@ cl_environment_t *clCreateEnvironment(char *filename,
                         }
                         else if (err == CL_INVALID_VALUE)
                         {
-                            //printf("Warning: More kernels are present than were supplied (%u), trying to allocate again!\n",pEnv->numKernels);
-                            //pEnv->numKernels++;
                             if (pEnv->kernels[0] != NULL)
                                 printf("WARNING! Some Kernel Values were filled in!\n");
                             cl_free(pEnv->kernels);

@@ -22,6 +22,10 @@ $ make
 Testing:
 $ make test
 
+Installing:
+$ export INSTALL_DIR=/where/ever/you/like
+$ make install
+
 What's contained herein:
 1.) clEnvironment API
 2.) clCompiler which utilizes the clEnvironment API
@@ -43,5 +47,7 @@ TODO - Make clQuery a library which can be linked to for all it's querying featu
 TODO - Allow clCompiler to specify the Class of device (CPU/GPU/ACCELERATOR) - currently uses default.
 TODO - Add 2D/3D Buffer types to clKernelCall
 TODO - Add chaining to clKernelCall (and intermediates buffers which may or may not be read out)
+TODO - Complete using the clopt files as compile time options to pass to the precompiled OpenCL Kernels.
+TODO - Add JavaDoc style comments to all the API's.
 
 
