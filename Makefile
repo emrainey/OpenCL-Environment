@@ -4,6 +4,8 @@ endif
 
 DIRS=environment compiler query imgfilter yuv pid nbody
 
+.PHONY: todo all debug error
+
 all %:
 	@(for d in $(DIRS); do\
 		cd sources/$$d;\
@@ -24,5 +26,5 @@ error:
 	@echo LOCAL_ROOT=$(LOCAL_ROOT)
 
 todo:
-	@fgrep -HnR -e TODO sources/ README
+	@fgrep -HnR -e TODO sources/ include/ TODO README
 

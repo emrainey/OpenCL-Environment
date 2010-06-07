@@ -37,17 +37,4 @@ What's contained herein:
 6.) ImgFilter - Implements a 3x3 edge filter on input LUMA (B/W) images.
 7.) NBody - an implementation of the famous N-body gravity simulator.
 
-What's left to do (@see make todo)
-TODO - Complete the ImgFilter implementation via cl_kernel_call_t
-TODO - Complete the YUV implementation via cl_kernel_call_t
-TODO - Complete the YUV conversions for file based images (YUV to RGB)
-TODO - Attach the Nbody demo to an OpenGL display to show how the bodies simulate over time.
-TODO - Add more query targets (queues, kernels, etc)
-TODO - Make clQuery a library which can be linked to for all it's querying features.
-TODO - Allow clCompiler to specify the Class of device (CPU/GPU/ACCELERATOR) - currently uses default.
-TODO - Add 2D/3D Buffer types to clKernelCall
-TODO - Add chaining to clKernelCall (and intermediates buffers which may or may not be read out)
-TODO - Complete using the clopt files as compile time options to pass to the precompiled OpenCL Kernels.
-TODO - Add JavaDoc style comments to all the API's.
-
 
