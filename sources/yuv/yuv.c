@@ -25,18 +25,45 @@
 #endif
 #include <clenvironment.h>
 
+#ifdef CL_PRECOMPILED
+#include <kernel_yuv.h>
+#endif
+
 void notify(cl_program program, void *arg)
 {
-    printf("Program %p Arg %p\n",program, arg);
+    //printf("Compiled Program %p Arg %p\n",program, arg);
 }
 
-void normalize_float(float *a, cl_uint low, cl_uint hi, cl_uchar *b, cl_uint numPixels)
+int ipow(int x, int n)
+{
+    if (n == 0)
+        return 1;
+    else if (n == 1)
+        return x;
+    else
+        return x * ipow(x, n - 1);
+}
+
+float frand(float low, float hi)
+{
+    float r = hi + low;
+    int p = 5; // arbitrary precision
+    int n = ipow(10,p);
+    float v = (float)(rand()%n)/(n-1);
+    float x = (v * r) + low;
+    //printf("frand [%lf, %lf] n=%d, v=%lf, x=%lf\n", low, hi, n, v,x);
+    return x;
+}
+
+void normalize_float(float *a, cl_int low, cl_int hi, cl_uchar *b, cl_uint numPixels)
 {
     cl_uint i = 0;
     cl_uint range = hi - low;
+    //printf("Range for %p is %d to %d (%d)\n", a, low, hi, range);
     for (i = 0; i < numPixels; i++)
     {
-        cl_uint c = (range * a[i]) + low;
+        cl_int c = (range * a[i]) + low;
+        //printf("a = %lf, c = %d\n",a[i], c);
         if (c > hi)
             b[i] = (cl_uchar)hi;
         else if (c < low)
@@ -46,240 +73,111 @@ void normalize_float(float *a, cl_uint low, cl_uint hi, cl_uchar *b, cl_uint num
     }
 }
 
-cl_int convert_rgb2yuv_bt601(cl_environment_t *pEnv,
-                             float *r,
-                             float *b,
-                             float *g,
-                             float *y,
-                             float *u,
-                             float *v,
-                             cl_uint numPixels)
+cl_int cl_convert_rgbf_to_yuvf_bt601(cl_environment_t *pEnv,
+                                     float *r,
+                                     float *g,
+                                     float *b,
+                                     float *y,
+                                     float *u,
+                                     float *v,
+                                     cl_uint numPixels)
 {
-    cl_mem r_mem;
-    cl_mem g_mem;
-    cl_mem b_mem;
-    cl_mem y_mem;
-    cl_mem u_mem;
-    cl_mem v_mem;
-    const cl_uint numBytes = numPixels * sizeof(float);
     cl_int err = CL_SUCCESS;
-    size_t global_work_size = numPixels;
-    cl_uint i = 0;
-
-    cl_kernel kernel = clGetKernelByName(pEnv, "kernel_rgb2yuv_bt601");
-    if (kernel == NULL)
-        return CL_INVALID_KERNEL_NAME;
-
-    // create the rgb and yuv memory
-    r_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    g_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    b_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    y_mem = clCreateBuffer(pEnv->context, CL_MEM_WRITE_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    u_mem = clCreateBuffer(pEnv->context, CL_MEM_WRITE_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    v_mem = clCreateBuffer(pEnv->context, CL_MEM_WRITE_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-
-    // enqueue the read memory
-    for (i = 0; i < pEnv->numDevices; i++) {
-        err = 0;
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], r_mem, CL_TRUE, 0, numBytes, r, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], g_mem, CL_TRUE, 0, numBytes, g, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], b_mem, CL_TRUE, 0, numBytes, b, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Write Enqueue Error = %d\n",err);
-    }
-
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-
-    // enqueue the kernel
-    for (i = 0; i < pEnv->numDevices; i++) {
-        clSetKernelArg(kernel, 0, sizeof(cl_mem), &r_mem);
-        clSetKernelArg(kernel, 1, sizeof(cl_mem), &g_mem);
-        clSetKernelArg(kernel, 2, sizeof(cl_mem), &b_mem);
-        clSetKernelArg(kernel, 3, sizeof(cl_mem), &y_mem);
-        clSetKernelArg(kernel, 4, sizeof(cl_mem), &u_mem);
-        clSetKernelArg(kernel, 5, sizeof(cl_mem), &v_mem);
-
-        err = 0;
-        err |= clEnqueueNDRangeKernel(pEnv->queues[i], kernel, 1, NULL, &global_work_size, NULL, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Work Queue Error = %d\n",err);
-    }
-
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-
-    printf("Executed kernels!\n");
-
-    // read the result memory
-    for (i = 0; i<pEnv->numDevices; i++) {
-        err = 0;
-        err |= clEnqueueReadBuffer(pEnv->queues[i], y_mem, CL_TRUE, 0, numBytes, y, 0, NULL, NULL);
-        err |= clEnqueueReadBuffer(pEnv->queues[i], u_mem, CL_TRUE, 0, numBytes, u, 0, NULL, NULL);
-        err |= clEnqueueReadBuffer(pEnv->queues[i], v_mem, CL_TRUE, 0, numBytes, v, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Read Enqueue Error=%d\n",err);
-    }
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-#ifdef CL_DEBUG
-    for (i = 0; i < numPixels; i++)
-    {
-        printf("rgb = {%lf, %lf, %lf} :: yuv = {%lf, %lf, %lf}\n",r[i],g[i],b[i],y[i],u[i],v[i]);
-    }
-#endif
-
-    // release memory objects
-    clReleaseMemObject(r_mem);
-    clReleaseMemObject(g_mem);
-    clReleaseMemObject(b_mem);
-    clReleaseMemObject(y_mem);
-    clReleaseMemObject(u_mem);
-    clReleaseMemObject(v_mem);
-
+    const size_t numBytes = numPixels * sizeof(float);
+    cl_kernel_param_t params[] = {
+        {numBytes, r, NULL, CL_MEM_READ_ONLY},
+        {numBytes, g, NULL, CL_MEM_READ_ONLY},
+        {numBytes, b, NULL, CL_MEM_READ_ONLY},
+        {numBytes, y, NULL, CL_MEM_WRITE_ONLY},
+        {numBytes, u, NULL, CL_MEM_WRITE_ONLY},
+        {numBytes, v, NULL, CL_MEM_WRITE_ONLY},
+    };
+    cl_kernel_call_t call = {
+        "kernel_rgb2yuv_bt601",
+        params, dimof(params),
+        1,
+        {numPixels, 0,0},
+        {0,0,0},
+        CL_SUCCESS
+    };
+    err = clCallKernel(pEnv, &call);
+    printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
     return err;
 }
 
-cl_int convert_rgb2yuv(cl_environment_t *pEnv,
-                       float *r,
-                       float *b,
-                       float *g,
-                       float *bt601,
-                       float *y,
-                       float *u,
-                       float *v,
-                       cl_uint numPixels)
+cl_int cl_convert_rgbf_to_yuvf(cl_environment_t *pEnv,
+                               float *r,
+                               float *g,
+                               float *b,
+                               float *y,
+                               float *u,
+                               float *v,
+                               float *a, // constants
+                               cl_uint numPixels)
 {
-    cl_mem r_mem;
-    cl_mem g_mem;
-    cl_mem b_mem;
-    cl_mem y_mem;
-    cl_mem u_mem;
-    cl_mem v_mem;
-    cl_mem bt601_mem;
-    const cl_uint numBytes = numPixels * sizeof(float);
     cl_int err = CL_SUCCESS;
-    size_t global_work_size = numPixels;
-    cl_uint i = 0;
-
-
-    cl_kernel kernel = clGetKernelByName(pEnv, "kernel_rgb2yuv");
-    if (kernel == NULL)
-        return CL_INVALID_KERNEL_NAME;
-
-    // create the rgb and yuv memory
-    r_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    g_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    b_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    y_mem = clCreateBuffer(pEnv->context, CL_MEM_WRITE_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    u_mem = clCreateBuffer(pEnv->context, CL_MEM_WRITE_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    v_mem = clCreateBuffer(pEnv->context, CL_MEM_WRITE_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    bt601_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, sizeof(float)*9, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-
-    // enqueue the read memory
-    for (i = 0; i < pEnv->numDevices; i++) {
-        err = 0;
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], r_mem, CL_TRUE, 0, numBytes, r, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], g_mem, CL_TRUE, 0, numBytes, g, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], b_mem, CL_TRUE, 0, numBytes, b, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], bt601_mem, CL_TRUE, 0, sizeof(float)*9, bt601, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Write Enqueue Error = %d\n",err);
-    }
-
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-
-    // enqueue the kernel
-    for (i = 0; i < pEnv->numDevices; i++) {
-        clSetKernelArg(kernel, 0, sizeof(cl_mem), &r_mem);
-        clSetKernelArg(kernel, 1, sizeof(cl_mem), &g_mem);
-        clSetKernelArg(kernel, 2, sizeof(cl_mem), &b_mem);
-        clSetKernelArg(kernel, 3, sizeof(cl_mem), &bt601_mem);
-        clSetKernelArg(kernel, 4, sizeof(cl_mem), &y_mem);
-        clSetKernelArg(kernel, 5, sizeof(cl_mem), &u_mem);
-        clSetKernelArg(kernel, 6, sizeof(cl_mem), &v_mem);
-
-        err = 0;
-        err |= clEnqueueNDRangeKernel(pEnv->queues[i], kernel, 1, NULL, &global_work_size, NULL, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Work Queue Error = %d\n",err);
-    }
-
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-
-    printf("Executed kernels!\n");
-
-    // read the result memory
-    for (i = 0; i<pEnv->numDevices; i++) {
-        err = 0;
-        err |= clEnqueueReadBuffer(pEnv->queues[i], y_mem, CL_TRUE, 0, numBytes, y, 0, NULL, NULL);
-        err |= clEnqueueReadBuffer(pEnv->queues[i], u_mem, CL_TRUE, 0, numBytes, u, 0, NULL, NULL);
-        err |= clEnqueueReadBuffer(pEnv->queues[i], v_mem, CL_TRUE, 0, numBytes, v, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Read Enqueue Error = %d\n",err);
-    }
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-#ifdef CL_DEBUG
-    for (i = 0; i < numPixels; i++)
-    {
-        printf("rgb = {%lf, %lf, %lf} :: yuv = {%lf, %lf, %lf}\n",r[i],g[i],b[i],y[i],u[i],v[i]);
-    }
-#endif
-
-    // release memory objects
-    clReleaseMemObject(r_mem);
-    clReleaseMemObject(g_mem);
-    clReleaseMemObject(b_mem);
-    clReleaseMemObject(y_mem);
-    clReleaseMemObject(u_mem);
-    clReleaseMemObject(v_mem);
-    clReleaseMemObject(bt601_mem);
-
+    const size_t numBytes = numPixels * sizeof(float);
+    cl_kernel_param_t params[] = {
+        {numBytes, r, NULL, CL_MEM_READ_ONLY},
+        {numBytes, g, NULL, CL_MEM_READ_ONLY},
+        {numBytes, b, NULL, CL_MEM_READ_ONLY},
+        {sizeof(float) * 9, a, NULL, CL_MEM_READ_ONLY}, // constants only have 9 elements
+        {numBytes, y, NULL, CL_MEM_WRITE_ONLY},
+        {numBytes, u, NULL, CL_MEM_WRITE_ONLY},
+        {numBytes, v, NULL, CL_MEM_WRITE_ONLY},
+    };
+    cl_kernel_call_t call = {
+        "kernel_rgb2yuv",
+        params, dimof(params),
+        1,
+        {numPixels, 0, 0},
+        {0,0,0},
+        CL_SUCCESS,
+    };
+    err = clCallKernel(pEnv, &call);
+    printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
     return err;
 }
 
 int main(int argc, char *argv[])
 {
-    const cl_uint width = 10;
-    const cl_uint height = 1;
+    const cl_uint width = 1920;
+    const cl_uint height = 1080;
     const cl_uint numPixels = height * width;
-    float r[numPixels];
-    float g[numPixels];
-    float b[numPixels];
-    float y[numPixels]; cl_uchar Yp[numPixels];
-    float u[numPixels]; cl_uchar Up[numPixels];
-    float v[numPixels]; cl_uchar Vp[numPixels];
+    cl_int err = CL_SUCCESS;
+
+    printf("Processing %ux%u => %u pixels\n", width, height, numPixels);
+
+    float *r = cl_malloc_array(float, numPixels);
+    float *g = cl_malloc_array(float, numPixels);
+    float *b = cl_malloc_array(float, numPixels);
+    float *y = cl_malloc_array(float, numPixels);
+    float *u = cl_malloc_array(float, numPixels);
+    float *v = cl_malloc_array(float, numPixels);
+    cl_uchar *Yp = cl_malloc_array(cl_uchar, numPixels);
+    cl_uchar *Up = cl_malloc_array(cl_uchar, numPixels);
+    cl_uchar *Vp = cl_malloc_array(cl_uchar, numPixels);
+
     float bt601[9] = {0.257, 0.504, 0.098, -0.148, -0.291, 0.439, 0.439, -0.368, -0.071};
     time_t start, diff;
-    clock_t c_start, c_diff;
+    clock_t c_start, c_diff1, c_diff2;
+
+#ifdef CL_PRECOMPILED
+    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, NULL);
+#else
     cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",1,notify, NULL);
-    if (pEnv)
+#endif
+    if (pEnv && r && g && b && y && u && v)
     {
         cl_uint i = 0;
-        printf("Created environment %p\n", pEnv);
 
+        srand(time(NULL));
         // initialize the data
         for (i = 0; i < numPixels; i++)
         {
-            r[i] = (float)(rand()%1000)/999;
-            g[i] = (float)(rand()%1000)/999;
-            b[i] = (float)(rand()%1000)/999;
+            r[i] = frand(0.0,1.0); // [0-1]
+            g[i] = frand(0.0,1.0); // [0-1]
+            b[i] = frand(0.0,1.0); // [0-1]
             y[i] = 0.00;
             u[i] = 0.00;
             v[i] = 0.00;
@@ -287,27 +185,46 @@ int main(int argc, char *argv[])
 
         start = time(NULL);
         c_start = clock();
-        convert_rgb2yuv_bt601(pEnv, r, g, b, y, u, v, numPixels);
-        c_diff = clock() - c_start;
+        err = cl_convert_rgbf_to_yuvf_bt601(pEnv, r, g, b, y, u, v, numPixels);
+        cl_assert(err == CL_SUCCESS,printf("Error = %d\n",err));
+        c_diff1 = clock() - c_start;
         diff = time(NULL) - start;
-        printf("Constant Version Ran in %lu seconds (%lu ticks)\n", diff, c_diff);
+        printf("With Constants Version Ran in %lu seconds (%lu ticks)\n", diff, c_diff1);
+
+        //if (v[numPixels - 1] != 0.0)
+        //    printf("All data processed!\n");
+
+        // initialize the data
+        for (i = 0; i < numPixels; i++)
+        {
+            r[i] = frand(0.0,1.0); // [0-1]
+            g[i] = frand(0.0,1.0); // [0-1]
+            b[i] = frand(0.0,1.0); // [0-1]
+            y[i] = 0.00;
+            u[i] = 0.00;
+            v[i] = 0.00;
+        }
 
         start = time(NULL);
         c_start = clock();
-        convert_rgb2yuv(pEnv, r, g, b, bt601, y, u, v, numPixels);
-        c_diff = clock() - c_start;
+        cl_convert_rgbf_to_yuvf(pEnv, r, g, b, y, u, v, bt601, numPixels);
+        c_diff2 = clock() - c_start;
         diff = time(NULL) - start;
-        printf("Non-Constant Version Ran in %lu seconds (%lu ticks)\n", diff, c_diff);
+        printf("With No Constants Version Ran in %lu seconds (%lu ticks)\n", diff, c_diff2);
 
         normalize_float(y,   16, 235, Yp, numPixels);
         normalize_float(u, -128, 128, Up, numPixels);
         normalize_float(v, -128, 128, Vp, numPixels);
 
+#ifdef CL_DEBUG
         for (i = 0; i < numPixels; i++)
             printf("YUV = {0x%02x, 0x%02x, 0x%02x}\n", Yp[i], Up[i], Vp[i]);
-
+#endif
         clDeleteEnvironment(pEnv);
     }
+
+    cl_free(r); cl_free(g); cl_free(b);
+    cl_free(y); cl_free(u); cl_free(v);
     return 0;
 }
 

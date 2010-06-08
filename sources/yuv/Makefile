@@ -17,6 +17,7 @@ TARGET=clyuv
 TARGETTYPE=exe
 CSOURCES=yuv.c
 CLSOURCES=kernel_yuv.cl
+DEFS+=CL_PRECOMPILED
 LIBS+=clenvironment
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/global.mak

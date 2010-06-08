@@ -24,6 +24,9 @@
 
 #define cl_assert(expr, action) { if (!(expr)) {printf("ERROR! "#expr" is false! %s:%u\n",__FILE__,__LINE__); action;} }
 
+#define cl_malloc_struct(type)  (type *)cl_malloc(sizeof(type))
+#define cl_malloc_array(type, num) (type *)cl_malloc(sizeof(type) * num)
+
 // Defines and includes should be pulled in from the compile line.
 #define STRINGERIZE(x)          (#x)
 #define CL_ARGS                 (STRINGERIZE(DEFINES)" "STRINGERIZE(INCLUDES))
@@ -51,6 +54,7 @@ typedef struct _cl_kernel_param_t {
     void *data;
     cl_mem mem;
     cl_mem_flags flags;
+    cl_event event;
 } cl_kernel_param_t;
 
 typedef struct _cl_kernel_call_t {
@@ -61,6 +65,9 @@ typedef struct _cl_kernel_call_t {
     size_t global_work_size[3];
     size_t  local_work_size[3];
     cl_int err;
+    cl_event event;
+    cl_ulong start;
+    cl_ulong stop;
 } cl_kernel_call_t;
 
 typedef struct _cl_environemnt_t
@@ -108,6 +115,9 @@ cl_kernel_bin_t *cl_unserialize_kernels(cl_byte * bin, size_t numBytes);
 
 cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name);
 cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall);
+
+void *cl_malloc(size_t numBytes);
+void cl_free(void *ptr);
 
 #endif
 

@@ -47,9 +47,6 @@ void *cl_malloc(size_t numBytes)
     return ptr;
 }
 
-#define cl_malloc_struct(type)  (type *)cl_malloc(sizeof(type))
-#define cl_malloc_array(type, num) (type *)cl_malloc(sizeof(type) * num)
-
 size_t flen(FILE *fp)
 {
     size_t len = 0;
@@ -482,7 +479,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                 // create the command queues
                 for (i = 0; i < pEnv->numDevices; i++)
                 {
-                    pEnv->queues[i] = clCreateCommandQueue(pEnv->context, pEnv->devices[i], 0, &err);
+                    pEnv->queues[i] = clCreateCommandQueue(pEnv->context, pEnv->devices[i], CL_QUEUE_PROFILING_ENABLE, &err);
                     if (pEnv->queues[i] == NULL)
                     {
                         clDeleteEnvironment(pEnv);
@@ -660,7 +657,7 @@ cl_environment_t *clCreateEnvironment(char *filename,
                 // create the command queues
                 for (i = 0; i < pEnv->numDevices; i++)
                 {
-                    pEnv->queues[i] = clCreateCommandQueue(pEnv->context, pEnv->devices[i], 0, &err);
+                    pEnv->queues[i] = clCreateCommandQueue(pEnv->context, pEnv->devices[i], CL_QUEUE_PROFILING_ENABLE, &err);
                     if (pEnv->queues[i] == NULL)
                     {
                         clDeleteEnvironment(pEnv);
@@ -806,9 +803,11 @@ cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name)
     cl_uint i = 0;
     char name[CL_MAX_STRING];
     size_t len = CL_MAX_STRING * sizeof(cl_char);
+    //printf("Looking for kernel %s\n", func_name);
     for (i = 0; i < pEnv->numKernels; i++)
     {
-        cl_int err = clGetKernelInfo(pEnv->kernels[i], CL_KERNEL_FUNCTION_NAME, len, name, &len);
+        cl_int err = clGetKernelInfo(pEnv->kernels[i], CL_KERNEL_FUNCTION_NAME, sizeof(name), name, &len);
+        //printf("SYMBOL[%06u] (%lu) %s\n", i, len, name);
         if (err == CL_SUCCESS && strncmp(name, func_name, CL_MAX_STRING) == 0)
         {
             return pEnv->kernels[i];
@@ -851,7 +850,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall)
 #ifdef CL_DEBUG
                 printf("Copying mem %p from ptr %p for %lu bytes\n", pCall->params[j].mem, pCall->params[j].data, pCall->params[j].numBytes);
 #endif
-                err = clEnqueueWriteBuffer(pEnv->queues[i], pCall->params[j].mem, CL_TRUE, 0, pCall->params[j].numBytes, pCall->params[j].data, 0, NULL, NULL);
+                err = clEnqueueWriteBuffer(pEnv->queues[i], pCall->params[j].mem, CL_TRUE, 0, pCall->params[j].numBytes, pCall->params[j].data, 0, NULL, &pCall->params[j].event);
                 cl_assert((err == CL_SUCCESS),printf("ERROR: Write Enqueue Error = %d\n",err));
             }
         }
@@ -870,16 +869,22 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall)
             err = clSetKernelArg(kernel, j, sizeof(cl_mem), &pCall->params[j].mem);
             cl_assert((err == CL_SUCCESS),printf("ERROR: Kernel Arg %d is wrong (Error=%d)\n", j, err));
         }
-        err = clEnqueueNDRangeKernel(pEnv->queues[i], kernel, pCall->numDim, NULL, pCall->global_work_size, NULL, 0, NULL, NULL);
+        err = clEnqueueNDRangeKernel(pEnv->queues[i], kernel, pCall->numDim, NULL, pCall->global_work_size, NULL, 0, NULL, &pCall->event);
         cl_assert((err == CL_SUCCESS),printf("ERROR: Work Queue Error = %d\n",err));
     }
 
     // finish
     for (i = 0; i<pEnv->numDevices; i++)
         clFinish(pEnv->queues[i]);
+
+    err = clGetEventProfilingInfo(pCall->event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &pCall->start, NULL);
+    cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
+    err = clGetEventProfilingInfo(pCall->event, CL_PROFILING_COMMAND_END,   sizeof(cl_ulong), &pCall->stop, NULL);
+    cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
 #ifdef CL_DEBUG
     printf("Executed kernel %s!\n",pCall->kernel_name);
 #endif
+
     // read the result memory
     for (i = 0; i<pEnv->numDevices; i++) {
         for (j = 0; j < pCall->numParams; j++)

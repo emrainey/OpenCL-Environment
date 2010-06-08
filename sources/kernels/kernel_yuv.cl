@@ -17,7 +17,7 @@
 __kernel void kernel_rgb2yuv(__global float *r,
                              __global float *g,
                              __global float *b,
-                             __constant float *a,
+                             __constant float *a, // you could use BT601 or BT709 constants
                              __global float *y,
                              __global float *u,
                              __global float *v)

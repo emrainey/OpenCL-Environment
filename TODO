@@ -9,4 +9,5 @@ TODO - Add 2D/3D Buffer types to clKernelCall
 TODO - Add chaining to clKernelCall (and intermediates buffers which may or may not be read out)
 TODO - Complete using the clopt files as compile time options to pass to the precompiled OpenCL Kernels.
 TODO - Add JavaDoc style comments to all the API's.
+TODO - Add profiling support via OpenCL clGetEventProfilingInfo
 
