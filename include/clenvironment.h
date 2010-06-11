@@ -62,6 +62,7 @@ typedef struct _cl_kernel_call_t {
     cl_kernel_param_t *params;
     cl_uint numParams;
     cl_uint numDim;
+	size_t global_work_offset[3];
     size_t global_work_size[3];
     size_t  local_work_size[3];
     cl_int err;

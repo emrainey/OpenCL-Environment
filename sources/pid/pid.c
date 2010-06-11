@@ -45,9 +45,10 @@ cl_int pid_loop(cl_environment_t *pEnv,
     cl_kernel_call_t call = {
         "kernel_pid",
         params,
-        1, 1,
+        1, 1, 
+		{0,0,0},
         {numPids, 0, 0},
-        {0,0,0},
+        {1,1,1},
         CL_SUCCESS
     };
 

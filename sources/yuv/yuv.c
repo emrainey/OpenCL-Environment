@@ -95,10 +95,11 @@ cl_int cl_convert_rgbf_to_yuvf_bt601(cl_environment_t *pEnv,
     cl_kernel_call_t call = {
         "kernel_rgb2yuv_bt601",
         params, dimof(params),
-        1,
+        1, 
+		{0,0,0},
         {numPixels, 0,0},
-        {0,0,0},
-        CL_SUCCESS
+        {1,1,1},
+        CL_SUCCESS,0,0,0
     };
     err = clCallKernel(pEnv, &call);
     printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
@@ -129,10 +130,11 @@ cl_int cl_convert_rgbf_to_yuvf(cl_environment_t *pEnv,
     cl_kernel_call_t call = {
         "kernel_rgb2yuv",
         params, dimof(params),
-        1,
+        1, 
+		{0,0,0},
         {numPixels, 0, 0},
-        {0,0,0},
-        CL_SUCCESS,
+        {1,1,1},
+        CL_SUCCESS,0,0,0
     };
     err = clCallKernel(pEnv, &call);
     printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));

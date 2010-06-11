@@ -23,6 +23,7 @@
 #else
 #include <OpenCL/opencl.h>
 #endif
+#include <kernel_nbody.h>
 #include <clenvironment.h>
 
 #define CL_OPTIONS  ("-I/Users/emrainey/Source/OpenCL/include")
@@ -42,151 +43,62 @@ float sum(float *a, cl_uint num)
 }
 
 cl_int distance(cl_environment_t *pEnv,
-                float *x, float *y, float *z, float *d,
+                cl_float4 *p, 
+				cl_float *d,
                 cl_uint numPoints)
 {
-    cl_kernel_call_t call;
+	cl_uint n  = sizeof(float) * numPoints;
+	cl_uint n4 = sizeof(cl_float4) * numPoints;
     cl_kernel_param_t params[] = {
-        {sizeof(float)*numPoints,x,NULL,CL_MEM_READ_ONLY},
-        {sizeof(float)*numPoints,y,NULL,CL_MEM_READ_ONLY},
-        {sizeof(float)*numPoints,z,NULL,CL_MEM_READ_ONLY},
-        {sizeof(float)*numPoints,d,NULL,CL_MEM_WRITE_ONLY},
+        {n4,p,NULL,CL_MEM_READ_ONLY},
+        {n ,d,NULL,CL_MEM_WRITE_ONLY},
     };
-
-    call.kernel_name = "kernel_magnitude";
-    call.params = params;
-    call.numParams = dimof(params);
-    call.numDim = 1;
-    call.global_work_size[0] = numPoints;
-    call.global_work_size[1] = 0;
-    call.global_work_size[2] = 0;
-    call.local_work_size[0] = 0;
-    call.local_work_size[1] = 0;
-    call.local_work_size[2] = 0;
-
+    cl_kernel_call_t call = {
+		"kernel_magnitude",
+		params, dimof(params),
+		1, 
+		{0,0,0},
+		{numPoints, 0, 0},
+		{1,1,1},
+		CL_SUCCESS, 0,0,0
+	};
     return clCallKernel(pEnv, &call);
 }
 
 cl_int nbodies(cl_environment_t *pEnv,
-               float *m,
-               float *a_x, float *a_y, float *a_z,
-               float *v_x, float *v_y, float *v_z,
-               float *p_x, float *p_y, float *p_z,
-               float *t, float *d,   float *g,
+			   cl_float *ms,  
+			   cl_float *m,
+               cl_float4 *a,
+               cl_float4 *v,
+               cl_float4 *p,
+               cl_float *t, 
+		       cl_float *d,   
+		       cl_float *g,
                size_t numBodies)
 {
-    cl_mem  m_mem, d_mem, g_mem, t_mem;
-    cl_mem ax_mem, ay_mem, az_mem;
-    cl_mem vx_mem, vy_mem, vz_mem;
-    cl_mem px_mem, py_mem, pz_mem;
-
-    const cl_uint numBytes = numBodies * sizeof(float);
-    cl_int err = CL_SUCCESS;
-    size_t global_work_size = numBodies;
-    cl_uint i = 0;
-
-    cl_kernel kernel = clGetKernelByName(pEnv, "kernel_nbody");
-    if (kernel == NULL)
-        return CL_INVALID_KERNEL_NAME;
-
-    // create the rgb and yuv memory
-    m_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    t_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_ONLY, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    d_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    g_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    ax_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    ay_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    az_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    vx_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    vy_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    vz_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    px_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    py_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-    pz_mem = clCreateBuffer(pEnv->context, CL_MEM_READ_WRITE, numBytes, NULL, &err);
-    cl_assert(err == CL_SUCCESS,);
-
-    // enqueue the write memory
-    for (i = 0; i < pEnv->numDevices; i++) {
-        err = 0;
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], m_mem, CL_TRUE, 0, numBytes, m, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], t_mem, CL_TRUE, 0, numBytes, t, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], d_mem, CL_TRUE, 0, numBytes, d, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], g_mem, CL_TRUE, 0, numBytes, g, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], ax_mem, CL_TRUE, 0, numBytes, a_x, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], ay_mem, CL_TRUE, 0, numBytes, a_y, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], az_mem, CL_TRUE, 0, numBytes, a_z, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], vx_mem, CL_TRUE, 0, numBytes, v_x, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], vy_mem, CL_TRUE, 0, numBytes, v_y, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], vz_mem, CL_TRUE, 0, numBytes, v_z, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], px_mem, CL_TRUE, 0, numBytes, p_x, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], py_mem, CL_TRUE, 0, numBytes, p_y, 0, NULL, NULL);
-        err |= clEnqueueWriteBuffer(pEnv->queues[i], pz_mem, CL_TRUE, 0, numBytes, p_z, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Write Enqueue Error = %d\n",err);
-    }
-
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-
-    // enqueue the kernel
-    for (i = 0; i < pEnv->numDevices; i++) {
-        clSetKernelArg(kernel, 0, sizeof(cl_mem), &m_mem);
-        clSetKernelArg(kernel, 1, sizeof(cl_mem), &ax_mem);
-        clSetKernelArg(kernel, 2, sizeof(cl_mem), &ay_mem);
-        clSetKernelArg(kernel, 3, sizeof(cl_mem), &az_mem);
-        clSetKernelArg(kernel, 4, sizeof(cl_mem), &vx_mem);
-        clSetKernelArg(kernel, 5, sizeof(cl_mem), &vy_mem);
-        clSetKernelArg(kernel, 6, sizeof(cl_mem), &vz_mem);
-        clSetKernelArg(kernel, 7, sizeof(cl_mem), &px_mem);
-        clSetKernelArg(kernel, 8, sizeof(cl_mem), &py_mem);
-        clSetKernelArg(kernel, 9, sizeof(cl_mem), &pz_mem);
-        clSetKernelArg(kernel, 10, sizeof(cl_mem), &t_mem);
-        clSetKernelArg(kernel, 11, sizeof(cl_mem), &d_mem);
-        clSetKernelArg(kernel, 12, sizeof(cl_mem), &g_mem);
-        err = 0;
-        err |= clEnqueueNDRangeKernel(pEnv->queues[i], kernel, 1, NULL, &global_work_size, NULL, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Work Queue Error = %d\n",err);
-    }
-
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-
-    printf("Executed kernels!\n");
-
-    // read the result memory
-    for (i = 0; i<pEnv->numDevices; i++) {
-        err = 0;
-        err |= clEnqueueReadBuffer(pEnv->queues[i], d_mem, CL_TRUE, 0, numBytes, d, 0, NULL, NULL);
-        err |= clEnqueueReadBuffer(pEnv->queues[i], g_mem, CL_TRUE, 0, numBytes, g, 0, NULL, NULL);
-        if (err != CL_SUCCESS) printf("ERROR: Read Enqueue Error=%d\n",err);
-    }
-    // finish
-    for (i = 0; i<pEnv->numDevices; i++)
-        clFinish(pEnv->queues[i]);
-
-    // release memory objects
-    clReleaseMemObject(m_mem);
-    clReleaseMemObject(d_mem);
-    clReleaseMemObject(g_mem);
-    clReleaseMemObject(ax_mem); clReleaseMemObject(ay_mem); clReleaseMemObject(az_mem);
-    clReleaseMemObject(vx_mem); clReleaseMemObject(vy_mem); clReleaseMemObject(vz_mem);
-    clReleaseMemObject(px_mem); clReleaseMemObject(py_mem); clReleaseMemObject(pz_mem);
-    return err;
+	cl_uint n = sizeof(cl_float)*numBodies;
+	cl_uint n4 = sizeof(cl_float4)*numBodies;
+	cl_kernel_param_t params[] = {
+		{n, ms, NULL, CL_MEM_READ_WRITE},
+		{n,  m, NULL, CL_MEM_READ_ONLY},
+		{n4, a, NULL, CL_MEM_READ_WRITE},
+		{n4, v, NULL, CL_MEM_READ_WRITE},
+		{n4, p, NULL, CL_MEM_READ_WRITE},
+		{n,  t, NULL, CL_MEM_READ_ONLY},
+		{n,  d, NULL, CL_MEM_READ_WRITE},
+		{n,  g, NULL, CL_MEM_READ_WRITE},		
+	};
+	cl_kernel_call_t call = {
+		"kernel_nbody",
+		params, dimof(params),
+		1, 
+		{0,0,0},
+		{numBodies, 0, 0},
+		{1,1,1},
+		CL_SUCCESS,0,0,0
+	};
+	return clCallKernel(pEnv, &call);
 }
-
 int ipow(int v, int p)
 {
     if (p == 0)
@@ -207,46 +119,40 @@ float frand(void)
     return (float)(rand()%1000)/999;
 }
 
-#define tmalloc(num,type)                    (type *)malloc(num * sizeof(type))
+void frand4(cl_float4 f, cl_int l, cl_int h)
+{
+	f[0] = frand() * ipow(10, rrand(l,h));
+	f[1] = frand() * ipow(10, rrand(l,h));
+	f[2] = frand() * ipow(10, rrand(l,h));
+	f[3] = frand() * ipow(10, rrand(l,h));
+}
 
 int main(int argc, char *argv[])
 {
     const size_t numBodies = 10;
-    float *m   = tmalloc(numBodies, float);
-    float *d   = tmalloc(numBodies, float);
-    float *g   = tmalloc(numBodies, float);
-    float *t   = tmalloc(numBodies, float);
-    float *a_x = tmalloc(numBodies, float);
-    float *a_y = tmalloc(numBodies, float);
-    float *a_z = tmalloc(numBodies, float);
-    float *v_x = tmalloc(numBodies, float);
-    float *v_y = tmalloc(numBodies, float);
-    float *v_z = tmalloc(numBodies, float);
-    float *p_x = tmalloc(numBodies, float);
-    float *p_y = tmalloc(numBodies, float);
-    float *p_z = tmalloc(numBodies, float);
+    float *m     = cl_malloc_array(float, numBodies);
+	float *ms    = cl_malloc_array(float, numBodies);
+    float *d     = cl_malloc_array(float, numBodies);
+    float *g     = cl_malloc_array(float, numBodies);
+    float *t     = cl_malloc_array(float, numBodies);
+    cl_float4 *a = cl_malloc_array(cl_float4, numBodies);
+    cl_float4 *v = cl_malloc_array(cl_float4, numBodies);
+    cl_float4 *p = cl_malloc_array(cl_float4, numBodies);
 
     time_t start, diff;
     clock_t c_start, c_diff;
 
-    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",1,notify, CL_OPTIONS);
-    if (pEnv)
+    // cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",1,notify, CL_OPTIONS);
+	cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_OPTIONS);
+	if (pEnv)
     {
         cl_uint i = 0;
-        printf("Created environment %p\n", pEnv);
-
         for (i = 0; i < numBodies; i++)
         {
-            m[i]   = frand() * ipow(10,rrand(4,27)); // masses should be 10^4 - 10^27 (Earth heavy)
-            a_x[i] = frand() * ipow(10,rrand(1,8));
-            a_y[i] = frand() * ipow(10,rrand(1,8));
-            a_z[i] = frand() * ipow(10,rrand(1,8));
-            v_x[i] = frand() * ipow(10,rrand(1,9));  // velocity must be lower than 0.8*c!
-            v_y[i] = frand() * ipow(10,rrand(1,9));  // velocity must be lower than 0.8*c!
-            v_z[i] = frand() * ipow(10,rrand(1,9));  // velocity must be lower than 0.8*c!
-            p_x[i] = frand() * ipow(10,rrand(4,8));
-            p_y[i] = frand() * ipow(10,rrand(4,8));
-            p_z[i] = frand() * ipow(10,rrand(4,8));
+            m[i] = frand() * ipow(10,rrand(4,27)); // masses should be 10^4 - 10^27 (Earth heavy)
+            frand4(a[i], 1, 8);
+			frand4(v[i], 1, 9);
+			frand4(p[i], 4, 8);
             t[i] = 0.001; // 1 millisecond.
             d[i] = 0.00; // this will be initialized in the kernel
             g[i] = 0.00; // this will be initialized in the kernel
@@ -254,9 +160,9 @@ int main(int argc, char *argv[])
 
         start = time(NULL);
         c_start = clock();
-        nbodies(pEnv, m, a_x,a_y, a_z,v_x, v_y, v_z, p_x, p_y, p_z, t, d, g, numBodies);
-        distance(pEnv, p_x, p_y, p_z, d, numBodies);
-        //c_diff = clock() - c_start;
+        nbodies(pEnv, ms, m, a, v, p, t, d, g, numBodies);
+        distance(pEnv, p, d, numBodies);
+        c_diff = clock() - c_start;
         diff = time(NULL) - start;
         printf("Constant Version Ran in %lu seconds (%lu ticks)\n", diff, c_diff);
 
@@ -264,12 +170,19 @@ int main(int argc, char *argv[])
         for (i = 0; i < numBodies; i++)
         {
             printf("[%6u] p={%.2lf,%.2lf,%.2lf} v={%.2lf,%.2lf,%.2lf} a={%.2lf,%.2lf,%.2lf} d=%lf g=%lf\n", i,
-                    p_x[i], p_y[i], p_z[i],
-                    v_x[i], v_y[i], v_z[i],
-                    a_x[i], a_y[i], a_z[i], d[i],g[i]);
+                    p[i][0], p[i][1], p[i][2],
+                    v[i][0], v[i][1], v[i][2],
+                    a[i][0], a[i][1], a[i][2], d[i], g[i]);
         }
 //#endif
         clDeleteEnvironment(pEnv);
+		cl_free(g);
+		cl_free(d);
+		cl_free(t);
+		cl_free(m);
+		cl_free(v); 
+		cl_free(a);
+		cl_free(p);
     }
     return 0;
 }

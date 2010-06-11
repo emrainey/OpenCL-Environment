@@ -869,7 +869,13 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall)
             err = clSetKernelArg(kernel, j, sizeof(cl_mem), &pCall->params[j].mem);
             cl_assert((err == CL_SUCCESS),printf("ERROR: Kernel Arg %d is wrong (Error=%d)\n", j, err));
         }
-        err = clEnqueueNDRangeKernel(pEnv->queues[i], kernel, pCall->numDim, NULL, pCall->global_work_size, NULL, 0, NULL, &pCall->event);
+        err = clEnqueueNDRangeKernel(pEnv->queues[i], 
+									kernel, 
+									pCall->numDim, 
+									NULL, //pCall->global_work_offset, 
+									pCall->global_work_size, 
+									pCall->local_work_size, 
+									0, NULL, &pCall->event);
         cl_assert((err == CL_SUCCESS),printf("ERROR: Work Queue Error = %d\n",err));
     }
 

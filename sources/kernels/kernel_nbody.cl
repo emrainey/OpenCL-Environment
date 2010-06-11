@@ -14,48 +14,42 @@
  * limitations under the License.
  */
 
-__kernel void kernel_magnitude(__global float *x,
-                               __global float *y,
-                               __global float *z,
+typedef float cl_float4[4];
+
+__kernel void kernel_magnitude(__global cl_float4 *p,
                                __global float *mag)
 {
     int i = get_global_id(0);
     // mag = sqrt(x^2+y^2+z^2)
-    mag[i] = sqrt(x[i]*x[i] + y[i]*y[i] + z[i]*z[i]);
+    mag[i] = sqrt(p[i][0]*p[i][0] + p[i][1]*p[i][1] + p[i][2]*p[i][2]);
 }
-/*
-__kernel kernel_renormalize(__global float *x,
-                            __global float *y,
-                            __global float *z,
-                            __global float *om,
-                            __global float *nm)
+
+__kernel void kernel_renormalize(__global cl_float4 *p,
+                                 __global float *om,
+                                 __global float *nm)
 {
     int i = get_global_id(0);
 
-    kernel_magnitude(x,y,z,om);
+    kernel_magnitude(p,om);
 
-    x[i] /= om[i];
-    y[i] /= om[i];
-    z[i] /= om[i];
+    p[i][0] /= om[i];
+    p[i][1] /= om[i];
+    p[i][2] /= om[i];
 
-    x[i] *= nm[i];
-    y[i] *= nm[i];
-    z[i] *= nm[i];
+    p[i][0] *= nm[i];
+    p[i][1] *= nm[i];
+    p[i][2] *= nm[i];
 }
 
-__kernel kernel_distance(__global float *v1_x,
-                         __global float *v1_y,
-                         __global float *v1_z,
-                         __global float *v2_x,
-                         __global float *v2_y,
-                         __global float *v2_z,
-                         __global float *d)
+__kernel void kernel_distance(__global cl_float4 *v1,
+                              __global cl_float4 *v2,
+                              __global float *d)
 {
     int i = get_global_id(0);
 
-    float dx = v2_x[i] - v1_x[i];
-    float dy = v2_y[i] - v1_x[i];
-    float dz = v2_z[i] - v1_z[i];
+    float dx = v2[i][0] - v1[i][0];
+    float dy = v2[i][1] - v1[i][1];
+    float dz = v2[i][2] - v1[i][2];
 
     // distance = sqrt(sum(dx^2 + dy^2 + dz^2))
     d[i] = sqrt(dx*dx + dy*dy + dz*dz);
@@ -75,19 +69,15 @@ __kernel kernel_gravity(__global float Mg,
     f_mag[i] = (Mg * m[i] * G)/(d[i] * d[i]);
 }
 
-__kernel kernel_kinetic(__global *m,
-                        __global *v_x,
-                        __global *v_y,
-                        __global *v_z,
-                        __global *k_x,
-                        __global *k_y,
-                        __global *k_z)
+__kernel kernel_kinetic(__global float *m,
+                        __global cl_float4 *v,
+                        __global cl_float4 *ke)
 {
     int i = get_global_id(0);
 
-    k_x[i] = 0.5 * m[i] * v_x[i] * v_x[i];
-    k_y[i] = 0.5 * m[i] * v_y[i] * v_y[i];
-    k_z[i] = 0.5 * m[i] * v_z[i] * v_z[i];
+    ke[i][0] = 0.5 * m[i] * v[i][0] * v[i][0];
+    ke[i][1] = 0.5 * m[i] * v[i][1] * v[i][1];
+    ke[i][2] = 0.5 * m[i] * v[i][2] * v[i][2];
 }
 
 __kernel kernel_energy(__global *m,
@@ -97,49 +87,39 @@ __kernel kernel_energy(__global *m,
     float c = 299792458; // speed of light in meters/second;
     E[i] = m[i] * c * c;
 }
-*/
-__kernel kernel_nbody(__global float *m,
-                      __global float *a_x,
-                      __global float *a_y,
-                      __global float *a_z,
-                      __global float *v_x,
-                      __global float *v_y,
-                      __global float *v_z,
-                      __global float *p_x,
-                      __global float *p_y,
-                      __global float *p_z,
+
+__kernel kernel_nbody(__global float *ms,
+					  __global float *m,
+                      __global cl_float4 *a,
+                      __global cl_float4 *v,
+                      __global cl_float4 *p,
                       __global float *t,
                       __global float *d,
                       __global float *g)
 {
     int i = get_global_id(0);
     float G = 0.00000000006673;
-
-    // position is updated by velocity and some small quantity of acceration
-    p_x[i] += v_x[i]*t[i] + 0.5*t[i]*t[i]*a_x[i];
-    p_y[i] += v_y[i]*t[i] + 0.5*t[i]*t[i]*a_y[i];
-    p_z[i] += v_z[i]*t[i] + 0.5*t[i]*t[i]*a_z[i];
+	
+	// position is updated by velocity and some small quantity of acceration
+    p[i][0] += v[i][0]*t[i] + 0.5*t[i]*t[i]*a[i][0];
+    p[i][1] += v[i][1]*t[i] + 0.5*t[i]*t[i]*a[i][1];
+    p[i][2] += v[i][2]*t[i] + 0.5*t[i]*t[i]*a[i][2];
 
     // velocity is updated by acceration and friction (which is zero in space)
-    v_x[i] += a_x[i]*t[i];
-    v_y[i] += a_y[i]*t[i];
-    v_z[i] += a_z[i]*t[i];
+    v[i][0] += a[i][0]*t[i];
+    v[i][1] += a[i][1]*t[i];
+    v[i][2] += a[i][2]*t[i];
 
     // calculate the magnitude of the position with respec to 0,0,0 (this is a shortcut for distance)
-    d[i] = sqrt(p_x[i]*p_x[i] + p_y[i]*p_y[i] + p_z[i]*p_z[i]);
-    //kernel_magnitude(p_x, p_y, p_z, d);
-
+    d[i] = sqrt(p[i][0]*p[i][0] + p[i][1]*p[i][1] + p[i][2]*p[i][2]);
+    
     // gravity is based on position and mass.
-    g[i] = (10 * m[i] * G)/(d[i]*d[i]);
-    //kernel_gravity(10.0, m, d, g_mag); //@TODO this is a fixed M0 mass of 10.0
-
-    // acceration is updated by changes in gravity, which is based on position
-    a_x[i] = -p_x[i]*g[i]/d[i];
-    a_y[i] = -p_y[i]*g[i]/d[i];
-    a_z[i] = -p_z[i]*g[i]/d[i];
-
-    //kernel_renormalize(a_x, a_y, a_z, d, g_mag);
+    g[i] = (ms[i] * m[i] * G)/(d[i]*d[i]);
+    
+    // acceleration is updated by changes in gravity, which is based on position
+    a[i][0] = -p[i][0]*g[i]/d[i];
+    a[i][1] = -p[i][1]*g[i]/d[i];
+    a[i][2] = -p[i][2]*g[i]/d[i];
 }
-
 
 
