@@ -26,6 +26,7 @@
 #include <clenvironment.h>
 #include <clpid.h>
 #include <kernel_pid.h>
+#include <clmath.h>
 
 #define CL_OPTIONS  ("-I/Users/emrainey/Source/OpenCL/include")
 
@@ -57,11 +58,6 @@ cl_int pid_loop(cl_environment_t *pEnv,
         return err;
     else
         return call.err;
-}
-
-float frand(void)
-{
-    return (float)(rand()%1000)/999;
 }
 
 int main(int argc, char *argv[])

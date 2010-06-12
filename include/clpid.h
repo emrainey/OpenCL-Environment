@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _KERNEL_PID_H_
-#define _KERNEL_PID_H_
+#ifndef _CL_PID_H_
+#define _CL_PID_H_
 
 #define PCT_INT_WINDOW  (10)
 

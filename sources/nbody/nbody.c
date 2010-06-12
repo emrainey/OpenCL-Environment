@@ -24,6 +24,7 @@
 #include <OpenCL/opencl.h>
 #endif
 #include <kernel_nbody.h>
+#include <clmath.h>
 #include <clenvironment.h>
 
 #define CL_OPTIONS  ("-I/Users/emrainey/Source/OpenCL/include")
@@ -31,15 +32,6 @@
 void notify(cl_program program, void *arg)
 {
     printf("Program %p Arg %p\n",program, arg);
-}
-
-float sum(float *a, cl_uint num)
-{
-    float b = 0.0;
-    cl_uint i = 0;
-    for (i = 0; i < num; i++)
-        b += a[i];
-    return b;
 }
 
 cl_int distance(cl_environment_t *pEnv,
@@ -98,33 +90,6 @@ cl_int nbodies(cl_environment_t *pEnv,
 		CL_SUCCESS,0,0,0
 	};
 	return clCallKernel(pEnv, &call);
-}
-int ipow(int v, int p)
-{
-    if (p == 0)
-        return 1;
-    if (p == 1)
-        return v;
-    return v*ipow(v,p-1);
-}
-
-int rrand(int low, int hi)
-{
-    int r = hi - low;
-    return (rand() % r) + low;
-}
-
-float frand(void)
-{
-    return (float)(rand()%1000)/999;
-}
-
-void frand4(cl_float4 f, cl_int l, cl_int h)
-{
-	f[0] = frand() * ipow(10, rrand(l,h));
-	f[1] = frand() * ipow(10, rrand(l,h));
-	f[2] = frand() * ipow(10, rrand(l,h));
-	f[3] = frand() * ipow(10, rrand(l,h));
 }
 
 int main(int argc, char *argv[])

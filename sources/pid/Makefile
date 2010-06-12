@@ -16,6 +16,6 @@ TARGET=clpid
 TARGETTYPE=exe
 CSOURCES=pid.c
 CLSOURCES=kernel_pid.cl
-LIBS+=clenvironment
+LIBS+=clenvironment clmath
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/global.mak

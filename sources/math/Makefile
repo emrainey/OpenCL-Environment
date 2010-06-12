@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 include $(LOCAL_ROOT)/build/prelude.mak
-TARGET=clnbody
-TARGETTYPE=exe
-CSOURCES=nbody.c
-CLSOURCES=kernel_nbody.cl
-LIBS+=clenvironment clmath
-TESTCASE=$(TARGET)
+TARGET=clmath
+TARGETTYPE=library
+CSOURCES=clmath.c
 include $(LOCAL_ROOT)/build/global.mak

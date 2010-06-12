@@ -407,6 +407,8 @@ void cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
     {
         cl_uint d, b;
         fprintf(fo, "// PRECOMPILED HEADER, DO NOT MODIFY!\n");
+		fprintf(fo, "#ifndef _PRECOMPILED_KERNEL_H_\n");
+		fprintf(fo, "#define _PRECOMPILED_KERNEL_H_\n");
         fprintf(fo, "#include <clenvironment.h>\n");
         fprintf(fo, "static size_t gKernelBinarySizes[%lu] = {\n",bins->numDevices);
         for (d = 0; d < bins->numDevices; d++)
@@ -428,6 +430,7 @@ void cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
         }
         fprintf(fo, "};\n");
         fprintf(fo, "static cl_kernel_bin_t gKernelBins = { %luL, %luL, %luL, (size_t *)&gKernelBinarySizes, (cl_byte **)&gKernelBinaries };\n", bins->numDevices, bins->numBytesSizes, bins->numBytesData);
+		fprintf(fo, "#endif\n");
         fclose(fo);
     }
 }

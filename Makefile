@@ -2,7 +2,7 @@ ifndef LOCAL_ROOT
 LOCAL_ROOT=$(shell pwd)
 endif
 
-DIRS=environment compiler query imgfilter yuv pid nbody
+DIRS=math environment compiler query imgfilter yuv pid nbody
 
 .PHONY: todo all debug error
 
