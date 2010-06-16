@@ -73,3 +73,21 @@ void frand4(cl_float4 f, cl_int l, cl_int h)
 	f[2] = frand() * ipow(10, rrand(l,h));
 	f[3] = frand() * ipow(10, rrand(l,h));
 }
+
+void normalize_float(float *a, cl_int low, cl_int hi, cl_uchar *b, cl_uint numPixels)
+{
+    cl_uint i = 0;
+    cl_uint range = hi - low;
+    //printf("Range for %p is %d to %d (%d)\n", a, low, hi, range);
+    for (i = 0; i < numPixels; i++)
+    {
+        cl_int c = (range * a[i]) + low;
+        //printf("a = %lf, c = %d\n",a[i], c);
+        if (c > hi)
+            b[i] = (cl_uchar)hi;
+        else if (c < low)
+            b[i] = (cl_uchar)low;
+        else
+            b[i] = (cl_uchar)c;
+    }
+}
