@@ -41,15 +41,25 @@
 
 typedef unsigned char cl_byte;
 
+/** This is the data structure which holds precompiled OpenCL kernels for a series of devices */
 typedef struct _cl_kernel_bin_t {
-    size_t    numDevices;
-    size_t    numBytesSizes;
-    size_t    numBytesData;
-    size_t   *sizes;
-    cl_byte **data;
+    size_t    numDevices;		/**< the number of devices these kernels have been compiled against */
+    size_t    numBytesSizes;	/**< The number of bytes in the sizes array */
+    size_t    numBytesData;		/**< The number of bytes in the data array */
+    size_t   *sizes;			/**< An array of size_t values which indicates the length in bytes of the same indexed data buffer */
+    cl_byte **data;				/**< An array to precompiled device code, each length is indicated in the same index of sizes. */
 } cl_kernel_bin_t;
 
+/**< This indicates the type of parameter */
+typedef enum _cl_kernel_param_e {
+	CL_KPARAM_BUFFER_0D = 0,	/**< This is simply a single value to pass to the OpenCL kernel */
+	CL_KPARAM_BUFFER_1D,		/**< This is an array of values to pass to the OpenCL kernel */
+	CL_KPARAM_BUFFER_2D,		/**< This is a two dimensional array of values to pass to the OpenCL Kernel */
+	CL_KPARAM_BUFFER_3D,		/**< This is a three dimensional array of values to pass to the OpenCL kernel */
+} cl_kernel_param_e ;
+
 typedef struct _cl_kernel_param_t {
+	cl_kernel_param_e type;
     size_t numBytes;
     void *data;
     cl_mem mem;

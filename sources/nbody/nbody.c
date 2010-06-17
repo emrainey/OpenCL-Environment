@@ -42,8 +42,8 @@ cl_int distance(cl_environment_t *pEnv,
 	cl_uint n  = sizeof(float) * numPoints;
 	cl_uint n4 = sizeof(cl_float4) * numPoints;
     cl_kernel_param_t params[] = {
-        {n4,p,NULL,CL_MEM_READ_ONLY},
-        {n ,d,NULL,CL_MEM_WRITE_ONLY},
+        {CL_KPARAM_BUFFER_1D, n4,p,NULL,CL_MEM_READ_ONLY},
+        {CL_KPARAM_BUFFER_1D, n ,d,NULL,CL_MEM_WRITE_ONLY},
     };
     cl_kernel_call_t call = {
 		"kernel_magnitude",
@@ -71,14 +71,14 @@ cl_int nbodies(cl_environment_t *pEnv,
 	cl_uint n = sizeof(cl_float)*numBodies;
 	cl_uint n4 = sizeof(cl_float4)*numBodies;
 	cl_kernel_param_t params[] = {
-		{n, ms, NULL, CL_MEM_READ_WRITE},
-		{n,  m, NULL, CL_MEM_READ_ONLY},
-		{n4, a, NULL, CL_MEM_READ_WRITE},
-		{n4, v, NULL, CL_MEM_READ_WRITE},
-		{n4, p, NULL, CL_MEM_READ_WRITE},
-		{n,  t, NULL, CL_MEM_READ_ONLY},
-		{n,  d, NULL, CL_MEM_READ_WRITE},
-		{n,  g, NULL, CL_MEM_READ_WRITE},		
+		{CL_KPARAM_BUFFER_1D, n, ms, NULL, CL_MEM_READ_WRITE},
+		{CL_KPARAM_BUFFER_1D, n,  m, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, n4, a, NULL, CL_MEM_READ_WRITE},
+		{CL_KPARAM_BUFFER_1D, n4, v, NULL, CL_MEM_READ_WRITE},
+		{CL_KPARAM_BUFFER_1D, n4, p, NULL, CL_MEM_READ_WRITE},
+		{CL_KPARAM_BUFFER_1D, n,  t, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, n,  d, NULL, CL_MEM_READ_WRITE},
+		{CL_KPARAM_BUFFER_1D, n,  g, NULL, CL_MEM_READ_WRITE},		
 	};
 	cl_kernel_call_t call = {
 		"kernel_nbody",

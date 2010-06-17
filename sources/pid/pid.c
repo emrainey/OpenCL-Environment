@@ -41,12 +41,12 @@ cl_int pid_loop(cl_environment_t *pEnv,
 {
     cl_int err;
     cl_kernel_param_t params[] = {
-        {sizeof(cl_pid_t) * numPids, pids, NULL, CL_MEM_READ_WRITE}
+        {CL_KPARAM_BUFFER_1D, sizeof(cl_pid_t) * numPids, pids, NULL, CL_MEM_READ_WRITE}
     };
     cl_kernel_call_t call = {
         "kernel_pid",
-        params,
-        1, 1, 
+        params, dimof(params),
+		1, 
 		{0,0,0},
         {numPids, 0, 0},
         {1,1,1},

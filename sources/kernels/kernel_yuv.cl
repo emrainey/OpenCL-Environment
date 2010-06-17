@@ -14,6 +14,64 @@
  * limitations under the License.
  */
 
+
+unsigned char clamp_uc(int v, int l, int h)
+{
+	if (v > h)
+		v = h;
+	if (v < l)
+		v = l;
+	return (unsigned char)v;
+}
+
+char clamp_c(int v, int l, int h)
+{
+	if (v > h)
+		v = h;
+	if (v < l)
+		v = l;
+	return (char)v;
+}
+
+__kernel void kernel_uyvy_to_2bgr(__global unsigned char *uyvy,
+								  __global unsigned char *bgr,
+								  __global unsigned int width,
+								  __global unsigned int height,
+								  __global unsigned int srcStride,
+								  __global unsigned int dstStride)
+{
+	int x = get_global_id(0) * 2; // extend the x-width since it is macropixel indexed
+	int y = get_global_id(1);
+	int y0,u0,y1,v0,r,g,b;
+	
+	// determine UYVY index 
+	int i = (y * srcStride) + (x * 2); // xstride == 2
+	
+	// determine BGR index
+	int j = (y * dstStride) + (x * 3); // xstride == 3
+	
+	u0 = uyvy[i+0] - 128;
+	y0 = uyvy[i+1] - 16;
+	v0 = uyvy[i+2] - 128;
+	y1 = uyvy[i+3] - 16;
+	
+	r = ((74 * y0) + (102 * v0)) >> 6; 
+    g = ((74 * y0) - (52 * v0) - (25 * u0)) >> 6;
+    b = ((74 * y0) + (129 * u0)) >> 6;
+	
+	bgr[j + 0] = clamp_uc(b, 0, 255);
+	bgr[j + 1] = clamp_uc(g, 0, 255);
+	bgr[j + 2] = clamp_uc(r, 0, 255);
+	
+	r = ((74 * y1) + (102 * v0)) >> 6; 
+    g = ((74 * y1) - (52 * v0) - (25 * u0)) >> 6;
+    b = ((74 * y1) + (129 * u0)) >> 6;
+	
+	bgr[j + 3] = clamp_uc(b, 0, 255);
+	bgr[j + 4] = clamp_uc(g, 0, 255);
+	bgr[j + 5] = clamp_uc(r, 0, 255);
+}
+
 __kernel void kernel_rgb2yuv(__global float *r,
                              __global float *g,
                              __global float *b,

@@ -830,16 +830,33 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall)
 
     for (j = 0; j < pCall->numParams; j++)
     {
-        pCall->params[j].mem = clCreateBuffer(pEnv->context, pCall->params[j].flags, pCall->params[j].numBytes, NULL, &err);
-#ifdef CL_DEBUG
-        printf("Create Buffer from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
-                pCall->params[j].data,
-                pCall->params[j].numBytes,
-                (cl_uint)pCall->params[j].flags,
-                pCall->params[j].mem,
-                err);
-#endif
-        cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+		if (pCall->params[j].type == CL_KPARAM_BUFFER_0D)
+		{
+			pCall->params[j].mem = NULL;
+		}
+		else if (pCall->params[j].type == CL_KPARAM_BUFFER_1D)
+		{
+        	pCall->params[j].mem = clCreateBuffer(pEnv->context, pCall->params[j].flags, pCall->params[j].numBytes, NULL, &err);
+	#ifdef CL_DEBUG
+	        printf("Create Buffer from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
+	                pCall->params[j].data,
+	                pCall->params[j].numBytes,
+	                (cl_uint)pCall->params[j].flags,
+	                pCall->params[j].mem,
+	                err);
+	#endif
+	        cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+		}
+		else if (pCall->params[j].type == CL_KPARAM_BUFFER_2D)
+		{
+			// @TODO implement a 2D buffer
+			pCall->params[j].mem = NULL;
+		}
+		else if (pCall->params[j].type == CL_KPARAM_BUFFER_3D)
+		{
+			// @TODO implement a 3D buffer
+			pCall->params[j].mem = NULL;
+		}
     }
 
     // enqueue the writes
@@ -853,7 +870,8 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall)
 #ifdef CL_DEBUG
                 printf("Copying mem %p from ptr %p for %lu bytes\n", pCall->params[j].mem, pCall->params[j].data, pCall->params[j].numBytes);
 #endif
-                err = clEnqueueWriteBuffer(pEnv->queues[i], pCall->params[j].mem, CL_TRUE, 0, pCall->params[j].numBytes, pCall->params[j].data, 0, NULL, &pCall->params[j].event);
+				if (pCall->params[j].type != CL_KPARAM_BUFFER_0D)
+                	err = clEnqueueWriteBuffer(pEnv->queues[i], pCall->params[j].mem, CL_TRUE, 0, pCall->params[j].numBytes, pCall->params[j].data, 0, NULL, &pCall->params[j].event);
                 cl_assert((err == CL_SUCCESS),printf("ERROR: Write Enqueue Error = %d\n",err));
             }
         }
@@ -869,7 +887,10 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall)
 #ifdef CL_DEBUG
             printf("ARG[%2u] mem %p (%lu)\n", j, pCall->params[j].mem, sizeof(cl_mem));
 #endif
-            err = clSetKernelArg(kernel, j, sizeof(cl_mem), &pCall->params[j].mem);
+			if (pCall->params[j].type == CL_KPARAM_BUFFER_0D)
+				err = clSetKernelArg(kernel, j, pCall->params[j].numBytes, pCall->params[j].data);
+			else
+            	err = clSetKernelArg(kernel, j, sizeof(cl_mem), &pCall->params[j].mem);
             cl_assert((err == CL_SUCCESS),printf("ERROR: Kernel Arg %d is wrong (Error=%d)\n", j, err));
         }
         err = clEnqueueNDRangeKernel(pEnv->queues[i], 
