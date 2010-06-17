@@ -34,45 +34,6 @@ void notify(cl_program program, void *arg)
     //printf("Compiled Program %p Arg %p\n",program, arg);
 }
 
-int ipow(int x, int n)
-{
-    if (n == 0)
-        return 1;
-    else if (n == 1)
-        return x;
-    else
-        return x * ipow(x, n - 1);
-}
-
-float frand(float low, float hi)
-{
-    float r = hi + low;
-    int p = 5; // arbitrary precision
-    int n = ipow(10,p);
-    float v = (float)(rand()%n)/(n-1);
-    float x = (v * r) + low;
-    //printf("frand [%lf, %lf] n=%d, v=%lf, x=%lf\n", low, hi, n, v,x);
-    return x;
-}
-
-void normalize_float(float *a, cl_int low, cl_int hi, cl_uchar *b, cl_uint numPixels)
-{
-    cl_uint i = 0;
-    cl_uint range = hi - low;
-    //printf("Range for %p is %d to %d (%d)\n", a, low, hi, range);
-    for (i = 0; i < numPixels; i++)
-    {
-        cl_int c = (range * a[i]) + low;
-        //printf("a = %lf, c = %d\n",a[i], c);
-        if (c > hi)
-            b[i] = (cl_uchar)hi;
-        else if (c < low)
-            b[i] = (cl_uchar)low;
-        else
-            b[i] = (cl_uchar)c;
-    }
-}
-
 cl_int cl_convert_rgbf_to_yuvf_bt601(cl_environment_t *pEnv,
                                      float *r,
                                      float *g,
@@ -192,9 +153,6 @@ int main(int argc, char *argv[])
         c_diff1 = clock() - c_start;
         diff = time(NULL) - start;
         printf("With Constants Version Ran in %lu seconds (%lu ticks)\n", diff, c_diff1);
-
-        //if (v[numPixels - 1] != 0.0)
-        //    printf("All data processed!\n");
 
         // initialize the data
         for (i = 0; i < numPixels; i++)
