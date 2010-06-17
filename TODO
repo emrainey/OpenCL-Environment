@@ -1,6 +1,4 @@
 TODO - Complete the ImgFilter implementation via cl_kernel_call_t
-TODO - Complete the YUV implementation via cl_kernel_call_t
-TODO - Complete the YUV conversions for file based images (YUV to RGB)
 TODO - Attach the Nbody demo to an OpenGL display to show how the bodies simulate over time.
 TODO - Add more query targets (queues, kernels, etc)
 TODO - Make clQuery a library which can be linked to for all it's querying features.
@@ -9,5 +7,4 @@ TODO - Add 2D/3D Buffer types to clKernelCall
 TODO - Add chaining to clKernelCall (and intermediates buffers which may or may not be read out)
 TODO - Complete using the clopt files as compile time options to pass to the precompiled OpenCL Kernels.
 TODO - Add JavaDoc style comments to all the API's.
-TODO - Add profiling support via OpenCL clGetEventProfilingInfo
 
