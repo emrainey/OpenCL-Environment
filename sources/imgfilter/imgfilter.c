@@ -34,7 +34,44 @@ void notify(cl_program program, void *arg)
     printf("Program %p Arg %p\n",program, arg);
 }
 
-cl_int imgfilter(cl_environment_t *pEnv, cl_Image_t *pImage, cl_int *a, cl_uint a_len, cl_Image_t *pOut)
+cl_int imgfitler1d(cl_environment_t *pEnv, 
+				   cl_uint width,
+				   cl_uint height,
+				   cl_uchar *pSrc, 
+				   cl_int srcStride,
+				   cl_uchar *pDst,
+				   cl_int dstStride,
+				   cl_char *operator,
+				   cl_uint opDim)
+{
+	cl_int err = CL_SUCCESS;
+	cl_uint numSrcBytes = srcStride * height;
+	cl_uint numDstBytes = dstStride * height;
+	cl_uint numOpBytes = 2 * opDim * opDim;
+	cl_kernel_param_t params[] = {
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &width, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &height, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, numSrcBytes, pSrc, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_int), &srcStride, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, numDstBytes, pDst, NULL, CL_MEM_WRITE_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_int), &dstStride, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, numOpBytes, operator, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &opDim, CL_MEM_READ_ONLY},
+	};
+	cl_kernel_call_t call = {
+		"kernel_edge_filter",
+		params, dimof(params),
+		2, 
+		{0,0,0},
+		{width, height, 0},
+		{1,1,1},
+		CL_SUCCESS, 0,0,0
+	}; 
+	err = clCallKernel(pEnv, &call);
+	return err;
+}
+
+cl_int imgfilter2d(cl_environment_t *pEnv, cl_Image_t *pImage, cl_int *a, cl_uint a_len, cl_Image_t *pOut)
 {
     cl_mem a_mem;
     cl_mem image_mem;
@@ -144,8 +181,8 @@ int main(int argc, char *argv[])
                 if (numBytes == 0)
                     break;
                 c_start = clock();
-                err |= imgfilter(pEnv, &input_image, (cl_int *)&sobel[0], sizeof(cl_uint) * 9, &inter_image);
-                err |= imgfilter(pEnv, &inter_image, (cl_int *)&sobel[1], sizeof(cl_uint) * 9, &output_image);
+                err |= imgfilter2d(pEnv, &input_image, (cl_int *)&sobel[0], sizeof(cl_uint) * 9, &inter_image);
+                err |= imgfilter2d(pEnv, &inter_image, (cl_int *)&sobel[1], sizeof(cl_uint) * 9, &output_image);
                 c_diff = clock() - c_start;
                 printf("Sobel took %lu ticks\n", c_diff);
                 numBytes = fwrite(output_image.data[0], 1, numBytes, fo);

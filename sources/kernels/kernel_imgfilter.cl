@@ -16,33 +16,38 @@
 
 #include <climgfilter.h>
 
-__kernel void kernel_convolution(__global cl_Image_t *pIn,
-                                 __global cl_Image_t *pOut,
-                                 __global cl_Kernel_t *pK)
+__kernel void kernel_edge_filter(__global uint  width, 
+	 							 __global uint  height,
+								 __global uchar *pSrc,  // planar 1 byte pixel data
+	 							 __global uint srcStride, 
+							     __global uchar *pDst, // planar 1 byte pixel data
+								 __global uint dstStride,
+								 __global uchar *operator, // a fixed sized array of 2xNxN elements
+								 __global uint n) 
 {
     // these are the coordinates in the image
     const int x = get_global_id(0);
     const int y = get_global_id(1);
-/**
-    int i = (y*pIn->strides[Y_DIM]) + (x*pIn->strides[X_DIM]);
-    int j = (y*pOut->strides[Y_DIM]) + (x*pOut->strides[X_DIM]);
-    int s = 0;
-    int p,q,r,k = 0; // p=n, q=y, r=x
-    int
-
-    for (p = 0; p < pK->n_dim; p++)
+    int i,j; // linear indexes for pSrc and pDst
+	int a, b; // co-pixel index
+	float sum = 0;
+	int p,q,r; // operator pixel indexes
+	int nh = n / 2;
+	
+    for (p = 0; p < 2; p++)
     {
-        for (q = 0; q < pK->y_dim; q++)
+		int grad = 0;
+        for (q = 0, b = y-nh; q < n, b < y+nh; q++, b++)
         {
-            for (r = 0; r < pK->x_dim; r++)
+            for (r = 0, a = x-nh; r < n, a < x+nh; r++, a++)
             {
-                unsigned char a = pK->data[r + (q * pK->y_dim) + (p * (pK->n_dim)]
-                s +=
+				int s = (p*n*n) + (q*n) + r; // linear index for operator
+				i = (b*srcStride) + a;
+				grad += operator[s] * pSrc[i];
             }
         }
+		sum += grad*grad;
     }
-    pOut->data[0][j] =
-*/
-
-
+	j = (y*dstStride) + x;
+	pDst[j] = (uchar)sqrt(sum); 
 }
