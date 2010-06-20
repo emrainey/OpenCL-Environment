@@ -16,38 +16,60 @@
 
 #include <climgfilter.h>
 
+uchar clamp_uc(float a, uchar l, uchar h)
+{
+	if ((uint)a > (uint)h)
+		return h;
+	if ((int)a < (int)l)
+		return l;
+	return (uchar)a;
+}
+
 __kernel void kernel_edge_filter(__global uint  width, 
 	 							 __global uint  height,
 								 __global uchar *pSrc,  // planar 1 byte pixel data
-	 							 __global uint srcStride, 
+	 							 __global int srcStride, 
 							     __global uchar *pDst, // planar 1 byte pixel data
-								 __global uint dstStride,
-								 __global uchar *operator, // a fixed sized array of 2xNxN elements
-								 __global uint n) 
+								 __global int dstStride,
+								 __global char *operator, // a fixed sized array of 2xNxN elements
+								 __global uint n,
+								 __global uint range,
+								 __global uint limit) 
 {
     // these are the coordinates in the image
     const int x = get_global_id(0);
     const int y = get_global_id(1);
     int i,j; // linear indexes for pSrc and pDst
-	int a, b; // co-pixel index
-	float sum = 0;
+	int a, b; // relative x,y pixel index
 	int p,q,r; // operator pixel indexes
-	int nh = n / 2;
-	
-    for (p = 0; p < 2; p++)
+	int s; // linear index for operator
+	int nh = n >> 1; // rounded half-dimension size i.e. n = 3, nh = 1
+	int grad = 0;
+	int sum = 0;
+	float g = 0;
+	for (p = 0; p < 2; p++)
     {
-		int grad = 0;
-        for (q = 0, b = y-nh; q < n, b < y+nh; q++, b++)
+		grad = 0;
+        for (q = 0, b = y-nh; q < n, b <= y+nh; q++, b++)
         {
-            for (r = 0, a = x-nh; r < n, a < x+nh; r++, a++)
+			if (b < 0) continue;
+			if (b >= height) continue;
+			
+            for (r = 0, a = x-nh; r < n, a <= x+nh; r++, a++)
             {
-				int s = (p*n*n) + (q*n) + r; // linear index for operator
-				i = (b*srcStride) + a;
-				grad += operator[s] * pSrc[i];
+				if (a < 0) continue;
+				if (a >= width) continue;
+				
+				i = (b * srcStride) + a;
+				//if (pSrc[i] == 0) continue;
+				
+				s = (p * n * n) + (q * n) + r; 
+				grad += (int)((int)operator[s] * (uint)pSrc[i]);
             }
         }
-		sum += grad*grad;
+		sum += (grad * grad);
     }
-	j = (y*dstStride) + x;
-	pDst[j] = (uchar)sqrt(sum); 
-}
+	j = (y * dstStride) + x;
+	g = sqrt((float)sum);
+	pDst[j] = ((g/range) * limit);
+}	
