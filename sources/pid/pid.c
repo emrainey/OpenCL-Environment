@@ -70,13 +70,10 @@ int main(int argc, char *argv[])
 
     memset(pids, 0, sizeof(pids));
 
-    //cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_pid.cl",1,notify, CL_OPTIONS);
     cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_OPTIONS);
     if (pEnv)
     {
         cl_uint i = 0;
-        printf("Created environment %p\n", pEnv);
-
         for (i = 0; i < numPct; i++)
         {
             pids[i].sv = frand();
@@ -91,9 +88,8 @@ int main(int argc, char *argv[])
         pid_loop(pEnv, pids, numPct);
         c_diff = clock() - c_start;
         diff = time(NULL) - start;
-        printf("Constant Version Ran in %lu seconds (%lu ticks)\n", diff, c_diff);
+        printf("PID Ran in %lu seconds (%lu ticks)\n", diff, c_diff);
 
-//#ifdef CL_DEBUG
         for (i = 0; i < numPct; i++)
         {
             printf("e = sv - pv; mv = po + io + do;\n%lf = %lf - %lf; %lf = %lf + %lf + %lf\n",
@@ -105,7 +101,6 @@ int main(int argc, char *argv[])
                     pids[i].i_out,
                     pids[i].d_out);
         }
-//#endif
         clDeleteEnvironment(pEnv);
     }
     return 0;
