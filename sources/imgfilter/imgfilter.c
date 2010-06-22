@@ -25,7 +25,7 @@
 #include <OpenCL/opencl.h>
 #endif
 #include <clenvironment.h>
-#include <climgfilter.h>
+#include <clquery.h>
 #include <kernel_imgfilter.h>
 
 #define CL_OPTIONS  ("-I/Users/emrainey/Source/OpenCL/include")
@@ -110,6 +110,14 @@ int main(int argc, char *argv[])
         cl_int err = CL_SUCCESS;
         
 		cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_OPTIONS);
+ 		if (!pEnv)
+		{
+			clDeleteEnvironment(pEnv);
+			return -1;
+		}
+		
+		clPrintAllKernelInfo(pEnv->kernels[0]);
+			
         fi = fopen(argv[1], "rb");
         fo = fopen(argv[4], "wb+");
         if (fi && fo)

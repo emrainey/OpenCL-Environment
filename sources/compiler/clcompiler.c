@@ -22,8 +22,22 @@
 #else
 #include <OpenCL/opencl.h>
 #endif
-#include <clcompiler.h>
 #include <clenvironment.h>
+
+typedef enum _cl_opt_typee {
+    CL_OPTION_TYPE_STRING,
+    CL_OPTION_TYPE_INT,
+    CL_OPTION_TYPE_HEX,
+    CL_OPTION_TYPE_BOOL,
+} clOptionType_e;
+
+typedef struct _cl_opt_t {
+    char *arg;
+    clOptionType_e type;
+    size_t size;
+    void *ptr;
+    char *description;
+} clOpt;
 
 char filename[CL_MAX_PATHSIZE];
 char outfile[CL_MAX_PATHSIZE];

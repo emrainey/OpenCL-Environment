@@ -13,7 +13,7 @@
 # limitations under the License.
 include $(LOCAL_ROOT)/build/prelude.mak
 TARGET=clquery
-TARGETTYPE=exe
+TARGETTYPE=library
 CSOURCES=clquery.c
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/global.mak

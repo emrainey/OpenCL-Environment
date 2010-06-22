@@ -210,6 +210,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall);
 
 /** A handy wrapper for debugging */
 void *cl_malloc(size_t numBytes);
+
 /** A handy wrapper for debugging */
 void cl_free(void *ptr);
 

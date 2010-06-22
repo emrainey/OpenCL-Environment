@@ -129,52 +129,70 @@ cl_info_type_t clDeviceInfoType[] = {
     {CL_STRING_TYPE, L_STRINGERIZE(CL_DEVICE_EXTENSIONS)},
     {CL_UINT_TYPE, L_STRINGERIZE(CL_DEVICE_PLATFORM)},
 };
-cl_info_type_t clContextInfoTypes[] = {
+cl_info_type_t clContextInfoType[] = {
     {CL_STRING_TYPE, L_STRINGERIZE(CL_CONTEXT_REFERENCE_COUNT)},
     {CL_STRING_TYPE, L_STRINGERIZE(CL_CONTEXT_DEVICES)},
     {CL_STRING_TYPE, L_STRINGERIZE(CL_CONTEXT_PROPERTIES)},
 };
+cl_info_type_t clQueueInfoType[] = {
+	{CL_UINT_TYPE,   L_STRINGERIZE(CL_QUEUE_CONTEXT)},
+	{CL_UINT_TYPE,   L_STRINGERIZE(CL_QUEUE_DEVICE)},
+	{CL_UINT_TYPE,   L_STRINGERIZE(CL_QUEUE_REFERENCE_COUNT)},
+	{CL_UINT_TYPE,   L_STRINGERIZE(CL_QUEUE_PROPERTIES)},
+};
+cl_info_type_t clKernelInfoType[] = {
+	{CL_STRING_TYPE, L_STRINGERIZE(CL_KERNEL_FUNCTION_NAME)},
+	{CL_UINT_TYPE,   L_STRINGERIZE(CL_KERNEL_NUM_ARGS)},
+	{CL_UINT_TYPE,   L_STRINGERIZE(CL_KERNEL_REFERENCE_COUNT)},
+	{CL_UINT_TYPE,   L_STRINGERIZE(CL_KERNEL_CONTEXT)},
+	{CL_UINT_TYPE,   L_STRINGERIZE(CL_KERNEL_PROGRAM)},
+};
 cl_uint numPlatInfoTypes = dimof(clPlatInfoType);
 cl_uint numDeviceInfoTypes = dimof(clDeviceInfoType);
-cl_uint numContextInfoTypes = dimof(clContextInfoTypes);
+cl_uint numContextInfoTypes = dimof(clContextInfoType);
+cl_uint numQueueInfoTypes = dimof(clQueueInfoType);
+cl_uint numKernelInfoTypes = dimof(clKernelInfoType);
 
-void clPrintPlatformInfo(cl_platform_id plat, cl_platform_info info)
+/** This function allows us to type-cast the various query functions */
+typedef void (*QueryInfo_f)(void *, cl_uint, size_t, void *, size_t *);
+
+void clPrintQueryInfo(void *id, cl_uint info, QueryInfo_f query, cl_info_type_t *infoTypes, cl_uint numInfoTypes)
 {
     cl_uint i = 0;
     size_t size = 0;
-    for (i = 0; i < numPlatInfoTypes; i++)
+    for (i = 0; i < numInfoTypes; i++)
     {
-        if (info == clPlatInfoType[i].info)
+        if (info == infoTypes[i].info)
         {
-            switch (clPlatInfoType[i].type)
+            switch (infoTypes[i].type)
             {
                 case CL_STRING_TYPE:
                 {
                     cl_char param[CL_MAX_STRING];
                     memset(param, 0, sizeof(param));
-                    clGetPlatformInfo(plat, info, sizeof(param), param, &size);
-                    if (size > 0) printf("%41s:[%02lu] %s\n", clPlatInfoType[i].name, size, param);
+                    query(id, info, sizeof(param), param, &size);
+                    if (size > 0) printf("%41s:[%02lu] %s\n", infoTypes[i].name, size, param);
                     break;
                 }
                 case CL_ULONG_TYPE:
                 {
                     cl_ulong param;
-                    clGetPlatformInfo(plat, info, sizeof(param), &param, &size);
-                    if (size == 8) printf("%41s:[%02lu] %llu\n", clPlatInfoType[i].name, size, param);
+                    query(id, info, sizeof(param), &param, &size);
+                    if (size == 8) printf("%41s:[%02lu] %llu\n", infoTypes[i].name, size, param);
                     break;
                 }
                 case CL_UINT_TYPE:
                 {
                     cl_uint param;
-                    clGetPlatformInfo(plat, info, sizeof(param), &param, &size);
-                    if (size == 4) printf("%41s:[%02lu] 0x%08x\n", clPlatInfoType[i].name, size, param);
+                    query(id, info, sizeof(param), &param, &size);
+                    if (size == 4) printf("%41s:[%02lu] 0x%08x\n", infoTypes[i].name, size, param);
                     break;
                 }
                 case CL_BYTE_TYPE:
                 {
                     cl_char param;
-                    clGetPlatformInfo(plat, info, sizeof(param), &param, &size);
-                    if (size == 1) printf("%41s:[%02lu] 0x%02x\n", clPlatInfoType[i].name, size, param);
+                    query(id, info, sizeof(param), &param, &size);
+                    if (size == 1) printf("%41s:[%02lu] 0x%02x\n", infoTypes[i].name, size, param);
                     break;
                 }
             }
@@ -182,109 +200,75 @@ void clPrintPlatformInfo(cl_platform_id plat, cl_platform_info info)
     }
 }
 
-void clPrintDeviceInfo(cl_device_id plat, cl_device_info info)
+void clPrintPlatformInfo(cl_platform_id plat, cl_platform_info info)
 {
-    cl_uint i = 0;
-    size_t size = 0;
-    for (i = 0; i < numDeviceInfoTypes; i++)
-    {
-        if (info == clDeviceInfoType[i].info)
-        {
-            switch (clDeviceInfoType[i].type)
-            {
-                case CL_STRING_TYPE:
-                {
-                    cl_char param[CL_MAX_STRING];
-                    memset(param, 0, sizeof(param));
-                    clGetDeviceInfo(plat, info, sizeof(param), param, &size);
-                    if (size > 0) printf("%41s:[%02lu] %s\n", clDeviceInfoType[i].name, size, param);
-                    break;
-                }
-                case CL_ULONG_TYPE:
-                {
-                    cl_ulong param;
-                    clGetDeviceInfo(plat, info, sizeof(param), &param, &size);
-                    if (size == 8) printf("%41s:[%02lu] %llu\n", clDeviceInfoType[i].name, size, param);
-                    break;
-                }
-                case CL_UINT_TYPE:
-                {
-                    cl_uint param;
-                    clGetDeviceInfo(plat, info, sizeof(param), &param, &size);
-                    if (size == 4) printf("%41s:[%02lu] 0x%08x\n", clDeviceInfoType[i].name, size, param);
-                    break;
-                }
-                case CL_BYTE_TYPE:
-                {
-                    cl_char param;
-                    clGetDeviceInfo(plat, info, sizeof(param), &param, &size);
-                    if (size == 1) printf("%41s:[%02lu] 0x%02x\n", clDeviceInfoType[i].name, size, param);
-                    break;
-                }
-            }
-        }
-    }
+	clPrintQueryInfo(plat, info, (QueryInfo_f)clGetPlatformInfo, clPlatInfoType, numPlatInfoTypes);
+}
+
+void clPrintDeviceInfo(cl_device_id device, cl_device_info info)
+{
+	clPrintQueryInfo(device, info, (QueryInfo_f)clGetDeviceInfo, clDeviceInfoType, numDeviceInfoTypes);
 }
 
 void clPrintContextInfo(cl_context context, cl_context_info info)
 {
-    cl_uint i = 0;
-    size_t size = 0;
-    for (i = 0; i < numPlatInfoTypes; i++)
-    {
-        if (info == clPlatInfoType[i].info)
-        {
-            switch (clPlatInfoType[i].type)
-            {
-                case CL_STRING_TYPE:
-                {
-                    cl_char param[CL_MAX_STRING];
-                    memset(param, 0, sizeof(param));
-                    clGetContextInfo(context, info, sizeof(param), param, &size);
-                    if (size > 0) printf("%41s:[%02lu] %s\n", clContextInfoTypes[i].name, size, param);
-                    break;
-                }
-                case CL_ULONG_TYPE:
-                {
-                    cl_ulong param;
-                    clGetContextInfo(context, info, sizeof(param), &param, &size);
-                    if (size == 8) printf("%41s:[%02lu] %llu\n", clContextInfoTypes[i].name, size, param);
-                    break;
-                }
-                case CL_UINT_TYPE:
-                {
-                    cl_uint param;
-                    clGetContextInfo(context, info, sizeof(param), &param, &size);
-                    if (size == 4) printf("%41s:[%02lu] 0x%08x\n", clContextInfoTypes[i].name, size, param);
-                    break;
-                }
-                case CL_BYTE_TYPE:
-                {
-                    cl_char param;
-                    clGetContextInfo(context, info, sizeof(param), &param, &size);
-                    if (size == 1) printf("%41s:[%02lu] 0x%02x\n", clContextInfoTypes[i].name, size, param);
-                    break;
-                }
-            }
-        }
-    }
+	clPrintQueryInfo(context, info, (QueryInfo_f)clGetContextInfo, clContextInfoType, numContextInfoTypes);
+}
+
+void clPrintQueueInfo(cl_command_queue queue, cl_command_queue_info info)
+{
+	clPrintQueryInfo(queue, info, (QueryInfo_f)clGetCommandQueueInfo, clQueueInfoType, numQueueInfoTypes);
+}
+
+void clPrintKernelInfo(cl_kernel kernel, cl_kernel_info info)
+{
+	clPrintQueryInfo(kernel, info, (QueryInfo_f)clGetKernelInfo, clKernelInfoType, numKernelInfoTypes);
 }
 
 void clQueryNotify(const char *errinfo,
-                   const void * private_info,
+                   const void *private_info,
                    size_t cb,
                    void * user_data)
 {
     printf("ERROR! %s\n",errinfo);
 }
 
-typedef struct _cl_system_t {
-    cl_platform_id  platform_id[CL_ITEM_MAX];
-    cl_uint         numPlatforms;
-    cl_device_id    device_id[CL_ITEM_MAX];
-    cl_uint         numDevices;
-} cl_system_t;
+void clPrintAllPlatformInfo(cl_platform_id platform)
+{
+	cl_uint i = 0;
+    for (i = 0; i < numPlatInfoTypes; i++)
+        clPrintPlatformInfo(platform, clPlatInfoType[i].info);
+}
 
+void clPrintAllDeviceInfo(cl_device_id device)
+{	
+	cl_uint i = 0;
+    for (i = 0; i < numDeviceInfoTypes; i++)
+        clPrintDeviceInfo(device,clDeviceInfoType[i].info);
+}
+
+void clPrintAllContextInfo(cl_context context)
+{
+	cl_uint i = 0;
+    for (i = 0; i < numContextInfoTypes; i++)
+        clPrintContextInfo(context, clContextInfoType[i].info);
+}
+
+void clPrintAllQueueInfo(cl_command_queue queue)
+{
+	cl_uint i = 0;
+	for (i = 0; i < numQueueInfoTypes; i++)
+		clPrintQueueInfo(queue, clQueueInfoType[i].info);
+}
+
+void clPrintAllKernelInfo(cl_kernel kernel)
+{
+	cl_uint i = 0;
+	for (i = 0; i < numKernelInfoTypes; i++)
+		clPrintKernelInfo(kernel, clKernelInfoType[i].info);
+}
+
+#ifdef CL_TEST
 int main(int argc, char *argv[])
 {
     cl_uint        p,d;
@@ -304,9 +288,7 @@ int main(int argc, char *argv[])
         for (p = 0; p < numPlatforms; p++)
         {
             cl_uint i = 0;
-            for (i = 0; i < dimof(clPlatInfoType); i++) {
-                clPrintPlatformInfo(platform_id[p], clPlatInfoType[i].info);
-            }
+            clPrintAllPlatformInfo(platform_id[p]);
             err = clGetDeviceIDs(platform_id[p], CL_DEVICE_TYPE_ALL, 1, &device_id[0], &numDevices);
             if (err != CL_SUCCESS)
             {
@@ -322,9 +304,7 @@ int main(int argc, char *argv[])
 
                 for (d = 0; d < numDevices; d++)
                 {
-                    cl_uint i = 0;
-                    for (i = 0; i < dimof(clDeviceInfoType); i++)
-                        clPrintDeviceInfo(device_id[d],clDeviceInfoType[i].info);
+                    clPrintAllDeviceInfo(device_id[d]);
 
                     // create a context for this device....
                     context = clCreateContext(props,1,&device_id[d], clQueryNotify, NULL, &err);
@@ -341,10 +321,8 @@ int main(int argc, char *argv[])
 #ifdef CL_DEBUG
                         printf("Created Context %p\n",context);
 #endif
-                        cl_uint i = 0;
-                        for (i = 0; i < dimof(clContextInfoTypes); i++)
-                            clPrintContextInfo(context, clContextInfoTypes[i].info);
-
+						clPrintAllContextInfo(context);
+						
                         queue = clCreateCommandQueue(context, device_id[d], cmdprop, &err);
                         if (queue != NULL)
                         {
@@ -362,3 +340,4 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+#endif

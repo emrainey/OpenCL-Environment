@@ -16,6 +16,6 @@ TARGET=climgfilter
 TARGETTYPE=exe
 CSOURCES=imgfilter.c
 CLSOURCES=kernel_imgfilter.cl
-LIBS+=clenvironment
+LIBS+=clenvironment clquery
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/global.mak
