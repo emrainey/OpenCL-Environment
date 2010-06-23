@@ -289,9 +289,11 @@ cl_kernel_bin_t *cl_unserialize_kernels(cl_byte *bin, size_t numBytes)
 void cl_dump_kernels(char *filename, cl_kernel_bin_t *bins)
 {
     size_t numBytes = 0;
+	cl_byte *bin = NULL;
+	
     if (filename[0] == '\0')
         return;
-    cl_byte *bin = cl_serialize_kernels(bins, &numBytes);
+    bin = cl_serialize_kernels(bins, &numBytes);
 #ifdef CL_DEBUG
     printf("There are %lu binaries to write out\n", bins->numDevices);
 #endif

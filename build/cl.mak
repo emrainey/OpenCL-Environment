@@ -14,7 +14,7 @@
 
 CC = CL
 CP = CL
-AS = $(TIGRE_TCPU)ASM
+AS = ASM
 AR = LIB
 LD = LINK
 
@@ -49,11 +49,11 @@ OBJECTS=$(ASSEMBLY:%.S=$(ODIR)/%.obj) $(CPPSOURCES:%.cpp=$(ODIR)/%.obj) $(CSOURC
 KERNELS=$(CLSOURCES:%.cl=%.h)
 KOPTIONS=$(CLSOURCES:%.cl=$(ODIR)/%.clopt)
 INCLUDES=$(foreach inc,$(call PATH_CONV, $(IDIRS)),/I$(inc))
-DEFINES=$(foreach def,$(DEFS),/D$(def)) /D_CRT_SECURE_NO_DEPRECATE /DWIN32 /D_WIN32_WINNT=0x0501 /DWINVER=0x0501
+DEFINES=$(foreach def,$(DEFS),/D$(def)) /D_CRT_SECURE_NO_DEPRECATE /DWIN32 /D_WIN32_WINNT=0x0501 /DWINVER=0x0501 /D_MSC_VER=1500
 LDFLAGS=-Wall
-LIBRARIES=$(foreach ldir,$(LDIRS),/LIBPATH:$(ldir)) $(foreach lib,$(LIBS),$(lib))
+LIBRARIES=$(foreach ldir,$(LDIRS),/LIBPATH:$(ldir)) $(foreach lib,$(LIBS),$(lib).lib)
 AFLAGS=$(INCLUDES)
-CFLAGS+=/c $(INCLUDES) $(DEFINES) $(COPT) /nologo /Yd
+CFLAGS+=/c $(INCLUDES) $(DEFINES) $(COPT) /nologo /Wp64
 ifdef DEFFILE
 DEF=/DEF:$(DEFFILE)
 else
@@ -71,7 +71,7 @@ ifeq ($(TARGETTYPE),library)
 
 $(TARGET_BIN): $(OBJECTS)
 	@echo Archiving $@
-	$(Q)$(AR) /NOLOGO /MACHINE:$(TIGRE_TCPU) /OUT:$@ $(call PATH_CONV,$(OBJECTS)) $(LOGGING)
+	$(Q)$(AR) /NOLOGO /MACHINE:$(HOST_CPU) /OUT:$@ $(call PATH_CONV,$(OBJECTS)) $(LOGGING)
 
 install: $(TARGET_BIN)
 	@echo No install step for $(TARGET_BIN)

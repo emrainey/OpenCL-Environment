@@ -1,16 +1,16 @@
 
-IF "%OPENCL_ROOT%"=="" GOTO USAGE
-IF "%LOCAL_ROOT%"=="" SET LOCAL_ROOT=%CD%
-SET DIRS=math environment compiler query imgfilter yuv pid nbody
+@IF "%OPENCL_ROOT%"=="" @GOTO USAGE
+@IF "%LOCAL_ROOT%"=="" @SET LOCAL_ROOT=%CD%
+@SET DIRS=math environment compiler query imgfilter yuv pid nbody
 
-IF "%1"=="" SET TARGET=all
+@IF "%1"=="" SET TARGET=all
 
-FOR %%A IN (%DIRS%) DO @(
-	PUSHD sources\%%A
-	make %TARGET%
-	POPD
+@FOR %%A IN (%DIRS%) DO @(
+	@PUSHD sources\%%A
+	make %TARGET% DEBUG=1
+	@POPD
 )
-GOTO END
+@GOTO END
 
 :USAGE
 ECHO You must set OPENCL_ROOT (which includes the headers and the .lib).

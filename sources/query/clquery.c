@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef _MSC_VER
-#include <CL/opencl.h>
+#include <CL/cl.h>
 #else
 #include <OpenCL/opencl.h>
 #endif

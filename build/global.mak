@@ -22,11 +22,11 @@ else ifeq ($(HOST_OS),Windows_NT)
 #	endif
 endif
 
-TARGETPATH=$(LOCAL_ROOT)/out
+TDIR=$(LOCAL_ROOT)/out
 ODIR=$(LOCAL_ROOT)/out/obj
 IDIRS+=$(LOCAL_ROOT)/include .
 LDIRS+=$(LOCAL_ROOT)/out
-KDIR=$(LOCAL_ROOT)/sources/kernels/
+KDIR=$(LOCAL_ROOT)/sources/kernels
 IDIRS+=$(KDIR)
 
 ifeq ($(HOST_OS),DARWIN)
@@ -38,18 +38,18 @@ ifeq ($(HOST_OS),DARWIN)
 		DEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
 	endif
 else ifeq ($(HOST_OS),CYGWIN)
-    IDIRS+=$(OPENCL_ROOT)$/include
+    IDIRS+=$(OPENCL_ROOT)/include 
     LIBS+=opencl
-    LDIRS+=$(OPENCL_ROOT)$/lib
+    LDIRS+=$(OPENCL_ROOT)/lib
     DEFS+=
     CFLAGS+=-fPIC
 else ifeq ($(HOST_OS),Windows_NT)
-#   IDIRS+=$(BOOST_SCI_PKG_ROOT)$\include
-#	LDIRS+=$(BOOST_SCI_PKG_ROOT)$\lib
-    LIBS+=OpenCL.lib
-	IDIRS+=$(OPENCL_ROOT)/inc
-	LDIRS+=$(OPENCL_ROOT)/lib
-	DEFS+=_MSC_VER _DEBUG _CONSOLE
+#   IDIRS+=$(BOOST_SCI_PKG_ROOT)/include
+#	LDIRS+=$(BOOST_SCI_PKG_ROOT)/lib
+    LIBS+=OpenCL
+	IDIRS+=$(OPENCL_ROOT)\inc
+	LDIRS+=$(OPENCL_ROOT)\lib\x64
+	DEFS+=_DEBUG _CONSOLE
 endif
 
 ifndef ERROR_STRING
