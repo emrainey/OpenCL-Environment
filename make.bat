@@ -4,6 +4,7 @@
 @SET DIRS=math environment compiler query imgfilter yuv pid nbody
 
 @IF "%1"=="" SET TARGET=all
+@IF NOT "%1"=="" SET TARGET=%1
 
 @FOR %%A IN (%DIRS%) DO @(
 	@PUSHD sources\%%A

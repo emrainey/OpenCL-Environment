@@ -17,6 +17,7 @@ CP = CL
 AS = ASM
 AR = LIB
 LD = LINK
+CL = $(TDIR)/clcompiler
 
 PATH_CONV= $(subst /,\,$(1))
 
@@ -53,7 +54,7 @@ DEFINES=$(foreach def,$(DEFS),/D$(def)) /D_CRT_SECURE_NO_DEPRECATE /DWIN32 /D_WI
 LDFLAGS=-Wall
 LIBRARIES=$(foreach ldir,$(LDIRS),/LIBPATH:$(ldir)) $(foreach lib,$(LIBS),$(lib).lib)
 AFLAGS=$(INCLUDES)
-CFLAGS+=/c $(INCLUDES) $(DEFINES) $(COPT) /nologo /Wp64
+CFLAGS+=/c $(INCLUDES) $(DEFINES) $(COPT) /nologo /Wp64 /MT
 ifdef DEFFILE
 DEF=/DEF:$(DEFFILE)
 else
@@ -154,7 +155,10 @@ $(ODIR)/%.clopt: Makefile
 	$(Q)echo $(DEFINES) $(INCLUDES) > $@
 
 info:
-	@echo OS=$(OS)
+	@echo HOST_OS=$(OS)
+	@echo HOST_COMPILER=$(HOST_COMPILER)
+	@echo HOST_CPU=$(HOST_CPU)
+	@echo HOST_VARIANT=$(HOST_VARIANT)
 	@echo TARGET=$(TARGET)
 	@echo TARGETTYPE=$(TARGETTYPE)
 	@echo TARGET_BIN=$(TARGET_BIN)

@@ -48,7 +48,7 @@ else ifeq ($(HOST_OS),Windows_NT)
 #	LDIRS+=$(BOOST_SCI_PKG_ROOT)/lib
     LIBS+=OpenCL
 	IDIRS+=$(OPENCL_ROOT)\inc
-	LDIRS+=$(OPENCL_ROOT)\lib\x64
+	LDIRS+=$(OPENCL_ROOT)\lib\Win32
 	DEFS+=_DEBUG _CONSOLE
 endif
 
