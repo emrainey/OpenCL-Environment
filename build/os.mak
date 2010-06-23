@@ -16,17 +16,22 @@ CLEAN=rm
 ifeq ($(OS),Windows_NT)
 	ifeq ($(TERM),cygwin)
 		HOST_OS=CYGWIN
+		HOST_COMPILER=GCC
 	else
 		HOST_OS=Windows_NT
+		HOST_COMPILER=CL
 		CLEAN=del
 	endif
 else
     HOST_OS=$(shell uname -s)
     ifeq ($(HOST_OS),Darwin)
         HOST_OS=DARWIN
+		HOST_COMPILER=GCC
     else ifeq ($(HOST_OS),Linux)
         HOST_OS=LINUX
+		HOST_COMPILER=GCC
 	else
 		HOST_OS=POSIX
+		HOST_COMPILER=GCC
     endif
 endif

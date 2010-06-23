@@ -17,9 +17,9 @@ ifeq ($(HOST_OS),CYGWIN)
 		ERROR_STRING=You must defined OPENCL_ROOT!
 	endif
 else ifeq ($(HOST_OS),Windows_NT)
-	ifndef BOOST_SCI_PKG_ROOT
-		ERROR_STRING=You must defined BOOST_SCI_PGK_ROOT!
-	endif
+#	ifndef BOOST_SCI_PKG_ROOT
+#		ERROR_STRING=You must defined BOOST_SCI_PGK_ROOT!
+#	endif
 endif
 
 TARGETPATH=$(LOCAL_ROOT)/out
@@ -44,14 +44,20 @@ else ifeq ($(HOST_OS),CYGWIN)
     DEFS+=
     CFLAGS+=-fPIC
 else ifeq ($(HOST_OS),Windows_NT)
-    IDIRS+=$(BOOST_SCI_PKG_ROOT)$\include
-    LIBS+=opencl
-	LDIRS+=$(BOOST_SCI_PKG_ROOT)$\lib
-	DEFS+=_MSC_VER
+#   IDIRS+=$(BOOST_SCI_PKG_ROOT)$\include
+#	LDIRS+=$(BOOST_SCI_PKG_ROOT)$\lib
+    LIBS+=OpenCL.lib
+	IDIRS+=$(OPENCL_ROOT)/inc
+	LDIRS+=$(OPENCL_ROOT)/lib
+	DEFS+=_MSC_VER _DEBUG _CONSOLE
 endif
 
 ifndef ERROR_STRING
-    include $(LOCAL_ROOT)/build/gcc.mak
+	ifeq ($(HOST_COMPILER),GCC)
+		include $(LOCAL_ROOT)/build/gcc.mak
+	else ifeq ($(HOST_COMPILER),CL)
+		include $(LOCAL_ROOT)/build/cl.mak
+	endif
 else
 error:
 	@echo $(ERROR_STRING)
