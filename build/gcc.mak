@@ -16,7 +16,7 @@ CC = $(CROSS_COMPILE)gcc
 CP = $(CROSS_COMPILE)g++
 AS = $(CROSS_COMPILE)as
 AR = $(CROSS_COMPILE)ar
-CL = $(TARGETPATH)/clcompiler
+CL = $(TDIR)/clcompiler
 
 ifdef DEBUG
 Q=

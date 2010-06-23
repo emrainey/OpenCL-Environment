@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <climgfilter.h>
-
 uchar clamp_uc(float a, uchar l, uchar h)
 {
 	if ((uint)a > (uint)h)
