@@ -72,8 +72,12 @@ TARGET_INSTALLED=$(INSTALL_DIR)/$(BIN_PRE)$(TARGET)$(BIN_EXT)
 endif
 
 OBJECTS=$(ASSEMBLY:%.S=$(ODIR)/%.o) $(CPPSOURCES:%.cpp=$(ODIR)/%.o) $(CSOURCES:%.c=$(ODIR)/%.o)
+ifdef CL_BUILD_RUNTIME
+DEFS+=CL_BUILD_RUNTIME
+else
 KERNELS=$(CLSOURCES:%.cl=%.h)
 KOPTIONS=$(CLSOURCES:%.cl=$(ODIR)/%.clopt)
+endif
 INCLUDES=$(foreach inc,$(IDIRS),-I$(call PATH_CONV,$(inc)))
 DEFINES=$(foreach def,$(DEFS),-D$(def))
 LDFLAGS+=-Wl,--enable-auto-import -Wl,--enable-stdcall-fixup

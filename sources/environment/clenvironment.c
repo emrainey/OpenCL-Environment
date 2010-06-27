@@ -339,9 +339,13 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
 			cl_uint tmp = 0;
 			size_t bytes = 0;
 			// query each device and ask it what type it is. OR that into a singe bit field
-			//err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(cl_uint), &tmp, &bytes);
-			//deviceTypes |= tmp;
+#ifndef _MSC_VER			
+			err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(cl_uint), &tmp, &bytes);
+			deviceTypes |= tmp;
+#else		
+			// if we're on windows we just assume that it's only a GPU version. 
 			deviceTypes |= CL_DEVICE_TYPE_GPU;
+#endif			
 		}
 #ifdef CL_DEBUG		
 		printf("CL_DEVICE_TYPE(s) = 0x%08x\n",deviceTypes);
@@ -847,15 +851,23 @@ cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name)
     cl_uint i = 0;
     char name[CL_MAX_STRING];
     size_t len = CL_MAX_STRING * sizeof(cl_char);
-    //printf("Looking for kernel %s\n", func_name);
+#ifdef CL_DEBUG	
+    printf("Looking for kernel %s\n", func_name);
+#endif	
     for (i = 0; i < pEnv->numKernels; i++)
     {
         cl_int err = clGetKernelInfo(pEnv->kernels[i], CL_KERNEL_FUNCTION_NAME, sizeof(name), name, &len);
-        //printf("SYMBOL[%06u] (%lu) %s\n", i, len, name);
+#ifdef CL_DEBUG        
+		printf("Found SYMBOL[%06u] (%lu) %s\n", i, len, name);
+#endif		
         if (err == CL_SUCCESS && strncmp(name, func_name, CL_MAX_STRING) == 0)
         {
             return pEnv->kernels[i];
         }
+		else
+		{
+			printf("ERROR: When requesting symbol %s error=%d \n", func_name, err);
+		}
     }
     return NULL;
 }

@@ -2,6 +2,7 @@ Supported Build Platforms:
 
 1.) Mac OSX
 2.) Windows with Visual Studio 2005 (incomplete)
+3.) Cygwin!
 
 What does this environment does:
 This clEnvironment API allows you to precompile your OpenCL kernels into
@@ -14,12 +15,32 @@ thus pushing the run-time OpenCL build stages back into build-time builds. It
 also allows you to completely specify a generic OpenCL Kernel call via predefined
 structures, thus freeing you to not worry about how to queue/call/pass args/etc.
 
+Required:
+In Cygwin and in Windows builds, you must define the path to the OpenCL developer tools. 
+I only have NVidia cards so the paths might be biased in that direction. First you'll have to 
+install the tools then in your .bashrc or in some setup batch file define your OPENCL_ROOT
+$ export OPENCL_ROOT=/cygdrive/<path to sdk>/OpenCL/common
+C:\> SET OPENCL_ROOT=<path to sdk>\OpenCL\common
+
+In all builds you must define the LOCAL_ROOT as the base of the OpenCL-Environment build system
+$ export LOCAL_ROOT=/cygdrive/<somewhere> # or `pwd` if you are in it.
+C:\> SET LOCAL_ROOT=<somewhere> # or %CD%
+
+If you would like some extra debug to see what's going on:
+$ export CL_DEBUG=1
+C:\> SET CL_DEBUG=1
+
+If you don't want to pre-build your OpenCL binaries or your platform has no real support for it (NVIDIA, i'm looking at you!).
+$ export CL_BUILD_RUNTIME=1
+C:\> SET CL_BUILD_RUNTIME=1
+
 Compiling:
 
 $ make clean
 $ make
 
 Testing:
+# for those with TESTCASES
 $ make test
 
 Installing:

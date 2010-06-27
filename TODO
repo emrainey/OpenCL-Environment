@@ -1,3 +1,7 @@
 TODO - Attach the Nbody demo to an OpenGL display to show how the bodies simulate over time.
 TODO - Test 2D/3D Buffer types in clCallKernel();
 TODO - Complete using the clopt files as compile time options to pass to the precompiled OpenCL Kernels.
+TODO - Determine Win32 or Win64 paths
+TODO - Work around NVidia issue with requesting CL_DEVICE_TYPE (crashes) - Works on APPLE!
+TODO - Remove \User\emrainey paths from everything (CL_OPTS, etc).
+TODO - Specify Windows paths for NVidia runtime compiler on Cygwin

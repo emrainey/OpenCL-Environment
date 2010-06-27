@@ -25,7 +25,9 @@
 #endif
 #include <clenvironment.h>
 #include <clpid.h>
+#ifndef CL_BUILD_RUNTIME
 #include <kernel_pid.h>
+#endif
 #include <clmath.h>
 
 #define CL_OPTIONS  ("-I/Users/emrainey/Source/OpenCL/include")
@@ -70,8 +72,12 @@ int main(int argc, char *argv[])
 
     memset(pids, 0, sizeof(pids));
 
+#ifdef CL_BUILD_RUNTIME
+	cl_environment_t *pEnv = clCreateEnvironment(KDIR "/kernel_pid.cl", CL_DEVICE_TYPE_GPU, 2, notify, "-IC:\\Users\\emrainey\\Source\\OpenCL-Environment\\include");
+#else	
     cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_OPTIONS);
-    if (pEnv)
+#endif
+	if (pEnv)
     {
         cl_uint i = 0;
         for (i = 0; i < numPct; i++)
