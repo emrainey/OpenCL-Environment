@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-typedef float cl_float4[4];
-
-__kernel void kernel_magnitude(__global cl_float4 *p,
+__kernel void kernel_magnitude(__global float4 *p,
                                __global float *mag)
 {
     int i = get_global_id(0);
@@ -24,7 +22,7 @@ __kernel void kernel_magnitude(__global cl_float4 *p,
     mag[i] = sqrt(p[i][0]*p[i][0] + p[i][1]*p[i][1] + p[i][2]*p[i][2]);
 }
 
-__kernel void kernel_renormalize(__global cl_float4 *p,
+__kernel void kernel_renormalize(__global float4 *p,
                                  __global float *om,
                                  __global float *nm)
 {
@@ -41,8 +39,8 @@ __kernel void kernel_renormalize(__global cl_float4 *p,
     p[i][2] *= nm[i];
 }
 
-__kernel void kernel_distance(__global cl_float4 *v1,
-                              __global cl_float4 *v2,
+__kernel void kernel_distance(__global float4 *v1,
+                              __global float4 *v2,
                               __global float *d)
 {
     int i = get_global_id(0);
@@ -70,8 +68,8 @@ __kernel kernel_gravity(__global float Mg,
 }
 
 __kernel kernel_kinetic(__global float *m,
-                        __global cl_float4 *v,
-                        __global cl_float4 *ke)
+                        __global float4 *v,
+                        __global float4 *ke)
 {
     int i = get_global_id(0);
 
@@ -90,9 +88,9 @@ __kernel kernel_energy(__global *m,
 
 __kernel kernel_nbody(__global float *ms,
 					  __global float *m,
-                      __global cl_float4 *a,
-                      __global cl_float4 *v,
-                      __global cl_float4 *p,
+                      __global float4 *a,
+                      __global float4 *v,
+                      __global float4 *p,
                       __global float *t,
                       __global float *d,
                       __global float *g)
