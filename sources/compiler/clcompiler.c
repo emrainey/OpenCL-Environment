@@ -46,6 +46,7 @@ cl_bool no_print_logo;
 cl_bool verbose;
 char cl_args[CL_MAX_STRING];
 char precomp[CL_MAX_PATHSIZE];
+char cl_device_types[CL_MAX_STRING];
 clOpt options[] = {
     {"-f", CL_OPTION_TYPE_STRING, CL_MAX_PATHSIZE, filename,     "The input kernel file."},
     {"-d", CL_OPTION_TYPE_INT,    sizeof(cl_uint), &numDevices,  "The number of devices to target. Max of 10."},
@@ -54,6 +55,7 @@ clOpt options[] = {
     {"-o", CL_OPTION_TYPE_STRING, CL_MAX_PATHSIZE, outfile,      "The output binary file"},
     {"-h", CL_OPTION_TYPE_STRING, CL_MAX_PATHSIZE, precomp,      "The precompiled header output file"},
     {"-W", CL_OPTION_TYPE_STRING, CL_MAX_STRING,   cl_args,      "Arguments to pass the OpenCL compiler for the kernels"},
+    {"-t", CL_OPTION_TYPE_STRING, CL_MAX_STRING,   cl_device_types, "Specifies the device types supported [cpu|gpu|acc|all]"},
 };
 cl_uint numOpts = dimof(options);
 
@@ -124,7 +126,7 @@ int main(int argc, char *argv[])
     if (argc > 1)
     {
         cl_environment_t *pEnv = NULL;
-
+		cl_uint dev_type = CL_DEVICE_TYPE_DEFAULT;
         clOptions(argc, argv);
         print_logo();
         if (verbose)
@@ -133,8 +135,17 @@ int main(int argc, char *argv[])
         if (verbose && cl_args[0] != '\0')
             printf("CL ARGS: %s\n",cl_args);
 
+		if (strncmp("cpu", cl_device_types, CL_MAX_STRING) == 0)
+			dev_type = CL_DEVICE_TYPE_CPU;
+		else if (strncmp("gpu", cl_device_types, CL_MAX_STRING) == 0)
+			dev_type = CL_DEVICE_TYPE_GPU;
+		else if (strncmp("acc", cl_device_types, CL_MAX_STRING) == 0 || strncmp("accelator", cl_device_types, CL_MAX_STRING) == 0)
+			dev_type = CL_DEVICE_TYPE_ACCELERATOR;
+		else if (strncmp("all", cl_device_types, CL_MAX_STRING) == 0)
+			dev_type = CL_DEVICE_TYPE_ALL;
+
         // process the kernel
-        pEnv = clCreateEnvironment(filename, numDevices, notify, cl_args);
+        pEnv = clCreateEnvironment(filename, dev_type, numDevices, notify, cl_args);
         clDeleteEnvironment(pEnv);
     }
     else

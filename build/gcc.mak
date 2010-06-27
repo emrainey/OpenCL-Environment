@@ -162,7 +162,7 @@ $(ODIR)/%.o: %.S
 
 %.h: $(KDIR)/%.cl
 	@echo Compiling OpenCL Kernel $<
-	-$(Q)$(CL) -n -f $< -d 1 -h $@ -W "$(DEFINES) $(INCLUDES)"
+	-$(Q)$(CL) -n -f $< -d 1 -t cpu -h $@ -W "$(DEFINES) $(INCLUDES)"
 
 $(ODIR)/%.clopt: Makefile
 	@echo Building local options file $@ for building OpenCL kernel dependencies.

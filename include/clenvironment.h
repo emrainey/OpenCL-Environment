@@ -52,6 +52,7 @@ typedef unsigned char cl_byte;
 
 /** This is the data structure which holds precompiled OpenCL kernels for a series of devices */
 typedef struct _cl_kernel_bin_t {
+    cl_uint   deviceTypes;      /**< the device types used in generating this set of kernels */
     size_t    numDevices;		/**< the number of devices these kernels have been compiled against */
     size_t    numBytesSizes;	/**< The number of bytes in the sizes array */
     size_t    numBytesData;		/**< The number of bytes in the data array */
@@ -79,10 +80,11 @@ typedef enum _cl_dimensions_e {
 #define PLANE_MAX	(4)
 
 typedef struct _cl_nd_buffer_t {
+	cl_image_format format;			/**< contains the needed formatting information about the type of nD buffer this is */
 	void   *data[PLANE_MAX];		/**< planar data. for single plane data, just use [0] */
 	cl_uint planes;					/**< the number of planes */
 	cl_uint dim[DIM_MAX];			/**< the size in pixels of each dimension */
-	cl_int  strides[DIM_MAX];		/**< the stride of each dimension */
+	cl_int  strides[DIM_MAX];		/**< the stride of each dimension (x stride == channel size, y stride == pitch, z stride == frame separation ) */
 	size_t  size; 					/**< the total size of the all the data involved in the buffer */
 } cl_nd_buffer_t;
 
@@ -132,11 +134,13 @@ typedef void (*clnotifier_f)(cl_program program, void *args);
 /** 
  * This function creates an OpenCL environment from a source file with a set of arguments for the run-time compiler.
  * @param filename The name of the file to read the sources from. 
+ * @param dev_type The device types to use to build your kernels. 
  * @param numDevices The number of devices to build your environment against. (use 0 to indicate to the function to use the max number available)
  * @param notifier The function pointer to the notification function which will be called when the build is complete (though not necessarily successfully).
  * @param cl_args The string of arguments to give to the runtime compiler.
  */
 cl_environment_t *clCreateEnvironment(char *filename,
+									  cl_uint dev_type,
                                       cl_uint numDevices,
                                       clnotifier_f notifier,
                                       char *cl_args);
@@ -204,9 +208,10 @@ cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name);
  * @note Currently one function call will be made
  * @TODO allow function chaining. 
  * @param pEnv The pointer to the environment. 
- * @param pCall The pointer to the kernel call data structure with all the fields filled in. 
+ * @param pCall The pointer to one or more kernel call data structures with all the fields filled in. 
+ * @param numCalls the number of kernels calls in the call chain.
  */
-cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall);
+cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint numCalls);
 
 /** A handy wrapper for debugging */
 void *cl_malloc(size_t numBytes);

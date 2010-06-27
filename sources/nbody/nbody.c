@@ -31,7 +31,7 @@
 
 void notify(cl_program program, void *arg)
 {
-    printf("Program %p Arg %p\n",program, arg);
+    //printf("Program %p Arg %p\n",program, arg);
 }
 
 cl_int distance(cl_environment_t *pEnv,
@@ -54,7 +54,7 @@ cl_int distance(cl_environment_t *pEnv,
 		{1,1,1},
 		CL_SUCCESS, 0,0,0
 	};
-    return clCallKernel(pEnv, &call);
+    return clCallKernel(pEnv, &call,1);
 }
 
 cl_int nbodies(cl_environment_t *pEnv,
@@ -89,7 +89,7 @@ cl_int nbodies(cl_environment_t *pEnv,
 		{1,1,1},
 		CL_SUCCESS,0,0,0
 	};
-	return clCallKernel(pEnv, &call);
+	return clCallKernel(pEnv, &call,1);
 }
 
 int main(int argc, char *argv[])
