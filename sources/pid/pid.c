@@ -32,7 +32,7 @@
 
 void notify(cl_program program, void *arg)
 {
-    printf("Program %p Arg %p\n",program, arg);
+    //printf("Program %p Arg %p\n",program, arg);
 }
 
 cl_int pid_loop(cl_environment_t *pEnv,
@@ -53,7 +53,7 @@ cl_int pid_loop(cl_environment_t *pEnv,
         CL_SUCCESS
     };
 
-    err = clCallKernel(pEnv, &call);
+    err = clCallKernel(pEnv, &call,1);
     if (err != CL_SUCCESS)
         return err;
     else

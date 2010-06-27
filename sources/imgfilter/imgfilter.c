@@ -95,7 +95,7 @@ cl_int imgfilter1d(cl_environment_t *pEnv,
 		{1,1,1},
 		CL_SUCCESS, 0,0,0
 	}; 
-	err = clCallKernel(pEnv, &call);
+	err = clCallKernel(pEnv, &call,1);
 	return err;
 }
 

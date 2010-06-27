@@ -62,7 +62,7 @@ cl_int cl_convert_rgbf_to_yuvf_bt601(cl_environment_t *pEnv,
         {1,1,1},
         CL_SUCCESS,0,0,0
     };
-    err = clCallKernel(pEnv, &call);
+    err = clCallKernel(pEnv, &call,1);
     printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
     return err;
 }
@@ -97,7 +97,7 @@ cl_int cl_convert_rgbf_to_yuvf(cl_environment_t *pEnv,
         {1,1,1},
         CL_SUCCESS,0,0,0
     };
-    err = clCallKernel(pEnv, &call);
+    err = clCallKernel(pEnv, &call, 1);
     printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
     return err;
 }
@@ -122,7 +122,7 @@ cl_int convert_uyvyto_2bgr(cl_environment_t *pEnv, cl_uchar *pUYVY, cl_uchar *pB
 		{1,1,1},
 		CL_SUCCESS, 0,0,0
 	};
-	err = clCallKernel(pEnv, &call);
+	err = clCallKernel(pEnv, &call, 1);
 	printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
 	return err;
 }

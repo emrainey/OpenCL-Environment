@@ -80,10 +80,11 @@ typedef enum _cl_dimensions_e {
 #define PLANE_MAX	(4)
 
 typedef struct _cl_nd_buffer_t {
+	cl_image_format format;			/**< contains the needed formatting information about the type of nD buffer this is */
 	void   *data[PLANE_MAX];		/**< planar data. for single plane data, just use [0] */
 	cl_uint planes;					/**< the number of planes */
 	cl_uint dim[DIM_MAX];			/**< the size in pixels of each dimension */
-	cl_int  strides[DIM_MAX];		/**< the stride of each dimension */
+	cl_int  strides[DIM_MAX];		/**< the stride of each dimension (x stride == channel size, y stride == pitch, z stride == frame separation ) */
 	size_t  size; 					/**< the total size of the all the data involved in the buffer */
 } cl_nd_buffer_t;
 
@@ -207,9 +208,10 @@ cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name);
  * @note Currently one function call will be made
  * @TODO allow function chaining. 
  * @param pEnv The pointer to the environment. 
- * @param pCall The pointer to the kernel call data structure with all the fields filled in. 
+ * @param pCall The pointer to one or more kernel call data structures with all the fields filled in. 
+ * @param numCalls the number of kernels calls in the call chain.
  */
-cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall);
+cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint numCalls);
 
 /** A handy wrapper for debugging */
 void *cl_malloc(size_t numBytes);
