@@ -32,7 +32,7 @@
 
 void notify(cl_program program, void *arg)
 {
-    printf("Program %p Arg %p\n",program, arg);
+    //printf("Program %p Arg %p\n",program, arg);
 }
 
 cl_int range_of_operator(cl_char *operator, cl_uint n, cl_uint limit)

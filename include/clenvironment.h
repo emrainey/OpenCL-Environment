@@ -52,6 +52,7 @@ typedef unsigned char cl_byte;
 
 /** This is the data structure which holds precompiled OpenCL kernels for a series of devices */
 typedef struct _cl_kernel_bin_t {
+    cl_uint   deviceTypes;      /**< the device types used in generating this set of kernels */
     size_t    numDevices;		/**< the number of devices these kernels have been compiled against */
     size_t    numBytesSizes;	/**< The number of bytes in the sizes array */
     size_t    numBytesData;		/**< The number of bytes in the data array */
@@ -132,11 +133,13 @@ typedef void (*clnotifier_f)(cl_program program, void *args);
 /** 
  * This function creates an OpenCL environment from a source file with a set of arguments for the run-time compiler.
  * @param filename The name of the file to read the sources from. 
+ * @param dev_type The device types to use to build your kernels. 
  * @param numDevices The number of devices to build your environment against. (use 0 to indicate to the function to use the max number available)
  * @param notifier The function pointer to the notification function which will be called when the build is complete (though not necessarily successfully).
  * @param cl_args The string of arguments to give to the runtime compiler.
  */
 cl_environment_t *clCreateEnvironment(char *filename,
+									  cl_uint dev_type,
                                       cl_uint numDevices,
                                       clnotifier_f notifier,
                                       char *cl_args);
