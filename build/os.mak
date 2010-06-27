@@ -17,6 +17,7 @@ ifeq ($(OS),Windows_NT)
 	ifeq ($(TERM),cygwin)
 		HOST_OS=CYGWIN
 		HOST_COMPILER=GCC
+		WINSYSDIR=/cygdrive/c/Windows/system32
 	else
 		HOST_OS=Windows_NT
 		HOST_COMPILER=CL

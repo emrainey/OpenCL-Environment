@@ -53,6 +53,17 @@ else ifeq ($(strip $(TARGETTYPE)),dsmo)
 else ifeq ($(strip $(TARGETTYPE)),exe)
 	BIN_PRE=
 	BIN_EXT=
+else ifeq ($(strip $(TARGETTYPE)),implib)
+	BIN_PRE=lib
+	BIN_EXT=.a
+endif
+
+ifndef CL_DEVICE_TYPE
+CL_DEVICE_TYPE=cpu
+endif
+
+ifndef CL_DEVICE_COUNT
+CL_DEVICE_COUNT=1
 endif
 
 TARGET_BIN=$(TDIR)/$(BIN_PRE)$(TARGET)$(BIN_EXT)
@@ -65,7 +76,9 @@ KERNELS=$(CLSOURCES:%.cl=%.h)
 KOPTIONS=$(CLSOURCES:%.cl=$(ODIR)/%.clopt)
 INCLUDES=$(foreach inc,$(IDIRS),-I$(call PATH_CONV,$(inc)))
 DEFINES=$(foreach def,$(DEFS),-D$(def))
-LDFLAGS+=-Wall,-enable-auto-import,-enable-runtime-pseudo-relocs,-verbose,--enable-stdcall-fixup
+LDFLAGS+=-Wl,--enable-auto-import -Wl,--enable-stdcall-fixup
+#-Wl,--enable-runtime-pseudo-relocs 
+#LDFLAGS+=--verbose
 LIBRARIES=$(foreach ldir,$(LDIRS),-L$(call PATH_CONV,$(ldir))) $(foreach lib,$(LIBS),-l$(lib))
 AFLAGS=-ahlms=$(ODIR)/listing.S $(INCLUDES)
 CFLAGS+=-Wall -ggdb -c $(INCLUDES) $(DEFINES) -DKDIR="\"$(KDIR)\"" -mtune=native
@@ -116,7 +129,24 @@ else
 	@echo No INSTALL_DIR specified for target $(TARGET)
 endif
 
-endif
+else ifeq ($(strip $(TARGETTYPE)),implib)
+
+ifeq ($(HOST_OS),CYGWIN)
+
+.PHONY: $(WINSYSDIR)/$(DLL)
+
+$(TARGET_BIN): $(WINSYSDIR)/$(DLL)
+	@echo Creating IMPORT Library for Cygwin for $(DLL)
+	#@nm $(WINSYSDIR)/$(DLL) | grep ' T _' | sed 's/.* T _//' >> $(DLL:%.dll=$(ODIR)/%.def)
+	@dlltool --input-def $(DLL:%.dll=$(LOCAL_ROOT)/build/%.def) --dllname $(WINSYSDIR)/$(DLL) --output-lib $@
+	
+else
+
+$(TARGET_BIN): $(DLL)
+	@echo No action needed on non-cygwin builds.
+
+endif # CYGWIN
+endif # TARGETTYPES
 
 ifdef INSTALL_DIR
 rebuild: clean install
@@ -162,7 +192,7 @@ $(ODIR)/%.o: %.S
 
 %.h: $(KDIR)/%.cl
 	@echo Compiling OpenCL Kernel $<
-	-$(Q)$(CL) -n -f $< -d 1 -t cpu -h $@ -W "$(DEFINES) $(INCLUDES)"
+	-$(Q)$(CL) -v -n -f $< -d $(CL_DEVICE_COUNT) -t $(CL_DEVICE_TYPE) -h $@ -W "$(DEFINES) $(INCLUDES)"
 
 $(ODIR)/%.clopt: Makefile
 	@echo Building local options file $@ for building OpenCL kernel dependencies.

@@ -22,7 +22,7 @@
 #else
 #include <OpenCL/opencl.h>
 #endif
-
+#include <clquery.h>
 #include <clenvironment.h>
 
 void cl_free(void *ptr)
@@ -329,15 +329,23 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
         printf("There are %lu devices associated with this program %p.\n", numDevices, program);
 #endif
         // get the devices
-        clGetProgramInfo(program, CL_PROGRAM_DEVICES, sizeof(devices), devices, NULL);
+        clGetProgramInfo(program, CL_PROGRAM_DEVICES, sizeof(devices), devices, &numDevices);
+		numDevices /= sizeof(cl_device_id);
+#ifdef CL_DEBUG		
+		printf("%u devices retrieved!\n",numDevices);
+#endif		
 		for (i = 0; i < numDevices; i++)
 		{
 			cl_uint tmp = 0;
+			size_t bytes = 0;
 			// query each device and ask it what type it is. OR that into a singe bit field
-			clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(cl_uint), &tmp, NULL);
-			deviceTypes |= tmp;
+			//err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(cl_uint), &tmp, &bytes);
+			//deviceTypes |= tmp;
+			deviceTypes |= CL_DEVICE_TYPE_GPU;
 		}
-		
+#ifdef CL_DEBUG		
+		printf("CL_DEVICE_TYPE(s) = 0x%08x\n",deviceTypes);
+#endif		
         // did it compile successfully?
         clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(cl_int), &err, NULL);
         if (err != CL_SUCCESS)
@@ -639,7 +647,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
 
 
 cl_environment_t *clCreateEnvironment(char *filename,
-									  cl_uint dev_type,
+									  cl_uint dev_types,
                                       cl_uint numDevices,
                                       clnotifier_f notifier,
                                       char *cl_args)
@@ -666,12 +674,17 @@ cl_environment_t *clCreateEnvironment(char *filename,
                                          (cl_context_properties)0};
 #ifdef CL_DEBUG
         printf("Platform ID %p\n", pEnv->platform);
+		//clPrintAllPlatformInfo(pEnv->platform);
 #endif
         pEnv->numDevices = numDevices;
-        err = clGetDeviceIDs(pEnv->platform, dev_type, pEnv->numDevices, pEnv->devices, &pEnv->numDevices);
+#ifdef CL_DEBUG
+		printf("Requesting %u devices\n",numDevices);
+#endif		
+        err = clGetDeviceIDs(pEnv->platform, dev_types, pEnv->numDevices, pEnv->devices, &pEnv->numDevices);
         if (err == CL_SUCCESS)
         {
 #ifdef CL_DEBUG
+			printf("Returned %u devices! (Asked for %u)\n", pEnv->numDevices, numDevices);
             for (i = 0; i < pEnv->numDevices; i++)
                 printf("Device ID[%02x] = %p\n", i, pEnv->devices[i]);
 #endif
@@ -821,6 +834,10 @@ cl_environment_t *clCreateEnvironment(char *filename,
                 } while (err == CL_INVALID_VALUE);
             }
         }
+		else
+		{
+			printf("ERROR: Failed to acquire devices of type: %u\n", dev_types);
+		}
     }
     return pEnv;
 }

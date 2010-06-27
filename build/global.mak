@@ -39,8 +39,9 @@ ifeq ($(HOST_OS),DARWIN)
 	endif
 else ifeq ($(HOST_OS),CYGWIN)
     IDIRS+=$(OPENCL_ROOT)/inc
-    LIBS+=opencl 
-    LDIRS+=$(OPENCL_ROOT)/lib/x64 
+    LIBS+=OpenCL
+    #LDIRS+=$(OPENCL_ROOT)/lib/x64 
+	LDIRS+=$(WINSYSDIR)
     DEFS+=_MSC_VER=1500
 else ifeq ($(HOST_OS),Windows_NT)
     LIBS+=OpenCL

@@ -150,8 +150,13 @@ int main(int argc, char *argv[])
     }
     else
     {
+		int i;
         print_logo();
-        printf("Usage:\n$ %s -f <filename> -d <number of devices> -o <output path>\n", argv[0]);
+        printf("Usage:\n$ %s [OPTIONS] \n", argv[0]);
+		for (i = 0; i < numOpts; i++)
+		{
+			printf("Option %s\t\t%s\n",options[i].arg, options[i].description);
+		}
         printf("Example:\n$ %s -f %s -d %u -o %s\n",argv[0],filename,numDevices,outfile);
     }
     return 0;

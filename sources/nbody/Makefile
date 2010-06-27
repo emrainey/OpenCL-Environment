@@ -16,6 +16,8 @@ TARGET=clnbody
 TARGETTYPE=exe
 CSOURCES=nbody.c
 CLSOURCES=kernel_nbody.cl
+CL_DEVICE_COUNT=2
+CL_DEVICE_TYPE=gpu
 LIBS+=clenvironment clmath
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/global.mak
