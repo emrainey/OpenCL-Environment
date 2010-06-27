@@ -24,7 +24,7 @@ else
 Q=@
 endif
 
-ifeq ($(OS),Windows_NT)
+ifeq ($(HOST_OS),Windows_NT)
 PATH_CONV=$(subst /,\,$(1))
 else
 PATH_CONV=$(subst \,/,$(1))
@@ -65,10 +65,10 @@ KERNELS=$(CLSOURCES:%.cl=%.h)
 KOPTIONS=$(CLSOURCES:%.cl=$(ODIR)/%.clopt)
 INCLUDES=$(foreach inc,$(IDIRS),-I$(call PATH_CONV,$(inc)))
 DEFINES=$(foreach def,$(DEFS),-D$(def))
-LDFLAGS+=-Wall
+LDFLAGS+=-Wall,-enable-auto-import,-enable-runtime-pseudo-relocs,-verbose,--enable-stdcall-fixup
 LIBRARIES=$(foreach ldir,$(LDIRS),-L$(call PATH_CONV,$(ldir))) $(foreach lib,$(LIBS),-l$(lib))
 AFLAGS=-ahlms=$(ODIR)/listing.S $(INCLUDES)
-CFLAGS+=-Wall -ggdb -c $(INCLUDES) $(DEFINES) -DKDIR="\"$(KDIR)\""
+CFLAGS+=-Wall -ggdb -c $(INCLUDES) $(DEFINES) -DKDIR="\"$(KDIR)\"" -mtune=native
 
 all: Makefile $(SOURCES) $(TARGET_BIN)
 

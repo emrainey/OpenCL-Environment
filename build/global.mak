@@ -17,9 +17,9 @@ ifeq ($(HOST_OS),CYGWIN)
 		ERROR_STRING=You must defined OPENCL_ROOT!
 	endif
 else ifeq ($(HOST_OS),Windows_NT)
-#	ifndef BOOST_SCI_PKG_ROOT
-#		ERROR_STRING=You must defined BOOST_SCI_PGK_ROOT!
-#	endif
+	ifndef OPENCL_ROOT
+		ERROR_STRING=You must defined OPENCL_ROOT!
+	endif
 endif
 
 TDIR=$(LOCAL_ROOT)/out
@@ -38,17 +38,14 @@ ifeq ($(HOST_OS),DARWIN)
 		DEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
 	endif
 else ifeq ($(HOST_OS),CYGWIN)
-    IDIRS+=$(OPENCL_ROOT)/include 
-    LIBS+=opencl
-    LDIRS+=$(OPENCL_ROOT)/lib
-    DEFS+=
-    CFLAGS+=-fPIC
+    IDIRS+=$(OPENCL_ROOT)/inc
+    LIBS+=opencl 
+    LDIRS+=$(OPENCL_ROOT)/lib/x64 
+    DEFS+=_MSC_VER=1500
 else ifeq ($(HOST_OS),Windows_NT)
-#   IDIRS+=$(BOOST_SCI_PKG_ROOT)/include
-#	LDIRS+=$(BOOST_SCI_PKG_ROOT)/lib
     LIBS+=OpenCL
 	IDIRS+=$(OPENCL_ROOT)\inc
-	LDIRS+=$(OPENCL_ROOT)\lib\Win32
+	LDIRS+=$(OPENCL_ROOT)\lib\x64
 	DEFS+=_DEBUG _CONSOLE
 endif
 

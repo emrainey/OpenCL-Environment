@@ -54,9 +54,8 @@ DEFINES=$(foreach def,$(DEFS),/D$(def)) /D_CRT_SECURE_NO_DEPRECATE /DWIN32 /D_WI
 LDFLAGS=-Wall
 LIBRARIES=$(foreach ldir,$(LDIRS),/LIBPATH:$(ldir)) $(foreach lib,$(LIBS),$(lib).lib)
 AFLAGS=$(INCLUDES)
-CFLAGS+=/c $(INCLUDES) $(DEFINES) $(COPT) /nologo /Wp64 /MT
-ifdef DEFFILE
-DEF=/DEF:$(DEFFILE)
+CFLAGS+=/c $(INCLUDES) $(DEFINES) $(COPT) /nologo /Wp64 /favor:AMD64 /MD
+ifdef DEFFILEDEF=/DEF:$(DEFFILE)
 else
 DEF=
 endif
