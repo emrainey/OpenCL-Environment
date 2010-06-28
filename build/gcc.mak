@@ -30,6 +30,7 @@ else
 PATH_CONV=$(subst \,/,$(1))
 endif
 
+
 ifdef LOGFILE
 LOGGING=&>>$(LOGFILE)
 else
@@ -80,7 +81,9 @@ KOPTIONS=$(CLSOURCES:%.cl=$(ODIR)/%.clopt)
 endif
 INCLUDES=$(foreach inc,$(IDIRS),-I$(call PATH_CONV,$(inc)))
 DEFINES=$(foreach def,$(DEFS),-D$(def))
+ifeq ($(HOST_OS),CYGWIN)
 LDFLAGS+=-Wl,--enable-auto-import -Wl,--enable-stdcall-fixup
+endif
 #-Wl,--enable-runtime-pseudo-relocs 
 #LDFLAGS+=--verbose
 LIBRARIES=$(foreach ldir,$(LDIRS),-L$(call PATH_CONV,$(ldir))) $(foreach lib,$(LIBS),-l$(lib))

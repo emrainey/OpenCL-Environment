@@ -26,7 +26,7 @@ TDIR=$(LOCAL_ROOT)/out
 ODIR=$(LOCAL_ROOT)/out/obj
 IDIRS+=$(LOCAL_ROOT)/include .
 LDIRS+=$(LOCAL_ROOT)/out
-KDIR=$(LOCAL_ROOT)/sources/kernels
+KDIR=$(LOCAL_ROOT)/sources/kernels/
 IDIRS+=$(KDIR)
 
 ifeq ($(HOST_OS),DARWIN)

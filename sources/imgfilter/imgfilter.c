@@ -26,9 +26,9 @@
 #endif
 #include <clenvironment.h>
 #include <clquery.h>
+#ifndef CL_BUILD_RUNTIME
 #include <kernel_imgfilter.h>
-
-#define CL_OPTIONS  ("-I/Users/emrainey/Source/OpenCL/include")
+#endif
 
 void notify(cl_program program, void *arg)
 {
@@ -108,9 +108,13 @@ int main(int argc, char *argv[])
         size_t width = atoi(argv[2]);
         size_t height = atoi(argv[3]);
         cl_int err = CL_SUCCESS;
-        
-		cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_OPTIONS);
- 		if (!pEnv)
+
+#ifdef CL_BUILD_RUNTIME
+		cl_environment_t *pEnv = clCreateEnvironment(KDIR "kernel_imgfilter.cl", CL_DEVICE_TYPE_GPU, 2, notify, CL_ARGS);
+#else		
+		cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
+#endif 	
+		if (!pEnv)
 		{
 			clDeleteEnvironment(pEnv);
 			return -1;

@@ -35,7 +35,11 @@
 #define STRINGERIZE(x)          (#x)
 
 /** This pulls the define list and includes from the makefile into the C/C++ files for compilation with the OpenCL kernels at run/compile time */
+#if defined(DEFINES) && defined(INCLUDES)
 #define CL_ARGS                 (STRINGERIZE(DEFINES)" "STRINGERIZE(INCLUDES))
+#else
+#define CL_ARGS 				""
+#endif
 
 #ifndef dimof
 /** Dimension of */

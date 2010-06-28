@@ -23,11 +23,11 @@
 #else
 #include <OpenCL/opencl.h>
 #endif
+#ifndef CL_BUILD_RUNTIME
 #include <kernel_nbody.h>
+#endif
 #include <clmath.h>
 #include <clenvironment.h>
-
-#define CL_OPTIONS  ("-I/Users/emrainey/Source/OpenCL/include")
 
 void notify(cl_program program, void *arg)
 {
@@ -107,8 +107,11 @@ int main(int argc, char *argv[])
     time_t start, diff;
     clock_t c_start, c_diff;
 
-    // cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",1,notify, CL_OPTIONS);
-	cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_OPTIONS);
+#ifdef CL_BUILD_RUNTIME
+    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",CL_DEVICE_TYPE_GPU, 2,notify, CL_ARGS);
+#else	
+	cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
+#endif	
 	if (pEnv)
     {
         cl_uint i = 0;

@@ -25,7 +25,7 @@
 #endif
 #include <clenvironment.h>
 #include <clmath.h>
-#ifdef CL_PRECOMPILED
+#ifndef CL_BUILD_RUNTIME
 #include <kernel_yuv.h>
 #endif
 
@@ -152,11 +152,11 @@ int main(int argc, char *argv[])
 	    time_t start, diff;
 	    clock_t c_start, c_diff1, c_diff2;
 
-	#ifdef CL_PRECOMPILED
-	    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, NULL);
-	#else
-	    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",1,notify, NULL);
-	#endif
+#ifdef CL_BUILD_RUNTIME
+	    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",CL_DEVICE_TYPE_GPU,2,notify, CL_ARGS);
+#else
+	    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
+#endif
 	    if (pEnv && r && g && b && y && u && v)
 	    {
 	        cl_uint i = 0;
@@ -231,10 +231,10 @@ int main(int argc, char *argv[])
 		cl_uchar *pUYVY = cl_malloc_array(cl_uchar, numYUVBytes);
 		cl_uchar *pBGR  = cl_malloc_array(cl_uchar, numRGBBytes);
 		
-#ifdef CL_PRECOMPILED
-	    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, NULL);
+#ifdef CL_BUILD_RUNTIME
+	    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",CL_DEVICE_TYPE_GPU, 2,notify, CL_ARGS);
 #else
-	    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",1,notify, NULL);
+	    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
 #endif
 		if (pEnv && fi && fo && pUYVY && pBGR)
 		{

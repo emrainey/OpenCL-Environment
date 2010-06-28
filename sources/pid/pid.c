@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
     memset(pids, 0, sizeof(pids));
 
 #ifdef CL_BUILD_RUNTIME
-	cl_environment_t *pEnv = clCreateEnvironment(KDIR "/kernel_pid.cl", CL_DEVICE_TYPE_GPU, 2, notify, "-IC:\\Users\\emrainey\\Source\\OpenCL-Environment\\include");
+	cl_environment_t *pEnv = clCreateEnvironment(KDIR "kernel_pid.cl", CL_DEVICE_TYPE_GPU, 2, notify, CL_ARGS);
 #else	
-    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_OPTIONS);
+    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
 #endif
 	if (pEnv)
     {
