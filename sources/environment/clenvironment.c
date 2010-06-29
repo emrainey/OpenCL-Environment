@@ -864,10 +864,6 @@ cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name)
         {
             return pEnv->kernels[i];
         }
-		else
-		{
-			printf("ERROR: When requesting symbol %s error=%d \n", func_name, err);
-		}
     }
     return NULL;
 }
@@ -996,7 +992,8 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
 	#endif
 
 	    // read the result memory
-	    for (i = 0; i<pEnv->numDevices; i++) {
+	    for (i = 0; i<pEnv->numDevices; i++) 
+		{
 	        for (j = 0; j < pCall[k].numParams; j++)
 	        {
 	            if (pCall[k].params[j].flags == CL_MEM_WRITE_ONLY ||

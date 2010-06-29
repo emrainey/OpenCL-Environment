@@ -82,12 +82,10 @@ endif
 INCLUDES=$(foreach inc,$(IDIRS),-I$(call PATH_CONV,$(inc)))
 DEFINES=$(foreach def,$(DEFS),-D$(def))
 ifeq ($(HOST_OS),CYGWIN)
-LDFLAGS+=-Wl,--enable-auto-import -Wl,--enable-stdcall-fixup
+	LDFLAGS+=-Wl,--enable-auto-import -Wl,--enable-stdcall-fixup
 endif
-#-Wl,--enable-runtime-pseudo-relocs 
-#LDFLAGS+=--verbose
 LIBRARIES=$(foreach ldir,$(LDIRS),-L$(call PATH_CONV,$(ldir))) $(foreach lib,$(LIBS),-l$(lib))
-AFLAGS=-ahlms=$(ODIR)/listing.S $(INCLUDES)
+AFLAGS+=-gdwarf2 $(INCLUDES)
 CFLAGS+=-Wall -ggdb -c $(INCLUDES) $(DEFINES) -DKDIR="\"$(KDIR)\"" -mtune=native
 
 all: Makefile $(SOURCES) $(TARGET_BIN)
@@ -199,15 +197,16 @@ $(ODIR)/%.o: %.S
 
 %.h: $(KDIR)/%.cl
 	@echo Compiling OpenCL Kernel $<
-	-$(Q)$(CL) -v -n -f $< -d $(CL_DEVICE_COUNT) -t $(CL_DEVICE_TYPE) -h $@ -W "$(DEFINES) $(INCLUDES)"
+	-$(Q)$(CL) -n -f $< -d $(CL_DEVICE_COUNT) -t $(CL_DEVICE_TYPE) -h $@ -W "$(DEFINES) $(INCLUDES)"
 
 $(ODIR)/%.clopt: Makefile
 	@echo Building local options file $@ for building OpenCL kernel dependencies.
 	$(Q)echo $(DEFINES) $(INCLUDES) > $@
 
 info:
-	@echo OS=$(OS)
+	@echo HOST_OS=$(HOST_OS)
 	@echo TARGET=$(TARGET)
+	@echo TARGET_CPU=$(TARGET_CPU)
 	@echo TARGETTYPE=$(TARGETTYPE)
 	@echo TARGET_BIN=$(TARGET_BIN)
 	@echo TARGET_INSTALLED=$(TARGET_INSTALLED)

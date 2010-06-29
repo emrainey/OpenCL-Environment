@@ -17,7 +17,7 @@ TARGETTYPE=exe
 CSOURCES=imgfilter.c
 CLSOURCES=kernel_imgfilter.cl
 CL_DEVICE_COUNT=2
-CL_DEVICE_TYPE=gpu
+CL_DEVICE_TYPE=all
 LIBS+=clenvironment clquery
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/global.mak
