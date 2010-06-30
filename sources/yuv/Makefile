@@ -19,7 +19,6 @@ CSOURCES=yuv.c
 CLSOURCES=kernel_yuv.cl
 CL_DEVICE_COUNT=2
 CL_DEVICE_TYPE=all
-DEFS+=CL_PRECOMPILED
 LIBS+=clenvironment clmath
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/global.mak

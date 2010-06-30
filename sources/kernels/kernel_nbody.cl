@@ -86,17 +86,62 @@ __kernel kernel_energy(__global *m,
     E[i] = m[i] * c * c;
 }
 
-__kernel kernel_nbody(__global float *ms,
-					  __global float *m,
-                      __global float4 *a,
+int gravity_averaging(__global float *m, 
+					  __global float4 *p,
+					  __global float4 *a,
+					  __global int num)
+{
+	int i = get_global_id(0);
+	float G = 0.00000000006673;
+	float4 sum; 
+	int j = 0;
+	
+	sum[0] = 0;
+	sum[1] = 0;
+	sum[2] = 0;
+	sum[3] = 0;
+	
+	// calculate gravity between each object and this object.
+	for (j = 0; j < num; j++)
+	{
+		// if it's this object, skip it
+		if (i == j) continue; 
+		
+		// generate the difference vectors
+		float dx = p[i][0] - p[j][0];
+		float dy = p[i][1] - p[j][1];
+		float dz = p[i][2] - p[j][2];
+		
+		// calculate the distance
+		float d = sqrt(dx*dx + dy*dy + dz*dz);
+		
+		// this is magnitude of the vector
+		float g = (G * m[i] * m[j])/(d*d);
+		
+		// combine the gravity vectors together
+		sum[0] += (dx/d)*g;
+		sum[1] += (dy/d)*g;
+		sum[2] += (dz/d)*g;
+	}
+	
+	// assign the sum back 
+	a[i][0] = sum[0];
+	a[i][1] = sum[1];
+	a[i][2] = sum[2];
+	
+	return 0;
+}
+
+__kernel kernel_nbody(__global float *m,
+                      __global float4 *a, // previously calculated gravirty vector per object
                       __global float4 *v,
                       __global float4 *p,
                       __global float *t,
-                      __global float *d,
-                      __global float *g)
+                      __global int num)
 {
     int i = get_global_id(0);
-    float G = 0.00000000006673;
+	
+	gravity_averaging(m, p, a, num);
 	
 	// position is updated by velocity and some small quantity of acceration
     p[i][0] += v[i][0]*t[i] + 0.5*t[i]*t[i]*a[i][0];
@@ -107,17 +152,6 @@ __kernel kernel_nbody(__global float *ms,
     v[i][0] += a[i][0]*t[i];
     v[i][1] += a[i][1]*t[i];
     v[i][2] += a[i][2]*t[i];
-
-    // calculate the magnitude of the position with respec to 0,0,0 (this is a shortcut for distance)
-    d[i] = sqrt(p[i][0]*p[i][0] + p[i][1]*p[i][1] + p[i][2]*p[i][2]);
-    
-    // gravity is based on position and mass.
-    g[i] = (ms[i] * m[i] * G)/(d[i]*d[i]);
-    
-    // acceleration is updated by changes in gravity, which is based on position
-    a[i][0] = -p[i][0]*g[i]/d[i];
-    a[i][1] = -p[i][1]*g[i]/d[i];
-    a[i][2] = -p[i][2]*g[i]/d[i];
 }
 
 

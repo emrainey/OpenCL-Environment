@@ -58,27 +58,22 @@ cl_int distance(cl_environment_t *pEnv,
 }
 
 cl_int nbodies(cl_environment_t *pEnv,
-			   cl_float *ms,  
 			   cl_float *m,
                cl_float4 *a,
                cl_float4 *v,
                cl_float4 *p,
                cl_float *t, 
-		       cl_float *d,   
-		       cl_float *g,
-               size_t numBodies)
+		       size_t numBodies)
 {
 	cl_uint n = sizeof(cl_float)*numBodies;
 	cl_uint n4 = sizeof(cl_float4)*numBodies;
 	cl_kernel_param_t params[] = {
-		{CL_KPARAM_BUFFER_1D, n, ms, NULL, CL_MEM_READ_WRITE},
 		{CL_KPARAM_BUFFER_1D, n,  m, NULL, CL_MEM_READ_ONLY},
 		{CL_KPARAM_BUFFER_1D, n4, a, NULL, CL_MEM_READ_WRITE},
 		{CL_KPARAM_BUFFER_1D, n4, v, NULL, CL_MEM_READ_WRITE},
 		{CL_KPARAM_BUFFER_1D, n4, p, NULL, CL_MEM_READ_WRITE},
 		{CL_KPARAM_BUFFER_1D, n,  t, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_1D, n,  d, NULL, CL_MEM_READ_WRITE},
-		{CL_KPARAM_BUFFER_1D, n,  g, NULL, CL_MEM_READ_WRITE},		
+		{CL_KPARAM_BUFFER_0D, sizeof(size_t), &numBodies, NULL, CL_MEM_READ_ONLY},		
 	};
 	cl_kernel_call_t call = {
 		"kernel_nbody",
@@ -96,16 +91,10 @@ int main(int argc, char *argv[])
 {
     const size_t numBodies = 10;
     float *m     = cl_malloc_array(float, numBodies);
-	float *ms    = cl_malloc_array(float, numBodies);
-    float *d     = cl_malloc_array(float, numBodies);
-    float *g     = cl_malloc_array(float, numBodies);
-    float *t     = cl_malloc_array(float, numBodies);
+	float *t     = cl_malloc_array(float, numBodies);
     cl_float4 *a = cl_malloc_array(cl_float4, numBodies);
     cl_float4 *v = cl_malloc_array(cl_float4, numBodies);
     cl_float4 *p = cl_malloc_array(cl_float4, numBodies);
-
-    time_t start, diff;
-    clock_t c_start, c_diff;
 
 #ifdef CL_BUILD_RUNTIME
     cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",CL_DEVICE_TYPE_GPU, 2,notify, CL_ARGS);
@@ -114,38 +103,26 @@ int main(int argc, char *argv[])
 #endif	
 	if (pEnv)
     {
-        cl_uint i = 0;
+        cl_uint i = 0, j = 0;
+		cl_uint numIterations = (argc > 1?atoi(argv[1]):10);
         for (i = 0; i < numBodies; i++)
         {
-            m[i] = frand() * ipow(10,rrand(4,27)); // masses should be 10^4 - 10^27 (Earth heavy)
-            frand4(a[i], 1, 8);
-			frand4(v[i], 1, 9);
+            m[i] = frand() * ipow(10,rrand(4,27)); // masses should be 10^4 - 10^27 ("Earth heavy")
+            frand4(a[i], 1, 3);
+			frand4(v[i], 1, 2);
 			frand4(p[i], 4, 8);
-            t[i] = 0.001; // 1 millisecond.
-            d[i] = 0.00; // this will be initialized in the kernel
-            g[i] = 0.00; // this will be initialized in the kernel
+            t[i] = 0.1; // 100 millisecond.
         }
-
-        start = time(NULL);
-        c_start = clock();
-        nbodies(pEnv, ms, m, a, v, p, t, d, g, numBodies);
-        distance(pEnv, p, d, numBodies);
-        c_diff = clock() - c_start;
-        diff = time(NULL) - start;
-        printf("Constant Version Ran in %lu seconds (%lu ticks)\n", diff, c_diff);
-
-//#ifdef CL_DEBUG
-        for (i = 0; i < numBodies; i++)
-        {
-            printf("[%6u] p={%.2lf,%.2lf,%.2lf} v={%.2lf,%.2lf,%.2lf} a={%.2lf,%.2lf,%.2lf} d=%lf g=%lf\n", i,
+		i = 0;
+		for (j = 0; j < numIterations; j++)
+		{
+        	nbodies(pEnv, m, a, v, p, t, numBodies);
+            printf("[%6u] p={%lf,%lf,%lf} v={%lf,%lf,%lf} a={%lf,%lf,%lf}\n", i,
                     p[i][0], p[i][1], p[i][2],
                     v[i][0], v[i][1], v[i][2],
-                    a[i][0], a[i][1], a[i][2], d[i], g[i]);
-        }
-//#endif
+                    a[i][0], a[i][1], a[i][2]);
+		}
         clDeleteEnvironment(pEnv);
-		cl_free(g);
-		cl_free(d);
 		cl_free(t);
 		cl_free(m);
 		cl_free(v); 
