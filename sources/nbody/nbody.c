@@ -95,12 +95,11 @@ int main(int argc, char *argv[])
     cl_float4 *a = cl_malloc_array(cl_float4, numBodies);
     cl_float4 *v = cl_malloc_array(cl_float4, numBodies);
     cl_float4 *p = cl_malloc_array(cl_float4, numBodies);
-
-	cl_uint type = clGetTypeFromString(CL_USER_DEVICE_TYPE);
-	cl_uint count = CL_USER_DEVICE_COUNT; 
 	
 #ifdef CL_BUILD_RUNTIME
-    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",, 2,notify, CL_ARGS);
+	cl_uint type = clGetTypeFromString(CL_USER_DEVICE_TYPE);
+	cl_uint count = CL_USER_DEVICE_COUNT; 
+    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",type,count,notify,CL_ARGS);
 #else	
 	cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
 #endif	
@@ -114,7 +113,7 @@ int main(int argc, char *argv[])
             frand4(a[i], 1, 3);
 			frand4(v[i], 1, 2);
 			frand4(p[i], 4, 8);
-            t[i] = 0.1f; // 100 millisecond.
+            t[i] = 0.001f; // 1 millisecond.
         }
 		i = 0;
 		for (j = 0; j < numIterations; j++)
