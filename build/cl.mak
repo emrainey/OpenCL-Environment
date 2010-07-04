@@ -12,16 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+UNIX_CONV= $(subst \,/,$(1))
+PATH_CONV= $(subst /,\,$(1))
+ESCAPE_CONV= $(subst /,\\,$(1))
+
+# We need to convert all the paths over to the UNIX format so that the rules work right
+# however, the command line in Windows won't work right with those types, so we'll rework 
+# those commands are the last minute.
+ODIR  := $(call UNIX_CONV,$(ODIR))
+TDIR  := $(call UNIX_CONV,$(TDIR))
+IDIRS := $(call UNIX_CONV,$(IDIRS))
+LDIRS := $(call UNIX_CONV,$(LDIRS))
+KDIR  := $(call UNIX_CONV,$(KDIR))
+
 CC = CL
 CP = CL
 AS = ASM
 AR = LIB
 LD = LINK
-CL = $(TDIR)/clcompiler
-
-PATH_CONV= $(subst /,\,$(1))
+CL = $(TDIR)\clcompiler.exe
 
 ifdef LOGFILE
+LOGFILE := $(call PATH_CONV,$(LOGFILE))
 LOGGING=>$(LOGFILE)
 endif
 
@@ -42,20 +54,33 @@ else ifeq ($(strip $(TARGETTYPE)),exe)
 	BIN_EXT=.exe
 endif
 
-TARGET_BIN=$(TDIR)\$(BIN_PRE)$(TARGET)$(BIN_EXT)
+TARGET_BIN=$(TDIR)/$(BIN_PRE)$(TARGET)$(BIN_EXT)
+TARGET_PDB=$(ODIR)/$(TARGET).pdb
 ifdef INSTALL_DIR
-TARGET_INSTALLED=$(INSTALL_DIR)/$(BIN_PRE)$(TARGET)$(BIN_EXT)
+	TARGET_INSTALLED=$(INSTALL_DIR)/$(BIN_PRE)$(TARGET)$(BIN_EXT)
 endif
+
+# C/C++ Defines
+DEFS+=KDIR="\"$(call ESCAPE_CONV,$(KDIR))\"" CL_USER_DEVICE_COUNT=$(CL_USER_DEVICE_COUNT) CL_USER_DEVICE_TYPE="\"$(CL_USER_DEVICE_TYPE)\""
+
 OBJECTS=$(ASSEMBLY:%.S=$(ODIR)/%.obj) $(CPPSOURCES:%.cpp=$(ODIR)/%.obj) $(CSOURCES:%.c=$(ODIR)/%.obj)
+ifdef CL_BUILD_RUNTIME
+DEFS+=CL_BUILD_RUNTIME
+else ifdef CLSOURCES
 KERNELS=$(CLSOURCES:%.cl=%.h)
-KOPTIONS=$(CLSOURCES:%.cl=$(ODIR)/%.clopt)
-INCLUDES=$(foreach inc,$(call PATH_CONV, $(IDIRS)),/I$(inc))
-DEFINES=$(foreach def,$(DEFS),/D$(def)) /D_CRT_SECURE_NO_DEPRECATE /DWIN32 /D_WIN32_WINNT=0x0501 /DWINVER=0x0501 /D_MSC_VER=1500
-LDFLAGS=-Wall
-LIBRARIES=$(foreach ldir,$(LDIRS),/LIBPATH:$(ldir)) $(foreach lib,$(LIBS),$(lib).lib)
+KOPTIONS=$(CLSOURCES:%.cl=%.clopt)
+KFLAGS=$(foreach inc,$(KIDIRS),-I$(call PATH_CONV,$(inc))) $(foreach def,$(KDEFS),-D$(def))
+endif
+INCLUDES=$(foreach inc,$(IDIRS),/I$(call PATH_CONV,$(inc)))
+DEFINES=$(foreach def,$(DEFS),/D$(def))
+LDFLAGS=/INCREMENTAL /nologo /DEBUG /PDB:$(call PATH_CONV,$(TARGET_PDB)) /SUBSYSTEM:CONSOLE /MACHINE:$(HOST_CPU)
+ARFLAGS=/nologo /MACHINE:$(HOST_CPU)
+LIBRARIES=$(foreach ldir,$(LDIRS),/LIBPATH:"$(ldir)") $(foreach lib,$(LIBS),$(lib).lib)
 AFLAGS=$(INCLUDES)
-CFLAGS+=/c $(INCLUDES) $(DEFINES) $(COPT) /nologo /Wp64 /favor:AMD64 /MD
-ifdef DEFFILEDEF=/DEF:$(DEFFILE)
+CFLAGS+=/c $(INCLUDES) $(DEFINES) $(COPT) /nologo /Wp64 /favor:AMD64 /MDd /EHsc /Gm /W3 /Zi /TP /Fd$(call PATH_CONV,$(TARGET_PDB))
+
+ifdef DEFFILE
+DEF=/DEF:$(DEFFILE)
 else
 DEF=
 endif
@@ -71,17 +96,19 @@ ifeq ($(TARGETTYPE),library)
 
 $(TARGET_BIN): $(OBJECTS)
 	@echo Archiving $@
-	$(Q)$(AR) /NOLOGO /MACHINE:$(HOST_CPU) /OUT:$@ $(call PATH_CONV,$(OBJECTS)) $(LOGGING)
+	$(Q)$(AR) $(ARFLAGS) /OUT:$(call PATH_CONV,$@) $(call PATH_CONV,$<) $(LOGGING)
 
 install: $(TARGET_BIN)
 	@echo No install step for $(TARGET_BIN)
 
 else ifeq ($(TARGETTYPE),exe)
 
-$(TARGET_BIN): $(OBJECTS)
+$(TARGET_BIN): $(OBJECTS) $(foreach lib,$(LIBS),$(lib).lib)
 	@echo Linking $@
-	$(Q)$(LD) /nologo /OUT:$(call PATH_CONV,$@) $(LIBRARIES) $(call PATH_CONV,$(OBJECTS)) $(LOGGING)
+	$(Q)$(LD) $(LDFLAGS) /OUT:$(call PATH_CONV,$@) $(LIBRARIES) $(call PATH_CONV,$<) $(LOGGING)
 
+%.lib: force_look
+	
 install: $(TARGET_BIN)
 	@echo No install step for $(TARGET_BIN)
 
@@ -89,7 +116,7 @@ else ifeq ($(TARGETTYPE),dsmo)
 
 $(TARGET_BIN): $(OBJECTS)
 	@echo Linking $@
-	$(Q)$(LD) /nologo /OUT:$(call PATH_CONV,$@) $(LIBRARIES) $(call PATH_CONV,$(OBJECTS)) /DLL $(DEF) $(LOGGING)
+	$(Q)$(LD) $(LDFLAGS) /OUT:$(call PATH_CONV,$@) $(LIBRARIES) $(call PATH_CONV,$<) /DLL $(DEF) $(LOGGING)
 
 install: $(TARGET_BIN)
 	@echo No install step for $(TARGET_BIN)
@@ -100,6 +127,10 @@ $(TARGET_BIN): $(OBJECTS)
 
 endif
 
+.PRECIOUS: $(KERNELS)
+
+force_look:
+
 clean: clean_kernels
 	@echo Cleaning Objects
 	-$(Q)$(CLEAN) $(call PATH_CONV,$(OBJECTS))
@@ -109,7 +140,7 @@ clean: clean_kernels
 	-$(Q)$(CLEAN) $(call PATH_CONV,$(TARGET_BIN:%.dll=%.exp))
 	-$(Q)$(CLEAN) $(call PATH_CONV,$(TARGET_BIN:%.dll=%.lib))
 ifdef LOGFILE
-	-$(Q)$(CLEAN) $(call PATH_CONV, $(LOGFILE))
+	-$(Q)$(CLEAN) $(LOGFILE)
 endif
 
 ifdef INSTALL_DIR
@@ -126,11 +157,13 @@ else
 endif
 
 clean_kernels:
-ifneq ($(KOPTIONS),)
-	-$(Q)$(CLEAN) $(call PATH_CONV,$(KOPTIONS))
+ifneq ($(KOPTIONS),) 
+	@echo Cleaning Kernel Option File $(KOPTIONS)
+	-$(Q)$(CLEAN) $(KOPTIONS)
 endif
 ifneq ($(KERNELS),)
-	-$(Q)$(CLEAN) $(call PATH_CONV,$(KERNELS))
+	@echo Cleaning Precompiled Kernels $(KERNELS)
+	-$(Q)$(CLEAN) $(KERNELS)
 endif
 
 $(ODIR)/%.obj: %.c $(KERNELS)
@@ -139,19 +172,19 @@ $(ODIR)/%.obj: %.c $(KERNELS)
 
 $(ODIR)/%.obj: %.cpp $(KERNELS)
 	@echo Compiling C++ $<
-	$(Q)$(CP) $(CFLAGS) $(call PATH_CONV,$<) /Fo$(call PATH_CONV,$@)  $(LOGGING)
+	$(Q)$(CP) $(CFLAGS) $(call PATH_CONV,$<) /Fo$(call PATH_CONV,$@) $(LOGGING)
 
 $(ODIR)/%.obj: %.S
 	@echo Assembling $<
-	$(Q)$(AS) $(AFLAGS) $(call PATH_CONV,$<) /Fo$(call PATH_CONV,$@)  $(LOGGING)
+	$(Q)$(AS) $(AFLAGS) $(call PATH_CONV,$<) /Fo$(call PATH_CONV,$@) $(LOGGING)
 
-%.h: $(KDIR)/%.cl
+%.h: $(KDIR)%.cl
 	@echo Compiling OpenCL Kernel $<
-	-$(Q)$(CL) -n -f $< -d 1 -h $@ -W "$(DEFINES) $(INCLUDES)"
+	$(Q)$(CL) -v -n -f $(call PATH_CONV,$<) -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $(call PATH_CONV,$@) -W "$(KFLAGS)"
 
-$(ODIR)/%.clopt: Makefile
+%.clopt: Makefile
 	@echo Building local options file $@ for building OpenCL kernel dependencies.
-	$(Q)echo $(DEFINES) $(INCLUDES) > $@
+	$(Q)echo $(DEFINES) $(INCLUDES) > $(call PATH_CONV,$@)
 
 info:
 	@echo HOST_OS=$(OS)
@@ -162,10 +195,9 @@ info:
 	@echo TARGETTYPE=$(TARGETTYPE)
 	@echo TARGET_BIN=$(TARGET_BIN)
 	@echo TARGET_INSTALLED=$(TARGET_INSTALLED)
-	@echo CC=$(CC)
-	@echo CP=$(CP)
-	@echo AR=$(AR)
-	@echo AS=$(AS)
+	@echo CC=$(CC) CP=$(CP) AR=$(AR) AS=$(AS) LD=$(LD)
+	@echo CSOURCES=$(CSOURCES)
+	@echo CLSOURCES=$(CLSOURCES)
 	@echo OBJECTS=$(OBJECTS)
 	@echo LDFLAGS=$(LDFLAGS)
 	@echo CFLAGS=$(CFLAGS)

@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+LOCAL_ROOT?=../..
 include $(LOCAL_ROOT)/build/prelude.mak
 TARGET=clyuv
 TARGETTYPE=exe
 CSOURCES=yuv.c
 CLSOURCES=kernel_yuv.cl
-CL_DEVICE_COUNT=2
-CL_DEVICE_TYPE=all
+CL_USER_DEVICE_COUNT=2
+CL_USER_DEVICE_TYPE=all
 LIBS+=clenvironment clmath
 TESTCASE=$(TARGET)
-include $(LOCAL_ROOT)/build/global.mak
+include $(LOCAL_ROOT)/build/finale.mak

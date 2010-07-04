@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+LOCAL_ROOT?=../..
 include $(LOCAL_ROOT)/build/prelude.mak
 TARGET=clcompiler
 TARGETTYPE=exe
 CSOURCES=clcompiler.c
 LIBS+=clquery clenvironment
-include $(LOCAL_ROOT)/build/global.mak
+include $(LOCAL_ROOT)/build/finale.mak

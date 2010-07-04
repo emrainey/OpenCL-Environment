@@ -22,13 +22,6 @@ else ifeq ($(HOST_OS),Windows_NT)
 	endif
 endif
 
-TDIR=$(LOCAL_ROOT)/out
-ODIR=$(LOCAL_ROOT)/out/obj
-IDIRS+=$(LOCAL_ROOT)/include .
-LDIRS+=$(LOCAL_ROOT)/out
-KDIR=$(LOCAL_ROOT)/sources/kernels/
-IDIRS+=$(KDIR)
-
 ifeq ($(HOST_OS),DARWIN)
     IDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
     LDFLAGS+=-framework OpenCL
@@ -42,12 +35,13 @@ else ifeq ($(HOST_OS),CYGWIN)
     LIBS+=OpenCL
     #LDIRS+=$(OPENCL_ROOT)/lib/x64 
 	LDIRS+=$(WINSYSDIR)
-    DEFS+=_MSC_VER=1500
+	# Assume VS 2005 _MSC_VER number.
+    DEFS+=_MSC_VER=1400 
 else ifeq ($(HOST_OS),Windows_NT)
     LIBS+=OpenCL
 	IDIRS+=$(OPENCL_ROOT)\inc
 	LDIRS+=$(OPENCL_ROOT)\lib\x64
-	DEFS+=_DEBUG _CONSOLE
+	DEFS+=_MSC_VER=1400 _DEBUG _CONSOLE _WIN32 _CRT_SECURE_NO_DEPRECATE _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x0501 WINVER=0x0501
 endif
 
 ifndef ERROR_STRING

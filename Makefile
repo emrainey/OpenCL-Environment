@@ -1,7 +1,4 @@
-ifndef LOCAL_ROOT
-LOCAL_ROOT=$(shell pwd)
-endif
-
+LOCAL_ROOT?=$(shell pwd)
 DIRS=math query environment compiler imgfilter yuv pid nbody
 
 .PHONY: todo all debug error
@@ -13,6 +10,10 @@ all %:
 		cd ../..;\
 	done)
 
+scrub:
+	-@rm out/obj/*.*
+	-@rm out/*.*
+	
 debug:
 	@(for d in $(DIRS); do\
 		cd sources/$$d;\

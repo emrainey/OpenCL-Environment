@@ -61,7 +61,7 @@ cl_uint numOpts = dimof(options);
 
 void clOptions(int argc, char *argv[])
 {
-    cl_uint i = 0;
+    int i = 0;
     cl_uint j = 0;
     for (i = 1; i < argc; i++)
     {
@@ -74,7 +74,7 @@ void clOptions(int argc, char *argv[])
                 switch (options[j].type)
                 {
                     case CL_OPTION_TYPE_STRING:
-                        strncpy(options[j].ptr, argv[i+1], options[j].size);
+                        strncpy((char *)options[j].ptr, argv[i+1], options[j].size);
                         break;
                     case CL_OPTION_TYPE_INT:
                         sscanf(argv[i+1], "%d", (cl_int *)options[j].ptr);
@@ -132,17 +132,15 @@ int main(int argc, char *argv[])
         if (verbose)
             printf("Loading file %s\n", filename);
 
-        if (verbose && cl_args[0] != '\0')
+        if (verbose && filename[0] != '\0')
+			printf("Compiling File: %s\n",filename);
+		
+		if (verbose && cl_args[0] != '\0')
             printf("CL ARGS: %s\n",cl_args);
-
-		if (strncmp("cpu", cl_device_types, CL_MAX_STRING) == 0)
-			dev_type = CL_DEVICE_TYPE_CPU;
-		else if (strncmp("gpu", cl_device_types, CL_MAX_STRING) == 0)
-			dev_type = CL_DEVICE_TYPE_GPU;
-		else if (strncmp("acc", cl_device_types, CL_MAX_STRING) == 0 || strncmp("accelator", cl_device_types, CL_MAX_STRING) == 0)
-			dev_type = CL_DEVICE_TYPE_ACCELERATOR;
-		else if (strncmp("all", cl_device_types, CL_MAX_STRING) == 0)
-			dev_type = CL_DEVICE_TYPE_ALL;
+	
+		dev_type = clGetTypeFromString(cl_device_types);
+		if (verbose)
+			printf("%u devices as type 0x%08x\n",numDevices,dev_type);
 
         // process the kernel
         pEnv = clCreateEnvironment(filename, dev_type, numDevices, notify, cl_args);
@@ -150,7 +148,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-		int i;
+		cl_uint i;
         print_logo();
         printf("Usage:\n$ %s [OPTIONS] \n", argv[0]);
 		for (i = 0; i < numOpts; i++)

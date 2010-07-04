@@ -23,16 +23,16 @@ uchar clamp_uc(float a, uchar l, uchar h)
 	return (uchar)a;
 }
 
-__kernel void kernel_edge_filter(__global uint  width, 
-	 							 __global uint  height,
+__kernel void kernel_edge_filter(uint  width, 
+	 							 uint  height,
 								 __global uchar *pSrc,  // planar 1 byte pixel data
-	 							 __global int srcStride, 
+	 							 int srcStride, 
 							     __global uchar *pDst, // planar 1 byte pixel data
-								 __global int dstStride,
+								 int dstStride,
 								 __global char *operator, // a fixed sized array of 2xNxN elements
-								 __global uint n,
-								 __global uint range,
-								 __global uint limit) 
+								 uint n,
+								 uint range,
+								 uint limit) 
 {
     // these are the coordinates in the image
     const int x = get_global_id(0);

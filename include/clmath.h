@@ -17,6 +17,9 @@
 #ifndef _CL_MATH_H_
 #define _CL_MATH_H_
 
+/** Integer Square Root Function */
+cl_uint isqrt(cl_int x);
+
 /** Integer Power Function */
 int ipow(int x, int n);
 

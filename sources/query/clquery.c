@@ -24,9 +24,8 @@
 #endif
 #include <clenvironment.h>
 
-typedef enum _cl_type_e { CL_STRING_TYPE, CL_ULONG_TYPE, CL_UINT_TYPE, CL_BYTE_TYPE} cl_type_e;
+typedef enum _cl_type_e { CL_STRING_TYPE, CL_UINT_ARRAY_TYPE, CL_ULONG_TYPE, CL_UINT_TYPE, CL_BYTE_TYPE} cl_type_e;
 
-#define CL_ITEM_MAX     (10)
 #define L_STRINGERIZE(x)    #x, x
 
 typedef struct _cl_error_strings_t {
@@ -49,6 +48,7 @@ cl_error_string_t errors[] = {
     {L_STRINGERIZE(CL_INVALID_SAMPLER)},
     {L_STRINGERIZE(CL_INVALID_BINARY)},
     {L_STRINGERIZE(CL_INVALID_BUILD_OPTIONS)},
+	{L_STRINGERIZE(CL_INVALID_KERNEL_DEFINITION)},
 };
 cl_uint numErrors = dimof(errors);
 
@@ -83,7 +83,9 @@ cl_info_type_t clDeviceInfoType[] = {
     {CL_UINT_TYPE, L_STRINGERIZE(CL_DEVICE_VENDOR_ID)},
     {CL_UINT_TYPE, L_STRINGERIZE(CL_DEVICE_MAX_COMPUTE_UNITS)},
     {CL_UINT_TYPE, L_STRINGERIZE(CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS)},
+//#ifdef __APPLE__	
     {CL_UINT_TYPE, L_STRINGERIZE(CL_DEVICE_MAX_WORK_GROUP_SIZE)},
+//#endif	
     {CL_STRING_TYPE, L_STRINGERIZE(CL_DEVICE_MAX_WORK_ITEM_SIZES)},
     {CL_UINT_TYPE, L_STRINGERIZE(CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR)},
     {CL_UINT_TYPE, L_STRINGERIZE(CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT)},
@@ -130,15 +132,15 @@ cl_info_type_t clDeviceInfoType[] = {
     {CL_UINT_TYPE, L_STRINGERIZE(CL_DEVICE_PLATFORM)},
 };
 cl_info_type_t clContextInfoType[] = {
-    {CL_STRING_TYPE, L_STRINGERIZE(CL_CONTEXT_REFERENCE_COUNT)},
-    {CL_STRING_TYPE, L_STRINGERIZE(CL_CONTEXT_DEVICES)},
-    {CL_STRING_TYPE, L_STRINGERIZE(CL_CONTEXT_PROPERTIES)},
+    {CL_UINT_TYPE, L_STRINGERIZE(CL_CONTEXT_REFERENCE_COUNT)},
+    {CL_ULONG_TYPE, L_STRINGERIZE(CL_CONTEXT_DEVICES)},
+    {CL_UINT_ARRAY_TYPE , L_STRINGERIZE(CL_CONTEXT_PROPERTIES)},
 };
 cl_info_type_t clQueueInfoType[] = {
 	{CL_UINT_TYPE,   L_STRINGERIZE(CL_QUEUE_CONTEXT)},
 	{CL_UINT_TYPE,   L_STRINGERIZE(CL_QUEUE_DEVICE)},
 	{CL_UINT_TYPE,   L_STRINGERIZE(CL_QUEUE_REFERENCE_COUNT)},
-	{CL_UINT_TYPE,   L_STRINGERIZE(CL_QUEUE_PROPERTIES)},
+	{CL_UINT_ARRAY_TYPE,   L_STRINGERIZE(CL_QUEUE_PROPERTIES)},
 };
 cl_info_type_t clKernelInfoType[] = {
 	{CL_STRING_TYPE, L_STRINGERIZE(CL_KERNEL_FUNCTION_NAME)},
@@ -174,6 +176,21 @@ void clPrintQueryInfo(void *id, cl_uint info, QueryInfo_f query, cl_info_type_t 
                     if (size > 0) printf("%41s:[%02lu] %s\n", infoTypes[i].name, size, param);
                     break;
                 }
+				case CL_UINT_ARRAY_TYPE:
+				{
+					cl_uint array[CL_MAX_STRING];
+					memset(array, 0, sizeof(array));
+					query(id, info, sizeof(array), array, &size);
+					if (size/sizeof(cl_uint) > 0) 
+					{
+						int j = 0;
+						printf("%41s:[%02lu] ",infoTypes[i].name, size);
+						for (j = 0; j < size/sizeof(cl_uint); j++)
+							printf("%09u ", array[j]);
+						printf("\n");
+					}
+					break;
+				}
                 case CL_ULONG_TYPE:
                 {
                     cl_ulong param;
@@ -225,14 +242,6 @@ void clPrintKernelInfo(cl_kernel kernel, cl_kernel_info info)
 	clPrintQueryInfo(kernel, info, (QueryInfo_f)clGetKernelInfo, clKernelInfoType, numKernelInfoTypes);
 }
 
-void clQueryNotify(const char *errinfo,
-                   const void *private_info,
-                   size_t cb,
-                   void * user_data)
-{
-    printf("ERROR! %s\n",errinfo);
-}
-
 void clPrintAllPlatformInfo(cl_platform_id platform)
 {
 	cl_uint i = 0;
@@ -268,76 +277,3 @@ void clPrintAllKernelInfo(cl_kernel kernel)
 		clPrintKernelInfo(kernel, clKernelInfoType[i].info);
 }
 
-#ifdef CL_TEST
-int main(int argc, char *argv[])
-{
-    cl_uint        p,d;
-    cl_platform_id platform_id[CL_ITEM_MAX];
-    cl_device_id   device_id[CL_ITEM_MAX];
-    cl_int         err = 0;
-    cl_uint        numPlatforms = 0;
-    cl_uint        numDevices = 0;
-
-    err = clGetPlatformIDs(CL_ITEM_MAX, &platform_id[0], &numPlatforms);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error in OpenCL Platform ID API\n");
-    }
-    else
-    {
-        for (p = 0; p < numPlatforms; p++)
-        {
-            cl_uint i = 0;
-            clPrintAllPlatformInfo(platform_id[p]);
-            err = clGetDeviceIDs(platform_id[p], CL_DEVICE_TYPE_ALL, 1, &device_id[0], &numDevices);
-            if (err != CL_SUCCESS)
-            {
-                printf("Failed to acquire ID of OpenCL CPU\n");
-                return -1;
-            }
-            else
-            {
-                cl_context context = 0;
-                cl_context_properties props[] = {(cl_context_properties)CL_CONTEXT_PLATFORM,
-                                                 (cl_context_properties)platform_id[p],
-                                                 (cl_context_properties)0};
-
-                for (d = 0; d < numDevices; d++)
-                {
-                    clPrintAllDeviceInfo(device_id[d]);
-
-                    // create a context for this device....
-                    context = clCreateContext(props,1,&device_id[d], clQueryNotify, NULL, &err);
-                    if (context == NULL)
-                    {
-                        clPrintError(err);
-                        printf("Failed to create a context for device %p, err=%i!\n",device_id[p],err);
-                        continue;
-                    }
-                    else
-                    {
-                        cl_command_queue queue;
-                        cl_command_queue_properties cmdprop = 0;
-#ifdef CL_DEBUG
-                        printf("Created Context %p\n",context);
-#endif
-						clPrintAllContextInfo(context);
-						
-                        queue = clCreateCommandQueue(context, device_id[d], cmdprop, &err);
-                        if (queue != NULL)
-                        {
-                            //cl_mem memory_objects[CL_ITEM_MAX];
-#ifdef CL_DEBUG
-                            printf("Created Command Queue %p\n",queue);
-#endif
-                            clReleaseCommandQueue(queue);
-                        }
-                    }
-                    clReleaseContext(context);
-                }
-            }
-        }
-    }
-    return 0;
-}
-#endif

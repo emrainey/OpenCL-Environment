@@ -15,3 +15,15 @@
 include $(LOCAL_ROOT)/build/os.mak
 include $(LOCAL_ROOT)/build/machine.mak
 
+# Normal Make Paths and Defines
+TDIR=$(LOCAL_ROOT)/out
+ODIR=$(LOCAL_ROOT)/out/obj
+IDIRS=$(LOCAL_ROOT)/include .
+LDIRS=$(LOCAL_ROOT)/out
+
+# OpenCL Kernel Make Paths and Defines
+# This has to have a trailing / due to it's inclusion in the C/C++ files
+KDIR=$(LOCAL_ROOT)/sources/kernels/
+KIDIRS=$(LOCAL_ROOT)/include .
+KDEFS=
+

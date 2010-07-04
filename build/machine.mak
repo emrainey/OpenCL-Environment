@@ -13,6 +13,7 @@
 # limitations under the License.
 
 ifeq ($(HOST_OS),Windows_NT)
+	#HOST_CPU=X86
 	HOST_CPU=X64
 else
 	HOST_CPU=$(shell uname -m)

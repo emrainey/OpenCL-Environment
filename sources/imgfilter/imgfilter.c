@@ -26,6 +26,7 @@
 #endif
 #include <clenvironment.h>
 #include <clquery.h>
+#include <clmath.h>
 #ifndef CL_BUILD_RUNTIME
 #include <kernel_imgfilter.h>
 #endif
@@ -35,10 +36,10 @@ void notify(cl_program program, void *arg)
     //printf("Program %p Arg %p\n",program, arg);
 }
 
-cl_int range_of_operator(cl_char *operator, cl_uint n, cl_uint limit)
+cl_int range_of_operator(cl_char *op, cl_uint n, cl_uint limit)
 {
 	cl_int range;
-	cl_int p,q,r,s;
+	cl_uint p,q,r,s;
 	cl_int max = 0, min = 0x7FFFFFFF;
 	for (p = 0; p < 2; p++) 
 	{
@@ -47,14 +48,14 @@ cl_int range_of_operator(cl_char *operator, cl_uint n, cl_uint limit)
 		    for (r = 0; r < n; r++) 
 			{
 				s = (p * n * n) + (q * n) + r;
-		        if (operator[s] < min)
-					min = operator[s];
-				else if (operator[s] > max)
-					max = operator[s];
+		        if (op[s] < min)
+					min = op[s];
+				else if (op[s] > max)
+					max = op[s];
 			}
 		}
 	}
-	range = sqrt(pow(abs(min)*limit,2) + pow(max*limit,2));
+	range = isqrt(ipow(abs(min)*limit,2) + ipow(max*limit,2));
 	return range;
 }
 
@@ -65,7 +66,7 @@ cl_int imgfilter1d(cl_environment_t *pEnv,
 				   cl_int srcStride,
 				   cl_uchar *pDst,
 				   cl_int dstStride,
-				   cl_char *operator,
+				   cl_char *op,
 				   cl_uint opDim,
 				   cl_uint range,
 				   cl_uint limit)
@@ -81,7 +82,7 @@ cl_int imgfilter1d(cl_environment_t *pEnv,
 		{CL_KPARAM_BUFFER_0D, sizeof(cl_int), &srcStride, NULL, CL_MEM_READ_ONLY},
 		{CL_KPARAM_BUFFER_1D, numDstBytes, pDst, NULL, CL_MEM_WRITE_ONLY},
 		{CL_KPARAM_BUFFER_0D, sizeof(cl_int), &dstStride, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_1D, numOpBytes, operator, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, numOpBytes, op, NULL, CL_MEM_READ_ONLY},
 		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &opDim, NULL, CL_MEM_READ_ONLY},
 		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &range, NULL, CL_MEM_READ_ONLY},
 		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &limit, NULL, CL_MEM_READ_ONLY},
@@ -105,12 +106,12 @@ int main(int argc, char *argv[])
     {
         FILE *fi = NULL;
         FILE *fo = NULL;
-        size_t width = atoi(argv[2]);
-        size_t height = atoi(argv[3]);
+        cl_uint width = atoi(argv[2]);
+        cl_uint height = atoi(argv[3]);
         cl_int err = CL_SUCCESS;
 
 #ifdef CL_BUILD_RUNTIME
-		cl_environment_t *pEnv = clCreateEnvironment(KDIR "kernel_imgfilter.cl", CL_DEVICE_TYPE_GPU, 2, notify, CL_ARGS);
+		cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_imgfilter.cl", CL_DEVICE_TYPE_GPU, 2, notify, CL_ARGS);
 #else		
 		cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
 #endif 	

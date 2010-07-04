@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 	    cl_uchar *Up = cl_malloc_array(cl_uchar, numPixels);
 	    cl_uchar *Vp = cl_malloc_array(cl_uchar, numPixels);
 
-	    float bt601[9] = {0.257, 0.504, 0.098, -0.148, -0.291, 0.439, 0.439, -0.368, -0.071};
+	    float bt601[9] = {0.257f, 0.504f, 0.098f, -0.148f, -0.291f, 0.439f, 0.439f, -0.368f, -0.071f};
 	    time_t start, diff;
 	    clock_t c_start, c_diff1, c_diff2;
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 	    {
 	        cl_uint i = 0;
 
-	        srand(time(NULL));
+	        srand((unsigned int)time(NULL));
 	        // initialize the data
 	        for (i = 0; i < numPixels; i++)
 	        {

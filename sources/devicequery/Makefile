@@ -13,7 +13,9 @@
 # limitations under the License.
 LOCAL_ROOT?=../..
 include $(LOCAL_ROOT)/build/prelude.mak
-TARGET=clenvironment
-TARGETTYPE=library
-CSOURCES=clenvironment.c
+TARGET=clDeviceQuery
+TARGETTYPE=exe
+CSOURCES=devicequery.c
+LIBS+=clquery
+TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/finale.mak

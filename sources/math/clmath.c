@@ -35,6 +35,12 @@ int ipow(int x, int n)
         return x * ipow(x, n - 1);
 }
 
+cl_uint isqrt(cl_int x)
+{
+	float xp = (float)x;
+	return (cl_uint)sqrt(xp);
+}
+
 float frand(void)
 {
     return (float)(rand()%1000)/999;
@@ -81,7 +87,7 @@ void normalize_float(float *a, cl_int low, cl_int hi, cl_uchar *b, cl_uint numPi
     //printf("Range for %p is %d to %d (%d)\n", a, low, hi, range);
     for (i = 0; i < numPixels; i++)
     {
-        cl_int c = (range * a[i]) + low;
+        cl_int c = (cl_int)((range * a[i]) + low);
         //printf("a = %lf, c = %d\n",a[i], c);
         if (c > hi)
             b[i] = (cl_uchar)hi;

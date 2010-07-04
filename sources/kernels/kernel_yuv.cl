@@ -35,10 +35,10 @@ char clamp_c(int v, int l, int h)
 
 __kernel void kernel_uyvy_to_2bgr(__global unsigned char *uyvy,
 								  __global unsigned char *bgr,
-								  __global unsigned int width,
-								  __global unsigned int height,
-								  __global unsigned int srcStride,
-								  __global unsigned int dstStride)
+								  unsigned int width,
+								  unsigned int height,
+								  unsigned int srcStride,
+								  unsigned int dstStride)
 {
 	int x = get_global_id(0) * 2; // extend the x-width since it is macropixel indexed
 	int y = get_global_id(1);

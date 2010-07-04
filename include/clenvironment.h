@@ -38,7 +38,7 @@
 #if defined(DEFINES) && defined(INCLUDES)
 #define CL_ARGS                 (STRINGERIZE(DEFINES)" "STRINGERIZE(INCLUDES))
 #else
-#define CL_ARGS 				""
+#define CL_ARGS 				NULL
 #endif
 
 #ifndef dimof
@@ -49,6 +49,14 @@
 #ifndef KDIR
 /** Use this incase you don't define the path to your kernels */
 #define KDIR 
+#endif
+
+#ifndef CL_USER_DEVICE_TYPE
+#define CL_USER_DEVICE_TYPE	"all"
+#endif
+
+#ifndef CL_USER_DEVICE_COUNT
+#define CL_USER_DEVICE_COUNT (1)
 #endif
 
 /** A byte type */
@@ -124,7 +132,7 @@ typedef struct _cl_environemnt_t
     cl_context_properties context_props; /**< The properties field for the context */
     cl_command_queue *queues;		/**< The command and data queue handle for this environment */
     char            **sources;		/**< The loaded source code from the source files, if you loaded and build in this runtime. This is blank if you load from binaries */
-    size_t            numLines;		/**< The number of lines of source code in sources */
+    cl_uint           numLines;		/**< The number of lines of source code in sources */
     size_t           *lengths;		/**< The array of line lengths of sources */
     cl_program        program;		/**< The handle to the program */
     cl_kernel        *kernels;		/**< The array of kernel handles */
@@ -222,6 +230,9 @@ void *cl_malloc(size_t numBytes);
 
 /** A handy wrapper for debugging */
 void cl_free(void *ptr);
+
+/** Converts the string type to the the CL_DEVICE_TYPE_... */
+cl_uint clGetTypeFromString(char *typestring);
 
 #endif
 

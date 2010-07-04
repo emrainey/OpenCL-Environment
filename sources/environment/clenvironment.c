@@ -137,7 +137,7 @@ cl_byte *cl_load_bin(char *filename, size_t *pNumBytes)
     if (fp != NULL)
     {
         size_t numBytes = flen(fp);
-        bin = cl_malloc(numBytes);
+        bin = (cl_byte *)cl_malloc(numBytes);
         if (bin)
         {
             fread(bin, 1, numBytes, fp);
@@ -166,7 +166,7 @@ cl_byte *cl_serialize_kernels(cl_kernel_bin_t *bins, size_t *pNumBytes)
     bin = cl_malloc_array(cl_byte,(*pNumBytes));
     if (bin)
     {
-        cl_uint offset = 0;
+        size_t offset = 0;
 		memcpy(&bins[offset], &bins->deviceTypes, sizeof(cl_uint));
 		offset += sizeof(cl_uint);
         memcpy(&bins[offset], &bins->numDevices, sizeof(size_t));
@@ -248,9 +248,9 @@ cl_kernel_bin_t *cl_create_kernel_bin(size_t numDevices)
 
 cl_kernel_bin_t *cl_unserialize_kernels(cl_byte *bin, size_t numBytes)
 {
-	cl_uint deviceTypes = CL_DEVICE_TYPE_DEFAULT;
+	cl_uint i,deviceTypes = CL_DEVICE_TYPE_DEFAULT;
     size_t numDevices = 1;
-    cl_uint i, offset = 0;
+    size_t offset = 0;
     cl_kernel_bin_t *bins = NULL;
 
     // minimum size
@@ -395,18 +395,18 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
 
 
 
-char **clLoadSources(char *filename, size_t *pNumLines)
+char **clLoadSources(char *filename, cl_uint *pNumLines)
 {
     FILE *fp = fopen(filename, "r");
-    cl_uint i, numLines = 0;
+    cl_uint numLines = 0;
     char **lines = NULL;
-    cl_uint lineSize = sizeof(char) * CL_MAX_LINESIZE;
+    cl_uint i, lineSize = sizeof(char) * CL_MAX_LINESIZE;
 #ifdef CL_DEBUG
     printf("Reading file: %s (%p)\n",filename,fp);
 #endif
     if (fp != NULL)
     {
-        numLines = flines(fp);
+        numLines = (cl_uint)flines(fp);
         *pNumLines = numLines;
         lines = (char **)cl_malloc(numLines * sizeof(char *));
         if (lines != NULL)
@@ -479,7 +479,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
     cl_environment_t *pEnv = cl_malloc_struct(cl_environment_t);
     if (pEnv == NULL)
         return NULL;
-    pEnv->numDevices = bins->numDevices;
+    pEnv->numDevices = (cl_uint)bins->numDevices;
     pEnv->devices = cl_malloc_array(cl_device_id, pEnv->numDevices);
     pEnv->queues  = cl_malloc_array(cl_command_queue, pEnv->numDevices);
     if (pEnv->devices == NULL || pEnv->queues == NULL)
@@ -600,7 +600,13 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                 err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
 #ifdef CL_DEBUG
                 printf("Querying for num kernels = %u, Error = %d\n", pEnv->numKernels, err);
-#endif
+#endif	
+				if (err != CL_SUCCESS || pEnv->numKernels == 0)
+				{
+					printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
+					clDeleteEnvironment(pEnv);
+					return NULL;
+				}
                 do {
                     // create the kernels
                     pEnv->kernels = cl_malloc_array(cl_kernel,pEnv->numKernels);
@@ -636,6 +642,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                         }
                         else if (err == CL_INVALID_VALUE)
                         {
+							printf("Only %u values were filled in!\n", pEnv->numKernels);
                             if (pEnv->kernels[0] != NULL)
                                 printf("WARNING! Some Kernel Values were filled in!\n");
                             cl_free(pEnv->kernels);
@@ -790,10 +797,21 @@ cl_environment_t *clCreateEnvironment(char *filename,
                 // that we are looking for).
 
                 // do the initial query to find the exact number of kernels
-                err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
+				err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
 #ifdef CL_DEBUG
                 printf("Querying for num kernels = %u, Error = %d\n", pEnv->numKernels, err);
+				clPrintError(err);
 #endif
+				err = CL_SUCCESS; 
+				if (pEnv->numKernels == 0)
+					pEnv->numKernels = 1;
+					
+				if (err != CL_SUCCESS || pEnv->numKernels == 0)
+				{
+					printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
+					clDeleteEnvironment(pEnv);
+					return NULL;
+				}
                 do {
                     // create the kernels
                     pEnv->kernels = cl_malloc_array(cl_kernel,pEnv->numKernels);
@@ -829,6 +847,7 @@ cl_environment_t *clCreateEnvironment(char *filename,
                         }
                         else if (err == CL_INVALID_VALUE)
                         {
+							printf("Only %u kernels were returned!\n", pEnv->numKernels);
                             if (pEnv->kernels[0] != NULL)
                                 printf("WARNING! Some Kernel Values were filled in!\n");
                             cl_free(pEnv->kernels);
@@ -1024,5 +1043,19 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
 			break;
     }
 	return err;
+}
+
+cl_uint clGetTypeFromString(char *typestring)
+{
+	if (strncmp(typestring, "all",4) == 0)
+		return CL_DEVICE_TYPE_ALL;
+	else if (strncmp(typestring,"gpu",4) == 0)
+		return CL_DEVICE_TYPE_GPU;
+	else if (strncmp(typestring,"cpu",4) == 0)
+		return CL_DEVICE_TYPE_CPU;
+	else if (strncmp(typestring,"acc",4) == 0 || strncmp(typestring,"accelerator",12) == 0)
+		return CL_DEVICE_TYPE_ACCELERATOR;
+	else
+		return CL_DEVICE_TYPE_DEFAULT;
 }
 

@@ -29,7 +29,8 @@ PATH_CONV=$(subst /,\,$(1))
 else
 PATH_CONV=$(subst \,/,$(1))
 endif
-
+P2W_CONV=$(patsubst \cygdrive\c\%,c:\%,$(subst /,\,$(1)))
+W2P_CONV=$(subst \,/,$(patsubst C:\%,\cygdrive\c\% $(1)))
 
 ifdef LOGFILE
 LOGGING=&>>$(LOGFILE)
@@ -72,13 +73,23 @@ ifdef INSTALL_DIR
 TARGET_INSTALLED=$(INSTALL_DIR)/$(BIN_PRE)$(TARGET)$(BIN_EXT)
 endif
 
-OBJECTS=$(ASSEMBLY:%.S=$(ODIR)/%.o) $(CPPSOURCES:%.cpp=$(ODIR)/%.o) $(CSOURCES:%.c=$(ODIR)/%.o)
+DEFS+=KDIR="\"$(KDIR)\"" CL_USER_DEVICE_COUNT=$(CL_USER_DEVICE_COUNT) CL_USER_DEVICE_TYPE="\"$(CL_USER_DEVICE_TYPE)\""
+
+
 ifdef CL_BUILD_RUNTIME
 DEFS+=CL_BUILD_RUNTIME
-else
+else ifdef CLSOURCES
 KERNELS=$(CLSOURCES:%.cl=%.h)
 KOPTIONS=$(CLSOURCES:%.cl=$(ODIR)/%.clopt)
+ifeq ($(HOST_OS),CYGWIN)
+# The Clang/LLVM is a Windows Path Compiler
+KFLAGS=$(foreach inc,$(KIDIRS),-I$(call P2W_CONV,$(inc))) $(foreach def,$(KDEFS),-D$(def))
+else
+KFLAGS=$(foreach inc,$(KIDIRS),-I$(inc)) $(foreach def,$(KDEFS),-D$(def))
 endif
+endif
+
+OBJECTS=$(ASSEMBLY:%.S=$(ODIR)/%.o) $(CPPSOURCES:%.cpp=$(ODIR)/%.o) $(CSOURCES:%.c=$(ODIR)/%.o)
 INCLUDES=$(foreach inc,$(IDIRS),-I$(call PATH_CONV,$(inc)))
 DEFINES=$(foreach def,$(DEFS),-D$(def))
 ifeq ($(HOST_OS),CYGWIN)
@@ -86,7 +97,7 @@ ifeq ($(HOST_OS),CYGWIN)
 endif
 LIBRARIES=$(foreach ldir,$(LDIRS),-L$(call PATH_CONV,$(ldir))) $(foreach lib,$(LIBS),-l$(lib))
 AFLAGS+=-gdwarf2 $(INCLUDES)
-CFLAGS+=-Wall -ggdb -c $(INCLUDES) $(DEFINES) -DKDIR="\"$(KDIR)\"" -mtune=native
+CFLAGS+=-Wall -ggdb -c $(INCLUDES) $(DEFINES) -mtune=native
 
 all: Makefile $(SOURCES) $(TARGET_BIN)
 
@@ -176,12 +187,13 @@ endif
 
 clean_kernels:
 ifneq ($(KOPTIONS),)
+	@echo Cleaning Kernel Option File $(KOPTIONS)
 	-$(Q)$(CLEAN) $(call PATH_CONV,$(KOPTIONS))
 endif
 ifneq ($(KERNELS),)
+	@echo Cleaning Precompiled Kernels $(KERNELS)
 	-$(Q)$(CLEAN) $(call PATH_CONV,$(KERNELS))
 endif
-
 
 $(ODIR)/%.o: %.c $(KERNELS)
 	@echo Compiling C $<
@@ -197,7 +209,7 @@ $(ODIR)/%.o: %.S
 
 %.h: $(KDIR)/%.cl
 	@echo Compiling OpenCL Kernel $<
-	-$(Q)$(CL) -n -f $< -d $(CL_DEVICE_COUNT) -t $(CL_DEVICE_TYPE) -h $@ -W "$(DEFINES) $(INCLUDES)"
+	-$(Q)$(CL) -n -f $< -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $@ -W "$(KFLAGS)"
 
 $(ODIR)/%.clopt: Makefile
 	@echo Building local options file $@ for building OpenCL kernel dependencies.

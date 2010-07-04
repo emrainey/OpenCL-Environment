@@ -5,3 +5,5 @@ TODO - Determine Win32 or Win64 paths
 TODO - Work around NVidia issue with requesting CL_DEVICE_TYPE (crashes) - Works on APPLE!
 TODO - Remove \User\emrainey paths from everything (CL_OPTS, etc).
 TODO - Specify Windows paths for NVidia runtime compiler on Cygwin
+TODO - Be able to specify OPENCL_ROOT in your environment variables in Visual Studio 2005
+TODO - Be able to specify KDIR in your build variables.
