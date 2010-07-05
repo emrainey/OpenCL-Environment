@@ -56,3 +56,6 @@ What's contained herein:
 7.) clNBody - an implementation of the famous N-body gravity simulator.
 8.) clDeviceQuery - queries all Platform and per device information.
 
+Locations to Get RAW HD Video Files for clYUV and clImgFilter
+Small YUV video files: http://dsplab.diei.unipg.it/~baruffa/dvbt/binaries/player/seqs/
+Large YUV video files: http://www.highdefforum.com/high-definition-movies-video-clips/6537-official-hd-video-clip-list.html
