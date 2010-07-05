@@ -64,7 +64,7 @@ typedef unsigned char cl_byte;
 
 /** This is the data structure which holds precompiled OpenCL kernels for a series of devices */
 typedef struct _cl_kernel_bin_t {
-    cl_uint   deviceTypes;      /**< the device types used in generating this set of kernels */
+    cl_device_type deviceTypes; /**< the device types used in generating this set of kernels */
     size_t    numDevices;		/**< the number of devices these kernels have been compiled against */
     size_t    numBytesSizes;	/**< The number of bytes in the sizes array */
     size_t    numBytesData;		/**< The number of bytes in the data array */

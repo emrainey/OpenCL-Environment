@@ -16,5 +16,5 @@ include $(LOCAL_ROOT)/build/prelude.mak
 TARGET=clcompiler
 TARGETTYPE=exe
 CSOURCES=clcompiler.c
-LIBS+=clquery clenvironment
+LIBS+=clenvironment clquery
 include $(LOCAL_ROOT)/build/finale.mak

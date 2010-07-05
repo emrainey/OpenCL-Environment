@@ -26,4 +26,5 @@ LDIRS=$(LOCAL_ROOT)/out
 KDIR=$(LOCAL_ROOT)/sources/kernels/
 KIDIRS=$(LOCAL_ROOT)/include .
 KDEFS=
-
+KFLAGS=-w -cl-mad-enable
+#-cl-opt-disable

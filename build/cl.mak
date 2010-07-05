@@ -60,7 +60,6 @@ ifdef INSTALL_DIR
 	TARGET_INSTALLED=$(INSTALL_DIR)/$(BIN_PRE)$(TARGET)$(BIN_EXT)
 endif
 
-# C/C++ Defines
 DEFS+=KDIR="\"$(call ESCAPE_CONV,$(KDIR))\"" CL_USER_DEVICE_COUNT=$(CL_USER_DEVICE_COUNT) CL_USER_DEVICE_TYPE="\"$(CL_USER_DEVICE_TYPE)\""
 
 OBJECTS=$(ASSEMBLY:%.S=$(ODIR)/%.obj) $(CPPSOURCES:%.cpp=$(ODIR)/%.obj) $(CSOURCES:%.c=$(ODIR)/%.obj)
@@ -69,7 +68,7 @@ DEFS+=CL_BUILD_RUNTIME
 else ifdef CLSOURCES
 KERNELS=$(CLSOURCES:%.cl=%.h)
 KOPTIONS=$(CLSOURCES:%.cl=%.clopt)
-KFLAGS=$(foreach inc,$(KIDIRS),-I$(call PATH_CONV,$(inc))) $(foreach def,$(KDEFS),-D$(def))
+KFLAGS+=$(foreach inc,$(KIDIRS),-I$(call PATH_CONV,$(inc))) $(foreach def,$(KDEFS),-D$(def))
 endif
 INCLUDES=$(foreach inc,$(IDIRS),/I$(call PATH_CONV,$(inc)))
 DEFINES=$(foreach def,$(DEFS),/D$(def))

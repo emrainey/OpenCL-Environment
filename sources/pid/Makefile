@@ -17,8 +17,12 @@ TARGET=clpid
 TARGETTYPE=exe
 CSOURCES=pid.c
 CLSOURCES=kernel_pid.cl
-CL_USER_DEVICE_COUNT=2
-CL_USER_DEVICE_TYPE=all
-LIBS+=clenvironment clmath
+CL_USER_DEVICE_COUNT=1
+ifeq ($(HOST_OS),Windows_NT)
+CL_USER_DEVICE_TYPE=gpu
+else
+CL_USER_DEVICE_TYPE=cpu
+endif
+LIBS+=clenvironment clmath clquery
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/finale.mak

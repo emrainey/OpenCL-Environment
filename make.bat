@@ -13,7 +13,7 @@
 SET TYPES=lib pdb idb exp obj exe o a so ilk manifest
 FOR %%A IN (%TYPES%) DO del /Q /F out\obj\*.%%A
 FOR %%A IN (%TYPES%) DO del /Q /F out\*.%%A
-@GOTO END
+@SET TARGET=clean
 
 :TARGETS
 @FOR %%A IN (%DIRS%) DO @(

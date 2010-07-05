@@ -129,8 +129,6 @@ int main(int argc, char *argv[])
 		cl_uint dev_type = CL_DEVICE_TYPE_DEFAULT;
         clOptions(argc, argv);
         print_logo();
-        if (verbose)
-            printf("Loading file %s\n", filename);
 
         if (verbose && filename[0] != '\0')
 			printf("Compiling File: %s\n",filename);

@@ -320,7 +320,7 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
     size_t numDevices;
     cl_kernel_bin_t *bins = NULL;
     cl_device_id devices[CL_MAX_DEVICES];
-	cl_uint deviceTypes = CL_DEVICE_TYPE_DEFAULT;
+	cl_device_type deviceTypes = 0;
 
     err = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(size_t), &numDevices, NULL);
     if (err == CL_SUCCESS)
@@ -336,16 +336,20 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
 #endif		
 		for (i = 0; i < numDevices; i++)
 		{
-			cl_uint tmp = 0;
+			cl_device_type tmp = 0;
 			size_t bytes = 0;
 			// query each device and ask it what type it is. OR that into a singe bit field
-#ifndef _MSC_VER			
-			err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(cl_uint), &tmp, &bytes);
-			deviceTypes |= tmp;
-#else		
-			// if we're on windows we just assume that it's only a GPU version. 
-			deviceTypes |= CL_DEVICE_TYPE_GPU;
-#endif			
+		
+			err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(tmp), &tmp, &bytes);
+			if (bytes == sizeof(tmp))
+			{
+				deviceTypes |= tmp;
+			}
+			else
+			{
+				printf("ERROR!!!! Can't receive the CL_DEVICE_TYPE!\n");
+				return NULL;
+			}
 		}
 #ifdef CL_DEBUG		
 		printf("CL_DEVICE_TYPE(s) = 0x%08x\n",deviceTypes);
@@ -388,12 +392,13 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
 			err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, bins->numBytesData, bins->data, &numBinaries2);
             cl_assert(err == CL_SUCCESS,);
             numBinaries2 /= sizeof(unsigned char *);
+#ifdef CL_DEBUG
+			printf("Wrote %u pointers to the binary structure!\n", numBinaries);
+#endif			
         }
     }
     return bins;
 }
-
-
 
 char **clLoadSources(char *filename, cl_uint *pNumLines)
 {
@@ -476,6 +481,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
 {
     cl_int err = CL_SUCCESS;
     cl_uint i,numPlatforms;
+	cl_uint numDevices = 0;
     cl_environment_t *pEnv = cl_malloc_struct(cl_environment_t);
     if (pEnv == NULL)
         return NULL;
@@ -501,10 +507,13 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
 #ifdef CL_DEBUG
         printf("Platform ID %p\n", pEnv->platform);
 #endif
-        err = clGetDeviceIDs(pEnv->platform, bins->deviceTypes, pEnv->numDevices, pEnv->devices, &pEnv->numDevices);
+        err = clGetDeviceIDs(pEnv->platform, bins->deviceTypes, pEnv->numDevices, pEnv->devices, &numDevices);
         if (err == CL_SUCCESS)
         {
 #ifdef CL_DEBUG
+			printf("Returned %u devices! (Asked for %u)\n", numDevices, pEnv->numDevices);
+			if (numDevices > pEnv->numDevices)
+				printf("Using only the requested number of devices!\n");
             for (i = 0; i < pEnv->numDevices; i++)
                 printf("Device ID[%02x] = %p\n", i, pEnv->devices[i]);
 #endif
@@ -590,23 +599,23 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                 }
 
                 printf("No build errors\n");
-
-                // now we're going to try to allocate the number of kernels
-                // within the program by guessing a number and cl_malloc/freeing
-                // until that number is correct (so long as we get the error code
-                // that we are looking for).
-
+				
+#ifndef CL_ITERATIVE_QUERY 
                 // do the initial query to find the exact number of kernels
                 err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
-#ifdef CL_DEBUG
-                printf("Querying for num kernels = %u, Error = %d\n", pEnv->numKernels, err);
-#endif	
 				if (err != CL_SUCCESS || pEnv->numKernels == 0)
 				{
 					printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
 					clDeleteEnvironment(pEnv);
 					return NULL;
 				}
+#else
+                // now we're going to try to allocate the number of kernels
+                // within the program by guessing a number and cl_malloc/freeing
+                // until that number is correct (so long as we get the error code
+                // that we are looking for).
+				pEnv->numKernels = 1; // assume 1 kernel
+#endif				
                 do {
                     // create the kernels
                     pEnv->kernels = cl_malloc_array(cl_kernel,pEnv->numKernels);
@@ -624,7 +633,11 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                         printf("Allocated room for %u kernels\n",pEnv->numKernels);
 #endif
                         err = clCreateKernelsInProgram(pEnv->program, pEnv->numKernels, pEnv->kernels, &pEnv->numKernels);
-                        if (err == CL_SUCCESS)
+#ifdef CL_DEBUG
+						printf("Queried for %u kernels\n", pEnv->numKernels);
+						clPrintError(err);
+#endif                        
+						if (err == CL_SUCCESS)
                         {
                             cl_uint j;
                             char function_name[CL_MAX_STRING];
@@ -640,16 +653,23 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                                 printf("SYMBOL: %s :: %u (%p)\n",function_name, numArgs, pEnv->kernels[j]);
                             }
                         }
-                        else if (err == CL_INVALID_VALUE)
+						else if (err == CL_INVALID_KERNEL_DEFINITION)
+						{
+							// something is terribly wrong (NVIDIA!!!!)
+							clDeleteEnvironment(pEnv);
+							return NULL;
+						}
+                        else // if (err == CL_INVALID_VALUE)
                         {
 							printf("Only %u values were filled in!\n", pEnv->numKernels);
                             if (pEnv->kernels[0] != NULL)
                                 printf("WARNING! Some Kernel Values were filled in!\n");
                             cl_free(pEnv->kernels);
                             cl_free(pEnv->retCodes);
+							pEnv->numKernels++;
                         }
                     }
-                } while (err == CL_INVALID_VALUE);
+                } while (err != CL_SUCCESS);
             }
         }
     }
@@ -691,11 +711,13 @@ cl_environment_t *clCreateEnvironment(char *filename,
 #ifdef CL_DEBUG
 		printf("Requesting %u devices\n",numDevices);
 #endif		
-        err = clGetDeviceIDs(pEnv->platform, dev_types, pEnv->numDevices, pEnv->devices, &pEnv->numDevices);
+        err = clGetDeviceIDs(pEnv->platform, dev_types, pEnv->numDevices, pEnv->devices, &numDevices);
         if (err == CL_SUCCESS)
         {
 #ifdef CL_DEBUG
-			printf("Returned %u devices! (Asked for %u)\n", pEnv->numDevices, numDevices);
+			printf("Returned %u devices! (Asked for %u)\n", numDevices, pEnv->numDevices);
+			if (numDevices > pEnv->numDevices)
+				printf("Using only the requested number of devices!\n");
             for (i = 0; i < pEnv->numDevices; i++)
                 printf("Device ID[%02x] = %p\n", i, pEnv->devices[i]);
 #endif
@@ -790,30 +812,26 @@ cl_environment_t *clCreateEnvironment(char *filename,
                 }
 
                 printf("No build errors\n");
-
-                // now we're going to try to allocate the number of kernels
-                // within the program by guessing a number and cl_malloc/freeing
-                // until that number is correct (so long as we get the error code
-                // that we are looking for).
-
+				
+#ifndef CL_ITERATIVE_QUERY
                 // do the initial query to find the exact number of kernels
 				err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
-#ifdef CL_DEBUG
-                printf("Querying for num kernels = %u, Error = %d\n", pEnv->numKernels, err);
-				clPrintError(err);
-#endif
-				err = CL_SUCCESS; 
-				if (pEnv->numKernels == 0)
-					pEnv->numKernels = 1;
-					
 				if (err != CL_SUCCESS || pEnv->numKernels == 0)
 				{
 					printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
 					clDeleteEnvironment(pEnv);
 					return NULL;
 				}
+#else
+				// now we're going to try to allocate the number of kernels
+                // within the program by guessing a number and cl_malloc/freeing
+                // until that number is correct (so long as we get the error code
+                // that we are looking for).
+				pEnv->numKernels = 1; // assume 1 kernel to start with
+#endif					
+
                 do {
-                    // create the kernels
+					// create the kernels
                     pEnv->kernels = cl_malloc_array(cl_kernel,pEnv->numKernels);
                     pEnv->retCodes = cl_malloc_array(cl_int,pEnv->numKernels);
                     if (pEnv->kernels == NULL || pEnv->retCodes == NULL)
@@ -829,7 +847,11 @@ cl_environment_t *clCreateEnvironment(char *filename,
                         printf("Allocated room for %u kernels\n",pEnv->numKernels);
 #endif
                         err = clCreateKernelsInProgram(pEnv->program, pEnv->numKernels, pEnv->kernels, &pEnv->numKernels);
-                        if (err == CL_SUCCESS)
+#ifdef CL_DEBUG
+						printf("Queried for %u kernels\n", pEnv->numKernels);
+						clPrintError(err);
+#endif  
+						if (err == CL_SUCCESS)
                         {
                             cl_uint j;
                             char function_name[CL_MAX_STRING];
@@ -845,16 +867,23 @@ cl_environment_t *clCreateEnvironment(char *filename,
                                 printf("SYMBOL: %s :: %u (%p)\n",function_name, numArgs, pEnv->kernels[j]);
                             }
                         }
-                        else if (err == CL_INVALID_VALUE)
+                        else if (err == CL_INVALID_KERNEL_DEFINITION)
+						{
+							// something is terribly wrong (NVIDIA!!!!)
+							clDeleteEnvironment(pEnv);
+							return NULL;
+						}
+                        else // if (err == CL_INVALID_VALUE)
                         {
 							printf("Only %u kernels were returned!\n", pEnv->numKernels);
                             if (pEnv->kernels[0] != NULL)
                                 printf("WARNING! Some Kernel Values were filled in!\n");
                             cl_free(pEnv->kernels);
                             cl_free(pEnv->retCodes);
+							pEnv->numKernels++;
                         }
                     }
-                } while (err == CL_INVALID_VALUE);
+                } while (err != CL_SUCCESS);
             }
         }
 		else

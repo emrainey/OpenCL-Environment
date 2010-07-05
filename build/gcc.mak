@@ -38,14 +38,6 @@ else
 LOGGING=
 endif
 
-ifdef CL_DEBUG
-DEFS+=CL_DEBUG
-endif
-
-ifndef NUM_KERNELS
-NUM_KERNELS=1
-endif
-
 ifeq ($(strip $(TARGETTYPE)),library)
 	BIN_PRE=lib
 	BIN_EXT=.a
@@ -60,13 +52,6 @@ else ifeq ($(strip $(TARGETTYPE)),implib)
 	BIN_EXT=.a
 endif
 
-ifndef CL_DEVICE_TYPE
-CL_DEVICE_TYPE=cpu
-endif
-
-ifndef CL_DEVICE_COUNT
-CL_DEVICE_COUNT=1
-endif
 
 TARGET_BIN=$(TDIR)/$(BIN_PRE)$(TARGET)$(BIN_EXT)
 ifdef INSTALL_DIR
@@ -75,7 +60,6 @@ endif
 
 DEFS+=KDIR="\"$(KDIR)\"" CL_USER_DEVICE_COUNT=$(CL_USER_DEVICE_COUNT) CL_USER_DEVICE_TYPE="\"$(CL_USER_DEVICE_TYPE)\""
 
-
 ifdef CL_BUILD_RUNTIME
 DEFS+=CL_BUILD_RUNTIME
 else ifdef CLSOURCES
@@ -83,9 +67,9 @@ KERNELS=$(CLSOURCES:%.cl=%.h)
 KOPTIONS=$(CLSOURCES:%.cl=$(ODIR)/%.clopt)
 ifeq ($(HOST_OS),CYGWIN)
 # The Clang/LLVM is a Windows Path Compiler
-KFLAGS=$(foreach inc,$(KIDIRS),-I$(call P2W_CONV,$(inc))) $(foreach def,$(KDEFS),-D$(def))
+KFLAGS+=$(foreach inc,$(KIDIRS),-I$(call P2W_CONV,$(inc))) $(foreach def,$(KDEFS),-D$(def))
 else
-KFLAGS=$(foreach inc,$(KIDIRS),-I$(inc)) $(foreach def,$(KDEFS),-D$(def))
+KFLAGS+=$(foreach inc,$(KIDIRS),-I$(inc)) $(foreach def,$(KDEFS),-D$(def))
 endif
 endif
 

@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 	cl_uint count = CL_USER_DEVICE_COUNT; 
 	
 #ifdef CL_BUILD_RUNTIME
-    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",, 2,notify, CL_ARGS);
+    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_nbody.cl",type,count,notify, CL_ARGS);
 #else	
 	cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
 #endif	
