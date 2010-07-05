@@ -2,7 +2,7 @@
  * Copyright (C) 2010 Erik Rainey
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this fSrcle except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -10,7 +10,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * See the License fDstr the specifSrcc language governing permissions and
  * limitations under the License.
  */
 
@@ -102,7 +102,7 @@ cl_int cl_convert_rgbf_to_yuvf(cl_environment_t *pEnv,
     return err;
 }
 
-cl_int convert_uyvyto_2bgr(cl_environment_t *pEnv, cl_uchar *pUYVY, cl_uchar *pBGR, cl_uint width, cl_uint height, cl_int srcStride, cl_int dstStride)
+cl_int convert_uyvy_to_2bgr(cl_environment_t *pEnv, cl_uchar *pUYVY, cl_uchar *pBGR, cl_uint width, cl_uint height, cl_int srcStride, cl_int dstStride)
 {
 	cl_int err = CL_SUCCESS;
 	cl_kernel_param_t params[] = {
@@ -126,6 +126,32 @@ cl_int convert_uyvyto_2bgr(cl_environment_t *pEnv, cl_uchar *pUYVY, cl_uchar *pB
 	printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
 	return err;
 }
+
+cl_int convert_yuv420_to_luma(cl_environment_t *pEnv, cl_uchar *pYUV420, cl_uchar *pLuma, cl_uint width, cl_uint height, cl_int srcStride, cl_int dstStride)
+{
+	cl_int err = CL_SUCCESS;
+	cl_kernel_param_t params[] = {
+		{CL_KPARAM_BUFFER_1D, srcStride*height, pYUV420, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, dstStride*height, pLuma, NULL, CL_MEM_WRITE_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &width, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &height, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_int), &srcStride, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_int), &dstStride, NULL, CL_MEM_READ_ONLY},
+	};
+	cl_kernel_call_t call = {
+		"kernel_yuv420_to_luma",
+		params, dimof(params),
+		2,
+		{0,0,0},
+		{width, height, 0}, 
+		{1,1,1},
+		CL_SUCCESS, 0,0,0
+	};
+	err = clCallKernel(pEnv, &call, 1);
+	printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
+	return err;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -153,7 +179,7 @@ int main(int argc, char *argv[])
 	    clock_t c_start, c_diff1, c_diff2;
 
 #ifdef CL_BUILD_RUNTIME
-	    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",CL_DEVICE_TYPE_GPU,2,notify, CL_ARGS);
+	    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",CL_DEVICE_TYPE_GPU,1,notify, CL_ARGS);
 #else
 	    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
 #endif
@@ -213,44 +239,72 @@ int main(int argc, char *argv[])
 	    cl_free(r); cl_free(g); cl_free(b);
 	    cl_free(y); cl_free(u); cl_free(v);
 	}
-	else if (argc == 6)
+	else if (argc >= 6)
 	{
-		char filename[CL_MAX_PATHSIZE];
-		char outfile[CL_MAX_PATHSIZE];
+		char srcfSrcle[CL_MAX_PATHSIZE];
+		char dstfSrcle[CL_MAX_PATHSIZE];
 		int width = atoi(argv[2]);
 		int height = atoi(argv[3]);
 		int f, numFrames = atoi(argv[4]);
-		unsigned int srcStride = width * 2;
-		unsigned int dstStride = width * 3;
-		int numYUVBytes = srcStride * height;
-		int numRGBBytes = dstStride * height;
-		strncpy(filename, argv[1], CL_MAX_PATHSIZE);
-		strncpy(outfile, argv[5], CL_MAX_PATHSIZE);
-		FILE *fi = fopen(filename, "rb");
-		FILE *fo = fopen(outfile, "wb+");
-		cl_uchar *pUYVY = cl_malloc_array(cl_uchar, numYUVBytes);
-		cl_uchar *pBGR  = cl_malloc_array(cl_uchar, numRGBBytes);
+		unsigned int srcStride = 0;
+		unsigned int dstStride = 0;
+		int numSrcBytes = 0;
+		int numDstBytes = 0;
+		int numSrcPlanes = 1;
+		int numDstPlanes = 1;
+		int type = (argc > 6?atoi(argv[6]):0);
+		FILE *fSrc = NULL;
+		FILE *fDst = NULL;
+		cl_uchar *pSrc = NULL;
+		cl_uchar *pDst = NULL;
+		if (type == 0) // UYVY to BGR 
+		{
+			srcStride = width * 2;
+			dstStride = width * 3;
+			numSrcBytes = srcStride * height * numSrcPlanes;
+			numDstBytes = dstStride * height * numDstPlanes;
+		}
+		else if (type == 1) // IYUV to Luma
+		{
+			srcStride = width;
+			numSrcPlanes = 3;
+			dstStride = width;
+			numSrcBytes = (width * height * 3)/2;
+			numDstBytes = dstStride * height * numDstPlanes;
+		}
+		
+		pSrc = cl_malloc_array(cl_uchar, numSrcBytes);
+		pDst = cl_malloc_array(cl_uchar, numDstBytes);
+		
+		strncpy(srcfSrcle, argv[1], CL_MAX_PATHSIZE);
+		strncpy(dstfSrcle, argv[5], CL_MAX_PATHSIZE);
+		
+		fSrc = fopen(srcfSrcle, "rb");
+		fDst = fopen(dstfSrcle, "wb+");
 		
 #ifdef CL_BUILD_RUNTIME
-	    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",CL_DEVICE_TYPE_GPU, 2,notify, CL_ARGS);
+	    cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_yuv.cl",CL_DEVICE_TYPE_GPU, 1,notify, CL_ARGS);
 #else
 	    cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
 #endif
-		if (pEnv && fi && fo && pUYVY && pBGR)
+		if (pEnv && fSrc && fDst && pSrc && pSrc)
 		{
 			for (f = 0; f < numFrames; f++) 
 			{
-				fread(pUYVY, 1, numYUVBytes, fi);
-				convert_uyvyto_2bgr(pEnv, pUYVY, pBGR, width, height, srcStride, dstStride);
-				fwrite(pBGR, 1, numRGBBytes, fo);
+				fread(pSrc, 1, numSrcBytes, fSrc);
+				if (type == 0)
+					convert_uyvy_to_2bgr(pEnv, pSrc, pDst, width, height, srcStride, dstStride);
+				else if (type == 1)
+					convert_yuv420_to_luma(pEnv, pSrc, pDst, width, height, srcStride, dstStride);
+				fwrite(pDst, 1, numDstBytes, fDst);
 			}
 			clDeleteEnvironment(pEnv);
 		}
-		cl_free(pUYVY);
-		cl_free(pBGR);
+		cl_free(pDst);
+		cl_free(pSrc);
 		
-		fclose(fi); 
-		fclose(fo);
+		fclose(fSrc); 
+		fclose(fDst);
 	}
     return 0;
 }
