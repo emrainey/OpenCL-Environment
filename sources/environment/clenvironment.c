@@ -1005,6 +1005,8 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
 	    for (i = 0; i<pEnv->numDevices; i++)
 	        clFinish(pEnv->queues[i]);
 
+		clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
+			
 	    // enqueue the kernel
 	    for (i = 0; i < pEnv->numDevices; i++) {
 	        for (j = 0; j < pCall[k].numParams; j++) {
@@ -1013,6 +1015,8 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
 	#endif
 				if (pCall[k].params[j].type == CL_KPARAM_BUFFER_0D)
 					err = clSetKernelArg(kernel, j, pCall[k].params[j].numBytes, pCall[k].params[j].data);
+				else if (pCall[k].params[j].type == CL_KPARAM_LOCAL)
+					err = clSetKernelArg(kernel, j, pCall[k].params[j].numBytes, NULL);
 				else
 	            	err = clSetKernelArg(kernel, j, sizeof(cl_mem), &pCall[k].params[j].mem);
 	            cl_assert((err == CL_SUCCESS),printf("ERROR: Kernel Arg %d is wrong (Error=%d)\n", j, err));
@@ -1047,6 +1051,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
 	            if (pCall[k].params[j].flags == CL_MEM_WRITE_ONLY ||
 	                pCall[k].params[j].flags == CL_MEM_READ_WRITE)
 	            {
+					err = CL_SUCCESS;
 					if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
 						err = clEnqueueReadBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pCall[k].params[j].numBytes, pCall[k].params[j].data, 0, NULL, NULL);
 					else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D || pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
@@ -1054,8 +1059,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
 						cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;	
 						err = clEnqueueReadBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pBuf->size, pBuf->data[0], 0, NULL, &pCall[k].params[j].event);
 	                }
-				
-	                cl_assert((err == CL_SUCCESS),printf("ERROR: Read Enqueue Error=%d\n",err));
+				    cl_assert((err == CL_SUCCESS),printf("ERROR: Read Enqueue Error=%d\n",err));
 	            }
 	        }
 	    }

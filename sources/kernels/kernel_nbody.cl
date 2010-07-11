@@ -142,7 +142,7 @@ __kernel void kernel_nbody(__global float *m,
 						   __global float4 *v,
 						   __global float4 *p,
 						   __global float *t,
-						   int num)
+						   uint num)
 {
     int i = get_global_id(0);
 

@@ -100,6 +100,49 @@ cl_int imgfilter1d(cl_environment_t *pEnv,
 	return err;
 }
 
+cl_int imgfilter1d_opt(cl_environment_t *pEnv, 
+				   cl_uint width,
+				   cl_uint height,
+				   cl_uchar *pSrc, 
+				   cl_int srcStride,
+				   cl_uchar *pDst,
+				   cl_int dstStride,
+				   cl_char *op,
+				   cl_uint opDim,
+				   cl_uint range,
+				   cl_uint limit)
+{
+	cl_int err = CL_SUCCESS;
+	cl_uint numSrcBytes = srcStride * height;
+	cl_uint numDstBytes = dstStride * height;
+	cl_uint numOpBytes = 2 * opDim * opDim;
+	cl_kernel_param_t params[] = {
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &width, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &height, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, numSrcBytes, pSrc, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_int), &srcStride, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, numDstBytes, pDst, NULL, CL_MEM_WRITE_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_int), &dstStride, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, numOpBytes, op, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &opDim, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &range, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_uint), &limit, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_LOCAL,     sizeof(cl_uchar)*18, NULL, NULL, CL_MEM_READ_WRITE},
+		{CL_KPARAM_LOCAL, 	  sizeof(cl_char)*18, NULL, NULL, CL_MEM_READ_WRITE},
+	};
+	cl_kernel_call_t call = {
+		"kernel_edge_filter_opt",
+		params, dimof(params),
+		2, 
+		{0,0,0},
+		{width, height, 0},
+		{1,1,1},
+		CL_SUCCESS, 0,0,0
+	}; 
+	err = clCallKernel(pEnv, &call,1);
+	return err;
+}
+
 int main(int argc, char *argv[])
 {
     if (argc >= 5)
@@ -140,7 +183,7 @@ int main(int argc, char *argv[])
                 if (numBytes == 0)
                     break;
                 c_start = clock();
-				err = imgfilter1d(pEnv, width, height, 
+				err = imgfilter1d_opt(pEnv, width, height, 
 								  input_image, width, 
 								  output_image, width, 
 								  (cl_char *)sobel, 3, 

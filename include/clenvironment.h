@@ -78,6 +78,7 @@ typedef enum _cl_kernel_param_e {
 	CL_KPARAM_BUFFER_1D,		/**< This is an array of values to pass to the OpenCL kernel */
 	CL_KPARAM_BUFFER_2D,		/**< This is a two dimensional array of values to pass to the OpenCL Kernel */
 	CL_KPARAM_BUFFER_3D,		/**< This is a three dimensional array of values to pass to the OpenCL kernel */
+	CL_KPARAM_LOCAL,			/**< This indicates that the memory indicated by this parameter should be local to the device */
 } cl_kernel_param_e ;
 
 /**< The enumeration of the dimensions for multi-dimensional buffers. */

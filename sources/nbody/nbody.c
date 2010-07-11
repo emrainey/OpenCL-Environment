@@ -73,7 +73,7 @@ cl_int nbodies(cl_environment_t *pEnv,
 		{CL_KPARAM_BUFFER_1D, n4, v, NULL, CL_MEM_READ_WRITE},
 		{CL_KPARAM_BUFFER_1D, n4, p, NULL, CL_MEM_READ_WRITE},
 		{CL_KPARAM_BUFFER_1D, n,  t, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_0D, sizeof(size_t), &numBodies, NULL, CL_MEM_READ_ONLY},		
+		{CL_KPARAM_BUFFER_0D, sizeof(numBodies), &numBodies, NULL, CL_MEM_READ_ONLY},		
 	};
 	cl_kernel_call_t call = {
 		"kernel_nbody",
