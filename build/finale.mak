@@ -24,7 +24,9 @@ endif
 
 ifeq ($(HOST_OS),DARWIN)
     IDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
-    LDFLAGS+=-framework OpenCL
+	IDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenGL.framework/Headers
+	IDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/GLUT.framework/Headers
+    LDFLAGS+=-framework OpenCL -framework OpenGL -framework GLUT
     CFLAGS+=-fPIC
     DEFS+=__APPLE__
     ifdef CL_DEBUG

@@ -1,5 +1,5 @@
 LOCAL_ROOT?=$(shell pwd)
-DIRS=math query environment compiler imgfilter yuv pid nbody
+DIRS=math query environment compiler imgfilter yuv pid nbody spacetime
 
 .PHONY: todo all debug error
 

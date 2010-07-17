@@ -167,8 +167,8 @@ cl_byte *cl_serialize_kernels(cl_kernel_bin_t *bins, size_t *pNumBytes)
     if (bin)
     {
         size_t offset = 0;
-		memcpy(&bins[offset], &bins->deviceTypes, sizeof(cl_uint));
-		offset += sizeof(cl_uint);
+        memcpy(&bins[offset], &bins->deviceTypes, sizeof(cl_uint));
+        offset += sizeof(cl_uint);
         memcpy(&bins[offset], &bins->numDevices, sizeof(size_t));
         offset += sizeof(size_t);
         for (i = 0; i < bins->numDevices; i++)
@@ -224,7 +224,7 @@ cl_kernel_bin_t *cl_create_kernel_bin(size_t numDevices)
     bins = (cl_kernel_bin_t *)cl_malloc(sizeof(cl_kernel_bin_t));
     if (bins)
     {
-		bins->deviceTypes = CL_DEVICE_TYPE_DEFAULT; 
+        bins->deviceTypes = CL_DEVICE_TYPE_DEFAULT;
         bins->numDevices = numDevices;
         bins->numBytesSizes = sizeof(size_t) * bins->numDevices;
         bins->numBytesData = sizeof(unsigned char *) * bins->numDevices;
@@ -248,7 +248,7 @@ cl_kernel_bin_t *cl_create_kernel_bin(size_t numDevices)
 
 cl_kernel_bin_t *cl_unserialize_kernels(cl_byte *bin, size_t numBytes)
 {
-	cl_uint i,deviceTypes = CL_DEVICE_TYPE_DEFAULT;
+    cl_uint i,deviceTypes = CL_DEVICE_TYPE_DEFAULT;
     size_t numDevices = 1;
     size_t offset = 0;
     cl_kernel_bin_t *bins = NULL;
@@ -257,15 +257,15 @@ cl_kernel_bin_t *cl_unserialize_kernels(cl_byte *bin, size_t numBytes)
     if (numBytes <= (2* sizeof(size_t)))
         return NULL;
 
-	memcpy(&deviceTypes, &bin[offset], sizeof(cl_uint));
-	offset += sizeof(cl_uint);
+    memcpy(&deviceTypes, &bin[offset], sizeof(cl_uint));
+    offset += sizeof(cl_uint);
     memcpy(&numDevices, &bin[offset], sizeof(size_t));
     offset += sizeof(size_t);
     printf("There are %lu device kernels in the flat binary\n", numDevices);
     bins = cl_create_kernel_bin(numDevices);
     if (bins)
     {
-		bins->deviceTypes = deviceTypes;
+        bins->deviceTypes = deviceTypes;
         bins->numBytesSizes = sizeof(size_t) * numDevices;
         bins->numBytesData  = sizeof(cl_byte *) * numDevices;
         for (i = 0; i < numDevices; i++)
@@ -296,8 +296,8 @@ cl_kernel_bin_t *cl_unserialize_kernels(cl_byte *bin, size_t numBytes)
 void cl_dump_kernels(char *filename, cl_kernel_bin_t *bins)
 {
     size_t numBytes = 0;
-	cl_byte *bin = NULL;
-	
+    cl_byte *bin = NULL;
+
     if (filename[0] == '\0')
         return;
     bin = cl_serialize_kernels(bins, &numBytes);
@@ -320,7 +320,7 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
     size_t numDevices;
     cl_kernel_bin_t *bins = NULL;
     cl_device_id devices[CL_MAX_DEVICES];
-	cl_device_type deviceTypes = 0;
+    cl_device_type deviceTypes = 0;
 
     err = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(size_t), &numDevices, NULL);
     if (err == CL_SUCCESS)
@@ -330,30 +330,30 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
 #endif
         // get the devices
         clGetProgramInfo(program, CL_PROGRAM_DEVICES, sizeof(devices), devices, &numDevices);
-		numDevices /= sizeof(cl_device_id);
-#ifdef CL_DEBUG		
-		printf("%u devices retrieved!\n",numDevices);
-#endif		
-		for (i = 0; i < numDevices; i++)
-		{
-			cl_device_type tmp = 0;
-			size_t bytes = 0;
-			// query each device and ask it what type it is. OR that into a singe bit field
-		
-			err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(tmp), &tmp, &bytes);
-			if (bytes == sizeof(tmp))
-			{
-				deviceTypes |= tmp;
-			}
-			else
-			{
-				printf("ERROR!!!! Can't receive the CL_DEVICE_TYPE!\n");
-				return NULL;
-			}
-		}
-#ifdef CL_DEBUG		
-		printf("CL_DEVICE_TYPE(s) = 0x%08x\n",deviceTypes);
-#endif		
+        numDevices /= sizeof(cl_device_id);
+#ifdef CL_DEBUG
+        printf("%u devices retrieved!\n",numDevices);
+#endif
+        for (i = 0; i < numDevices; i++)
+        {
+            cl_device_type tmp = 0;
+            size_t bytes = 0;
+            // query each device and ask it what type it is. OR that into a singe bit field
+
+            err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(tmp), &tmp, &bytes);
+            if (bytes == sizeof(tmp))
+            {
+                deviceTypes |= tmp;
+            }
+            else
+            {
+                printf("ERROR!!!! Can't receive the CL_DEVICE_TYPE!\n");
+                return NULL;
+            }
+        }
+#ifdef CL_DEBUG
+        printf("CL_DEVICE_TYPE(s) = 0x%08x\n",deviceTypes);
+#endif
         // did it compile successfully?
         clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(cl_int), &err, NULL);
         if (err != CL_SUCCESS)
@@ -362,19 +362,19 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
             return NULL;
         }
 
-		bins = cl_create_kernel_bin(numDevices);
-		if (bins == NULL)
-			return NULL;
-		
-		// set the device types
-		bins->deviceTypes = deviceTypes;
-		
+        bins = cl_create_kernel_bin(numDevices);
+        if (bins == NULL)
+            return NULL;
+
+        // set the device types
+        bins->deviceTypes = deviceTypes;
+
         err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, bins->numBytesSizes, bins->sizes, &numBinaries);
         if (err != CL_SUCCESS)
         {
             printf("Error: When requesting the number of binary outputs, error %d was returned\n", err);
-			cl_delete_kernel_bin(bins);
-			bins = NULL;
+            cl_delete_kernel_bin(bins);
+            bins = NULL;
         }
         else if (err == CL_SUCCESS)
         {
@@ -389,12 +389,12 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
 #endif
                 bins->data[i] = (unsigned char *)cl_malloc(bins->sizes[i]);
             }
-			err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, bins->numBytesData, bins->data, &numBinaries2);
+            err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, bins->numBytesData, bins->data, &numBinaries2);
             cl_assert(err == CL_SUCCESS,);
             numBinaries2 /= sizeof(unsigned char *);
 #ifdef CL_DEBUG
-			printf("Wrote %u pointers to the binary structure!\n", numBinaries);
-#endif			
+            printf("Wrote %u pointers to the binary structure!\n", numBinaries);
+#endif
         }
     }
     return bins;
@@ -447,8 +447,8 @@ void cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
     {
         cl_uint d, b;
         fprintf(fo, "// PRECOMPILED HEADER, DO NOT MODIFY!\n");
-		fprintf(fo, "#ifndef _PRECOMPILED_KERNEL_H_\n");
-		fprintf(fo, "#define _PRECOMPILED_KERNEL_H_\n");
+        fprintf(fo, "#ifndef _PRECOMPILED_KERNEL_H_\n");
+        fprintf(fo, "#define _PRECOMPILED_KERNEL_H_\n");
         fprintf(fo, "#include <clenvironment.h>\n");
         fprintf(fo, "static size_t gKernelBinarySizes[%lu] = {\n",bins->numDevices);
         for (d = 0; d < bins->numDevices; d++)
@@ -470,7 +470,7 @@ void cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
         }
         fprintf(fo, "};\n");
         fprintf(fo, "static cl_kernel_bin_t gKernelBins = { 0x%08x, %luL, %luL, %luL, (size_t *)&gKernelBinarySizes, (cl_byte **)&gKernelBinaries };\n", bins->deviceTypes, bins->numDevices, bins->numBytesSizes, bins->numBytesData);
-		fprintf(fo, "#endif\n");
+        fprintf(fo, "#endif\n");
         fclose(fo);
     }
 }
@@ -481,7 +481,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
 {
     cl_int err = CL_SUCCESS;
     cl_uint i,numPlatforms;
-	cl_uint numDevices = 0;
+    cl_uint numDevices = 0;
     cl_environment_t *pEnv = cl_malloc_struct(cl_environment_t);
     if (pEnv == NULL)
         return NULL;
@@ -511,9 +511,9 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
         if (err == CL_SUCCESS)
         {
 #ifdef CL_DEBUG
-			printf("Returned %u devices! (Asked for %u)\n", numDevices, pEnv->numDevices);
-			if (numDevices > pEnv->numDevices)
-				printf("Using only the requested number of devices!\n");
+            printf("Returned %u devices! (Asked for %u)\n", numDevices, pEnv->numDevices);
+            if (numDevices > pEnv->numDevices)
+                printf("Using only the requested number of devices!\n");
             for (i = 0; i < pEnv->numDevices; i++)
                 printf("Device ID[%02x] = %p\n", i, pEnv->devices[i]);
 #endif
@@ -599,23 +599,23 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                 }
 
                 printf("No build errors\n");
-				
-#ifndef CL_ITERATIVE_QUERY 
+
+#ifndef CL_ITERATIVE_QUERY
                 // do the initial query to find the exact number of kernels
                 err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
-				if (err != CL_SUCCESS || pEnv->numKernels == 0)
-				{
-					printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
-					clDeleteEnvironment(pEnv);
-					return NULL;
-				}
+                if (err != CL_SUCCESS || pEnv->numKernels == 0)
+                {
+                    printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
+                    clDeleteEnvironment(pEnv);
+                    return NULL;
+                }
 #else
                 // now we're going to try to allocate the number of kernels
                 // within the program by guessing a number and cl_malloc/freeing
                 // until that number is correct (so long as we get the error code
                 // that we are looking for).
-				pEnv->numKernels = 1; // assume 1 kernel
-#endif				
+                pEnv->numKernels = 1; // assume 1 kernel
+#endif
                 do {
                     // create the kernels
                     pEnv->kernels = cl_malloc_array(cl_kernel,pEnv->numKernels);
@@ -634,10 +634,10 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
 #endif
                         err = clCreateKernelsInProgram(pEnv->program, pEnv->numKernels, pEnv->kernels, &pEnv->numKernels);
 #ifdef CL_DEBUG
-						printf("Queried for %u kernels\n", pEnv->numKernels);
-						clPrintError(err);
-#endif                        
-						if (err == CL_SUCCESS)
+                        printf("Queried for %u kernels\n", pEnv->numKernels);
+                        clPrintError(err);
+#endif
+                        if (err == CL_SUCCESS)
                         {
                             cl_uint j;
                             char function_name[CL_MAX_STRING];
@@ -653,20 +653,20 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                                 printf("SYMBOL: %s :: %u (%p)\n",function_name, numArgs, pEnv->kernels[j]);
                             }
                         }
-						else if (err == CL_INVALID_KERNEL_DEFINITION)
-						{
-							// something is terribly wrong (NVIDIA!!!!)
-							clDeleteEnvironment(pEnv);
-							return NULL;
-						}
+                        else if (err == CL_INVALID_KERNEL_DEFINITION)
+                        {
+                            // something is terribly wrong (NVIDIA!!!!)
+                            clDeleteEnvironment(pEnv);
+                            return NULL;
+                        }
                         else // if (err == CL_INVALID_VALUE)
                         {
-							printf("Only %u values were filled in!\n", pEnv->numKernels);
+                            printf("Only %u values were filled in!\n", pEnv->numKernels);
                             if (pEnv->kernels[0] != NULL)
                                 printf("WARNING! Some Kernel Values were filled in!\n");
                             cl_free(pEnv->kernels);
                             cl_free(pEnv->retCodes);
-							pEnv->numKernels++;
+                            pEnv->numKernels++;
                         }
                     }
                 } while (err != CL_SUCCESS);
@@ -678,7 +678,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
 
 
 cl_environment_t *clCreateEnvironment(char *filename,
-									  cl_uint dev_types,
+                                      cl_uint dev_types,
                                       cl_uint numDevices,
                                       clnotifier_f notifier,
                                       char *cl_args)
@@ -705,19 +705,19 @@ cl_environment_t *clCreateEnvironment(char *filename,
                                          (cl_context_properties)0};
 #ifdef CL_DEBUG
         printf("Platform ID %p\n", pEnv->platform);
-		//clPrintAllPlatformInfo(pEnv->platform);
+        //clPrintAllPlatformInfo(pEnv->platform);
 #endif
         pEnv->numDevices = numDevices;
 #ifdef CL_DEBUG
-		printf("Requesting %u devices\n",numDevices);
-#endif		
+        printf("Requesting %u devices\n",numDevices);
+#endif
         err = clGetDeviceIDs(pEnv->platform, dev_types, pEnv->numDevices, pEnv->devices, &numDevices);
         if (err == CL_SUCCESS)
         {
 #ifdef CL_DEBUG
-			printf("Returned %u devices! (Asked for %u)\n", numDevices, pEnv->numDevices);
-			if (numDevices > pEnv->numDevices)
-				printf("Using only the requested number of devices!\n");
+            printf("Returned %u devices! (Asked for %u)\n", numDevices, pEnv->numDevices);
+            if (numDevices > pEnv->numDevices)
+                printf("Using only the requested number of devices!\n");
             for (i = 0; i < pEnv->numDevices; i++)
                 printf("Device ID[%02x] = %p\n", i, pEnv->devices[i]);
 #endif
@@ -812,26 +812,26 @@ cl_environment_t *clCreateEnvironment(char *filename,
                 }
 
                 printf("No build errors\n");
-				
+
 #ifndef CL_ITERATIVE_QUERY
                 // do the initial query to find the exact number of kernels
-				err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
-				if (err != CL_SUCCESS || pEnv->numKernels == 0)
-				{
-					printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
-					clDeleteEnvironment(pEnv);
-					return NULL;
-				}
+                err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
+                if (err != CL_SUCCESS || pEnv->numKernels == 0)
+                {
+                    printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
+                    clDeleteEnvironment(pEnv);
+                    return NULL;
+                }
 #else
-				// now we're going to try to allocate the number of kernels
+                // now we're going to try to allocate the number of kernels
                 // within the program by guessing a number and cl_malloc/freeing
                 // until that number is correct (so long as we get the error code
                 // that we are looking for).
-				pEnv->numKernels = 1; // assume 1 kernel to start with
-#endif					
+                pEnv->numKernels = 1; // assume 1 kernel to start with
+#endif
 
                 do {
-					// create the kernels
+                    // create the kernels
                     pEnv->kernels = cl_malloc_array(cl_kernel,pEnv->numKernels);
                     pEnv->retCodes = cl_malloc_array(cl_int,pEnv->numKernels);
                     if (pEnv->kernels == NULL || pEnv->retCodes == NULL)
@@ -848,10 +848,10 @@ cl_environment_t *clCreateEnvironment(char *filename,
 #endif
                         err = clCreateKernelsInProgram(pEnv->program, pEnv->numKernels, pEnv->kernels, &pEnv->numKernels);
 #ifdef CL_DEBUG
-						printf("Queried for %u kernels\n", pEnv->numKernels);
-						clPrintError(err);
-#endif  
-						if (err == CL_SUCCESS)
+                        printf("Queried for %u kernels\n", pEnv->numKernels);
+                        clPrintError(err);
+#endif
+                        if (err == CL_SUCCESS)
                         {
                             cl_uint j;
                             char function_name[CL_MAX_STRING];
@@ -868,28 +868,28 @@ cl_environment_t *clCreateEnvironment(char *filename,
                             }
                         }
                         else if (err == CL_INVALID_KERNEL_DEFINITION)
-						{
-							// something is terribly wrong (NVIDIA!!!!)
-							clDeleteEnvironment(pEnv);
-							return NULL;
-						}
+                        {
+                            // something is terribly wrong (NVIDIA!!!!)
+                            clDeleteEnvironment(pEnv);
+                            return NULL;
+                        }
                         else // if (err == CL_INVALID_VALUE)
                         {
-							printf("Only %u kernels were returned!\n", pEnv->numKernels);
+                            printf("Only %u kernels were returned!\n", pEnv->numKernels);
                             if (pEnv->kernels[0] != NULL)
                                 printf("WARNING! Some Kernel Values were filled in!\n");
                             cl_free(pEnv->kernels);
                             cl_free(pEnv->retCodes);
-							pEnv->numKernels++;
+                            pEnv->numKernels++;
                         }
                     }
                 } while (err != CL_SUCCESS);
             }
         }
-		else
-		{
-			printf("ERROR: Failed to acquire devices of type: %u\n", dev_types);
-		}
+        else
+        {
+            printf("ERROR: Failed to acquire devices of type: %u\n", dev_types);
+        }
     }
     return pEnv;
 }
@@ -899,15 +899,15 @@ cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name)
     cl_uint i = 0;
     char name[CL_MAX_STRING];
     size_t len = CL_MAX_STRING * sizeof(cl_char);
-#ifdef CL_DEBUG	
+#ifdef CL_DEBUG
     printf("Looking for kernel %s\n", func_name);
-#endif	
+#endif
     for (i = 0; i < pEnv->numKernels; i++)
     {
         cl_int err = clGetKernelInfo(pEnv->kernels[i], CL_KERNEL_FUNCTION_NAME, sizeof(name), name, &len);
-#ifdef CL_DEBUG        
-		printf("Found SYMBOL[%06u] (%lu) %s\n", i, len, name);
-#endif		
+#ifdef CL_DEBUG
+        printf("Found SYMBOL[%06u] (%lu) %s\n", i, len, name);
+#endif
         if (err == CL_SUCCESS && strncmp(name, func_name, CL_MAX_STRING) == 0)
         {
             return pEnv->kernels[i];
@@ -920,175 +920,175 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
 {
     cl_int err = CL_SUCCESS;
     cl_uint i = 0, j = 0, k = 0;
-	
-	for (k = 0; k < numCalls; k++)
-	{
-		cl_kernel kernel = clGetKernelByName(pEnv, pCall[k].kernel_name);
-    	if (kernel == NULL)
-	        return CL_INVALID_KERNEL_NAME;
 
-	    for (j = 0; j < pCall[k].numParams; j++)
-	    {
-			if (pCall[k].params[j].type == CL_KPARAM_BUFFER_0D)
-			{
-				pCall[k].params[j].mem = NULL;
-			}
-			else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
-			{
-	        	pCall[k].params[j].mem = clCreateBuffer(pEnv->context, pCall[k].params[j].flags, pCall[k].params[j].numBytes, NULL, &err);
-		#ifdef CL_DEBUG
-		        printf("Create Buffer from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
-		                pCall[k].params[j].data,
-		                pCall[k].params[j].numBytes,
-		                (cl_uint)pCall[k].params[j].flags,
-		                pCall[k].params[j].mem,
-		                err);
-		#endif
-		        cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
-			}
-			else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D)
-			{
-				cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;
-				cl_image_format *pIf = &pBuf->format;
-				pCall[k].params[j].mem = clCreateImage2D(pEnv->context, pCall[k].params[j].flags, pIf, pBuf->dim[X_DIM], pBuf->dim[Y_DIM], pBuf->strides[Y_DIM], NULL, &err);
-		#ifdef CL_DEBUG
-		        printf("Create Image2D from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
-		                pCall[k].params[j].data,
-		                pCall[k].params[j].numBytes,
-		                (cl_uint)pCall[k].params[j].flags,
-		                pCall[k].params[j].mem,
-		                err);
-		#endif
-		        cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));			
-			}
-			else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
-			{
-				cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;
-				cl_image_format *pIf = &pBuf->format;
-				pCall[k].params[j].mem = clCreateImage3D(pEnv->context, pCall[k].params[j].flags, pIf, pBuf->dim[X_DIM], pBuf->dim[Y_DIM], pBuf->dim[Z_DIM], pBuf->strides[Y_DIM], pBuf->strides[Z_DIM], NULL, &err);
-		#ifdef CL_DEBUG
-		        printf("Create Image3D from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
-		                pCall[k].params[j].data,
-		                pCall[k].params[j].numBytes,
-		                (cl_uint)pCall[k].params[j].flags,
-		                pCall[k].params[j].mem,
-		                err);
-		#endif
-		        cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
-			}
-	    }
+    for (k = 0; k < numCalls; k++)
+    {
+        cl_kernel kernel = clGetKernelByName(pEnv, pCall[k].kernel_name);
+        if (kernel == NULL)
+            return CL_INVALID_KERNEL_NAME;
 
-	    // enqueue the writes
-	    for (i = 0; i < pEnv->numDevices; i++)
-	    {
-	        for (j = 0; j < pCall[k].numParams; j++)
-	        {
-	            if (pCall[k].params[j].flags == CL_MEM_READ_ONLY ||
-	                pCall[k].params[j].flags == CL_MEM_READ_WRITE)
-	            {
-	#ifdef CL_DEBUG
-	                printf("Copying mem %p from ptr %p for %lu bytes\n", pCall[k].params[j].mem, pCall[k].params[j].data, pCall[k].params[j].numBytes);
-	#endif
-					if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
-	                	err = clEnqueueWriteBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pCall[k].params[j].numBytes, pCall[k].params[j].data, 0, NULL, &pCall[k].params[j].event);
-					else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D || pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
-					{
-						cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;	
-						err = clEnqueueWriteBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pBuf->size, pBuf->data[0], 0, NULL, &pCall[k].params[j].event);
-	                }
-					cl_assert((err == CL_SUCCESS),printf("ERROR: Write Enqueue Error = %d\n",err));
-	            }
-	        }
-	    }
+        for (j = 0; j < pCall[k].numParams; j++)
+        {
+            if (pCall[k].params[j].type == CL_KPARAM_BUFFER_0D)
+            {
+                pCall[k].params[j].mem = NULL;
+            }
+            else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
+            {
+                pCall[k].params[j].mem = clCreateBuffer(pEnv->context, pCall[k].params[j].flags, pCall[k].params[j].numBytes, NULL, &err);
+        #ifdef CL_DEBUG
+                printf("Create Buffer from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
+                        pCall[k].params[j].data,
+                        pCall[k].params[j].numBytes,
+                        (cl_uint)pCall[k].params[j].flags,
+                        pCall[k].params[j].mem,
+                        err);
+        #endif
+                cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+            }
+            else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D)
+            {
+                cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;
+                cl_image_format *pIf = &pBuf->format;
+                pCall[k].params[j].mem = clCreateImage2D(pEnv->context, pCall[k].params[j].flags, pIf, pBuf->dim[X_DIM], pBuf->dim[Y_DIM], pBuf->strides[Y_DIM], NULL, &err);
+        #ifdef CL_DEBUG
+                printf("Create Image2D from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
+                        pCall[k].params[j].data,
+                        pCall[k].params[j].numBytes,
+                        (cl_uint)pCall[k].params[j].flags,
+                        pCall[k].params[j].mem,
+                        err);
+        #endif
+                cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+            }
+            else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
+            {
+                cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;
+                cl_image_format *pIf = &pBuf->format;
+                pCall[k].params[j].mem = clCreateImage3D(pEnv->context, pCall[k].params[j].flags, pIf, pBuf->dim[X_DIM], pBuf->dim[Y_DIM], pBuf->dim[Z_DIM], pBuf->strides[Y_DIM], pBuf->strides[Z_DIM], NULL, &err);
+        #ifdef CL_DEBUG
+                printf("Create Image3D from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
+                        pCall[k].params[j].data,
+                        pCall[k].params[j].numBytes,
+                        (cl_uint)pCall[k].params[j].flags,
+                        pCall[k].params[j].mem,
+                        err);
+        #endif
+                cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+            }
+        }
 
-	    // finish
-	    for (i = 0; i<pEnv->numDevices; i++)
-	        clFinish(pEnv->queues[i]);
+        // enqueue the writes
+        for (i = 0; i < pEnv->numDevices; i++)
+        {
+            for (j = 0; j < pCall[k].numParams; j++)
+            {
+                if (pCall[k].params[j].flags == CL_MEM_READ_ONLY ||
+                    pCall[k].params[j].flags == CL_MEM_READ_WRITE)
+                {
+    #ifdef CL_DEBUG
+                    printf("Copying mem %p from ptr %p for %lu bytes\n", pCall[k].params[j].mem, pCall[k].params[j].data, pCall[k].params[j].numBytes);
+    #endif
+                    if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
+                        err = clEnqueueWriteBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pCall[k].params[j].numBytes, pCall[k].params[j].data, 0, NULL, &pCall[k].params[j].event);
+                    else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D || pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
+                    {
+                        cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;
+                        err = clEnqueueWriteBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pBuf->size, pBuf->data[0], 0, NULL, &pCall[k].params[j].event);
+                    }
+                    cl_assert((err == CL_SUCCESS),printf("ERROR: Write Enqueue Error = %d\n",err));
+                }
+            }
+        }
 
-		clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
-			
-	    // enqueue the kernel
-	    for (i = 0; i < pEnv->numDevices; i++) {
-	        for (j = 0; j < pCall[k].numParams; j++) {
-	#ifdef CL_DEBUG
-	            printf("ARG[%2u] mem %p (%lu)\n", j, pCall[k].params[j].mem, sizeof(cl_mem));
-	#endif
-				if (pCall[k].params[j].type == CL_KPARAM_BUFFER_0D)
-					err = clSetKernelArg(kernel, j, pCall[k].params[j].numBytes, pCall[k].params[j].data);
-				else if (pCall[k].params[j].type == CL_KPARAM_LOCAL)
-					err = clSetKernelArg(kernel, j, pCall[k].params[j].numBytes, NULL);
-				else
-	            	err = clSetKernelArg(kernel, j, sizeof(cl_mem), &pCall[k].params[j].mem);
-	            cl_assert((err == CL_SUCCESS),printf("ERROR: Kernel Arg %d is wrong (Error=%d)\n", j, err));
-	        }
-	        err = clEnqueueNDRangeKernel(pEnv->queues[i], 
-										kernel, 
-										pCall[k].numDim, 
-										NULL, //pCall[k].global_work_offset, 
-										pCall[k].global_work_size, 
-										pCall[k].local_work_size, 
-										0, NULL, &pCall[k].event);
-	        cl_assert((err == CL_SUCCESS),printf("ERROR: Work Queue Error = %d\n",err));
-	    }
+        // finish
+        for (i = 0; i<pEnv->numDevices; i++)
+            clFinish(pEnv->queues[i]);
 
-	    // finish
-	    for (i = 0; i<pEnv->numDevices; i++)
-	        clFinish(pEnv->queues[i]);
+        clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
 
-	    err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &pCall[k].start, NULL);
-	    cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
-	    err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_END,   sizeof(cl_ulong), &pCall[k].stop, NULL);
-	    cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
-	#ifdef CL_DEBUG
-	    printf("Executed kernel %s!\n",pCall[k].kernel_name);
-	#endif
+        // enqueue the kernel
+        for (i = 0; i < pEnv->numDevices; i++) {
+            for (j = 0; j < pCall[k].numParams; j++) {
+    #ifdef CL_DEBUG
+                printf("ARG[%2u] mem %p (%lu)\n", j, pCall[k].params[j].mem, sizeof(cl_mem));
+    #endif
+                if (pCall[k].params[j].type == CL_KPARAM_BUFFER_0D)
+                    err = clSetKernelArg(kernel, j, pCall[k].params[j].numBytes, pCall[k].params[j].data);
+                else if (pCall[k].params[j].type == CL_KPARAM_LOCAL)
+                    err = clSetKernelArg(kernel, j, pCall[k].params[j].numBytes, NULL);
+                else
+                    err = clSetKernelArg(kernel, j, sizeof(cl_mem), &pCall[k].params[j].mem);
+                cl_assert((err == CL_SUCCESS),printf("ERROR: Kernel Arg %d is wrong (Error=%d)\n", j, err));
+            }
+            err = clEnqueueNDRangeKernel(pEnv->queues[i],
+                                        kernel,
+                                        pCall[k].numDim,
+                                        NULL, //pCall[k].global_work_offset,
+                                        pCall[k].global_work_size,
+                                        pCall[k].local_work_size,
+                                        0, NULL, &pCall[k].event);
+            cl_assert((err == CL_SUCCESS),printf("ERROR: Work Queue Error = %d\n",err));
+        }
 
-	    // read the result memory
-	    for (i = 0; i<pEnv->numDevices; i++) 
-		{
-	        for (j = 0; j < pCall[k].numParams; j++)
-	        {
-	            if (pCall[k].params[j].flags == CL_MEM_WRITE_ONLY ||
-	                pCall[k].params[j].flags == CL_MEM_READ_WRITE)
-	            {
-					err = CL_SUCCESS;
-					if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
-						err = clEnqueueReadBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pCall[k].params[j].numBytes, pCall[k].params[j].data, 0, NULL, NULL);
-					else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D || pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
-					{
-						cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;	
-						err = clEnqueueReadBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pBuf->size, pBuf->data[0], 0, NULL, &pCall[k].params[j].event);
-	                }
-				    cl_assert((err == CL_SUCCESS),printf("ERROR: Read Enqueue Error=%d\n",err));
-	            }
-	        }
-	    }
-	    // finish
-	    for (i = 0; i<pEnv->numDevices; i++)
-	        clFinish(pEnv->queues[i]);
+        // finish
+        for (i = 0; i<pEnv->numDevices; i++)
+            clFinish(pEnv->queues[i]);
 
-	    for (j = 0; j < pCall[k].numParams; j++)
-	    {
-	        clReleaseMemObject(pCall[k].params[j].mem);
-	    }
-	    pCall[k].err = err;
-		if (err != CL_SUCCESS)
-			break;
+        err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &pCall[k].start, NULL);
+        cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
+        err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_END,   sizeof(cl_ulong), &pCall[k].stop, NULL);
+        cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
+    #ifdef CL_DEBUG
+        printf("Executed kernel %s!\n",pCall[k].kernel_name);
+    #endif
+
+        // read the result memory
+        for (i = 0; i<pEnv->numDevices; i++)
+        {
+            for (j = 0; j < pCall[k].numParams; j++)
+            {
+                if (pCall[k].params[j].flags == CL_MEM_WRITE_ONLY ||
+                    pCall[k].params[j].flags == CL_MEM_READ_WRITE)
+                {
+                    err = CL_SUCCESS;
+                    if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
+                        err = clEnqueueReadBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pCall[k].params[j].numBytes, pCall[k].params[j].data, 0, NULL, NULL);
+                    else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D || pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
+                    {
+                        cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;
+                        err = clEnqueueReadBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pBuf->size, pBuf->data[0], 0, NULL, &pCall[k].params[j].event);
+                    }
+                    cl_assert((err == CL_SUCCESS),printf("ERROR: Read Enqueue Error=%d\n",err));
+                }
+            }
+        }
+        // finish
+        for (i = 0; i<pEnv->numDevices; i++)
+            clFinish(pEnv->queues[i]);
+
+        for (j = 0; j < pCall[k].numParams; j++)
+        {
+            clReleaseMemObject(pCall[k].params[j].mem);
+        }
+        pCall[k].err = err;
+        if (err != CL_SUCCESS)
+            break;
     }
-	return err;
+    return err;
 }
 
 cl_uint clGetTypeFromString(char *typestring)
 {
-	if (strncmp(typestring, "all",4) == 0)
-		return CL_DEVICE_TYPE_ALL;
-	else if (strncmp(typestring,"gpu",4) == 0)
-		return CL_DEVICE_TYPE_GPU;
-	else if (strncmp(typestring,"cpu",4) == 0)
-		return CL_DEVICE_TYPE_CPU;
-	else if (strncmp(typestring,"acc",4) == 0 || strncmp(typestring,"accelerator",12) == 0)
-		return CL_DEVICE_TYPE_ACCELERATOR;
-	else
-		return CL_DEVICE_TYPE_DEFAULT;
+    if (strncmp(typestring, "all",4) == 0)
+        return CL_DEVICE_TYPE_ALL;
+    else if (strncmp(typestring,"gpu",4) == 0)
+        return CL_DEVICE_TYPE_GPU;
+    else if (strncmp(typestring,"cpu",4) == 0)
+        return CL_DEVICE_TYPE_CPU;
+    else if (strncmp(typestring,"acc",4) == 0 || strncmp(typestring,"accelerator",12) == 0)
+        return CL_DEVICE_TYPE_ACCELERATOR;
+    else
+        return CL_DEVICE_TYPE_DEFAULT;
 }
 
