@@ -1,5 +1,5 @@
-LOCAL_ROOT?=$(shell pwd)
-DIRS=math query environment compiler imgfilter yuv pid nbody spacetime
+LOCAL_ROOT?=$(abspath .)
+DIRS=math query devicequery environment compiler imgfilter yuv pid nbody spacetime
 
 .PHONY: todo all debug error
 
@@ -28,4 +28,3 @@ error:
 
 todo:
 	@fgrep -HnR -e TODO sources/ include/ TODO README
-
