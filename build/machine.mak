@@ -19,6 +19,8 @@ else
 	HOST_CPU=$(shell uname -m)
 	ifeq ($(HOST_CPU),Power Macintosh)
 		HOST_CPU=PPC
+	else ifeq ($(HOST_CPU),x86_64)
+		HOST_CPU=x86_64
 	else ifeq ($(HOST_CPU),i686)
 		HOST_CPU=X86
 	else ifeq ($(HOST_CPU),i586)

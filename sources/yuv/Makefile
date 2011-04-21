@@ -17,12 +17,6 @@ TARGET=clyuv
 TARGETTYPE=exe
 CSOURCES=yuv.c
 CLSOURCES=kernel_yuv.cl
-CL_USER_DEVICE_COUNT=1
-ifeq ($(HOST_OS),Windows_NT)
-CL_USER_DEVICE_TYPE=gpu
-else
-CL_USER_DEVICE_TYPE=cpu
-endif
 LIBS+=clenvironment clmath clquery
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/finale.mak

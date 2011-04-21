@@ -24,15 +24,32 @@ ifeq ($(OS),Windows_NT)
 		CLEAN=del
 	endif
 else
-    HOST_OS=$(shell uname -s)
-    ifeq ($(HOST_OS),Darwin)
-        HOST_OS=DARWIN
+	HOST_OS=$(shell uname -s)
+	ifeq ($(HOST_OS),Darwin)
+		HOST_OS=DARWIN
 		HOST_COMPILER=GCC
-    else ifeq ($(HOST_OS),Linux)
-        HOST_OS=LINUX
+	else ifeq ($(HOST_OS),Linux)
+		HOST_OS=LINUX
 		HOST_COMPILER=GCC
 	else
 		HOST_OS=POSIX
 		HOST_COMPILER=GCC
-    endif
+	endif
 endif
+
+
+CL_USER_DEVICE_COUNT=1
+
+ifeq ($(HOST_OS),Windows_NT)
+CL_USER_DEVICE_TYPE=gpu
+else ifeq ($(HOST_OS),CYGWIN)
+CL_USER_DEVICE_TYPE=gpu
+else ifeq ($(HOST_OS),LINUX)
+CL_USER_DEVICE_TYPE=gpu
+else # DARWIN?
+CL_USER_DEVICE_TYPE=cpu
+endif
+
+$(info HOST_OS=$(HOST_OS))
+$(info HOST_COMPILER=$(HOST_COMPILER))
+

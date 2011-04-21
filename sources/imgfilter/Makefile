@@ -17,12 +17,6 @@ TARGET=climgfilter
 TARGETTYPE=exe
 CSOURCES=imgfilter.c
 CLSOURCES=kernel_imgfilter.cl
-CL_USER_DEVICE_COUNT=1
-ifeq ($(HOST_OS),Windows_NT)
-CL_USER_DEVICE_TYPE=gpu
-else
-CL_USER_DEVICE_TYPE=cpu
-endif
 LIBS+=clenvironment clquery clmath
 TESTCASE=$(TARGET)
 include $(LOCAL_ROOT)/build/finale.mak

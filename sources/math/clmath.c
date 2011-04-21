@@ -19,7 +19,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
-#ifdef _MSC_VER
+#ifndef __APPLE__
 #include <CL/cl.h>
 #else
 #include <OpenCL/opencl.h>
