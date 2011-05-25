@@ -102,15 +102,6 @@
 extern "C" {
 #endif
 
-typedef struct _vec {
-    double x;
-    double y;
-    double z;
-    double w;
-} Vec;
-
-typedef unsigned char byte;
-
 typedef struct _colorb
 {
     byte r,g,b,a;

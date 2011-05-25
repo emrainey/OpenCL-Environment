@@ -13,16 +13,8 @@
 # limitations under the License.
 LOCAL_ROOT?=../..
 include $(LOCAL_ROOT)/build/prelude.mak
-ifeq ($(HOST_OS),Windows_NT)
-	TARGET     := spacetime
-	TARGETTYPE := exe
-	CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c Vec.c
-	LIBS       := clenvironment
-	CL_USER_DEVICE_COUNT := 1
-	ifeq ($(HOST_OS),Windows_NT)
-	CL_USER_DEVICE_TYPE := gpu
-	else
-	CL_USER_DEVICE_TYPE := cpu
-	endif
-endif
+TARGET     := spacetime
+TARGETTYPE := exe
+CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c Vec.c
+LIBS       := clenvironment
 include $(LOCAL_ROOT)/build/finale.mak
