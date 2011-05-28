@@ -22,7 +22,6 @@ ifndef CL_DEVICE_COUNT
 endif
 
 IDIRS += $(HOST_ROOT)/source/kernels
-DEFS += CL_BUILD_RUNTIME
 CL_USER_DEVICE_COUNT=1
 ifeq ($(HOST_OS),Windows_NT)
 	CL_USER_DEVICE_TYPE=gpu
@@ -56,11 +55,7 @@ else ifeq ($(HOST_OS),DARWIN)
 endif
 
 # OpenCL-Environment Compiler Support
-ifdef DEBUG
-CL=$(HOST_ROOT)/out/$(TARGET_CPU)/debug/clcompiler.exe
-else
-CL=$(HOST_ROOT)/out/$(TARGET_CPU)/release/clcompiler.exe
-endif
+CL:=$($(_MODULE)_TDIR)/clcompiler
 
 ifeq ($(HOST_OS),CYGWIN)
 DEFS+=KDIR="\"$(KDIR)\"" CL_USER_DEVICE_COUNT=$(CL_USER_DEVICE_COUNT) CL_USER_DEVICE_TYPE="\"$(CL_USER_DEVICE_TYPE)\""
@@ -71,22 +66,34 @@ endif
 ifdef CL_BUILD_RUNTIME
 DEFS+=CL_BUILD_RUNTIME
 else ifdef CLSOURCES
-KERNELS=$(CLSOURCES:%.cl=$(_MODPATH)/%.h)
-KOPTIONS=$(CLSOURCES:%.cl=$(_MODPATH)/%.clopt)
+KERNELS := $(CLSOURCES:%.cl=$(call PATH_CONV,$(_MODPATH))/%.h)
+KOPTIONS:= $(CLSOURCES:%.cl=$(call PATH_CONV,$(_MODPATH))/%.clopt)
+KIDIRS  := $(HOST_ROOT)/include
+KDEFS   := 
 ifeq ($(HOST_OS),CYGWIN)
 # The Clang/LLVM is a Windows Path Compiler
 KFLAGS+=$(foreach inc,$(KIDIRS),-I$(call P2W_CONV,$(inc))) $(foreach def,$(KDEFS),-D$(def))
 else
 KFLAGS+=$(foreach inc,$(KIDIRS),-I$(inc)) $(foreach def,$(KDEFS),-D$(def))
 endif
+
+ifeq ($(HOST_OS),Window_NT)
+	CLEAN := del
+else
+	CLEAN := rm
 endif
 
 ifdef KERNELS
 build:: kernels
 
-kernels:: $(foreach kern, $(KERNELS), $(_MODPATH)/$(kern))
+clean:: 
+	$(CLEAN) $(call PATH_CONV,$(KERNELS))
 
-%.h: $(KDIR)/%.cl $(CL)
+kernels:: $(foreach kern, $(KERNELS), $(kern))
+
+$(_MODPATH)/%.h: $(KDIR)/%.cl $(CL)
 	@echo [PURE] Compiling OpenCL Kernel $<
-	-$(Q)$(CL) -n -f $< -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $@ -W "$(KFLAGS)"
-endef
+	$(CL) -n -f $< -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $@ -W "$(KFLAGS)"
+endif
+
+endif

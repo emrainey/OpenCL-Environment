@@ -20,4 +20,5 @@ STATIC_LIBS := clenvironment
 
 include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
 include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
+
 -include $(FINALE)

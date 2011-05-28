@@ -30,8 +30,6 @@
 #endif
 #include <clmath.h>
 
-#define CL_OPTIONS  ("-I/Users/emrainey/Source/OpenCL/include")
-
 void notify(cl_program program, void *arg)
 {
     //printf("Program %p Arg %p\n",program, arg);

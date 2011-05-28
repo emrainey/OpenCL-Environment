@@ -1,4 +1,3 @@
-<<<<<<< HEAD:concerto/target.mak
 # Copyright (C) 2010 Erik Rainey
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(TARGET_CPU),)
-	TARGET_CPU=$(HOST_CPU)
+ifeq ($(TARGET_PLATFORM),)
+	TARGET_PLATFORM=PC
 endif
 
 ifeq ($(TARGET_PLATFORM),PC)
 	TARGET_OS=$(HOST_OS)
+	TARGET_CPU=$(HOST_CPU)
 endif
-
-ifeq ($(TARGET_OS),)
-	TARGET_OS=$(HOST_OS)
-endif
-
 
 SYSDEFS += $(TARGET_CPU)
 SYSDEFS += $(TARGET_OS)

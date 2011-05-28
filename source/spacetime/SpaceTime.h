@@ -24,7 +24,7 @@
 #include <time.h>
 #include <stdarg.h>
 
-#ifndef __APPLE__
+#ifndef DARWIN
 #include <CL/cl.h>
 #else
 #include <OpenCL/opencl.h>
@@ -32,7 +32,7 @@
 #include <clenvironment.h>
 
 /* OPENGL INCLUDES */
-#include <glut.h>
+#include <GL/glut.h>
 
 /*****************************************************************************
  *
