@@ -1,3 +1,4 @@
+<<<<<<< HEAD:concerto/target.mak
 # Copyright (C) 2010 Erik Rainey
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +27,9 @@ endif
 
 
 SYSDEFS += $(TARGET_CPU)
+SYSDEFS += $(TARGET_OS)
 
 $(info TARGET_OS=$(TARGET_OS))
 $(info TARGET_CPU=$(TARGET_CPU))
 $(info TARGET_PLATFORM=$(TARGET_PLATFORM))
+

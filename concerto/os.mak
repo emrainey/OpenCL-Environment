@@ -43,4 +43,3 @@ else
 endif
 $(info HOST_OS=$(HOST_OS))
 $(info HOST_COMPILER=$(HOST_COMPILER))
-SYSDEFS += $(HOST_OS)
