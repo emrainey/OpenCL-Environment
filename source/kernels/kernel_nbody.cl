@@ -21,9 +21,9 @@ __kernel void kernel_magnitude(__global float4 *p,
 
     // mag = sqrt(x^2+y^2+z^2)
 
-	float dx = p[i].x*p[i].x;
-	float dy = p[i].y*p[i].y;
-	float dz = p[i].z*p[i].z;
+    float dx = p[i].x*p[i].x;
+    float dy = p[i].y*p[i].y;
+    float dz = p[i].z*p[i].z;
 
     mag[i] = sqrt(dx*dx + dy*dy + dz*dz);
 }
@@ -60,9 +60,9 @@ __kernel void kernel_distance(__global float4 *v1,
 }
 
 __kernel void kernel_gravity(float Mg,
-							 __global float *m,
-							 __global float *d,
-							 __global float *f_mag)
+                             __global float *m,
+                             __global float *d,
+                             __global float *f_mag)
 {
     int i = get_global_id(0); // data fields are 1 dimensional
 
@@ -74,8 +74,8 @@ __kernel void kernel_gravity(float Mg,
 }
 
 __kernel void kernel_kinetic(__global float *m,
-							 __global float4 *v,
-							 __global float4 *ke)
+                             __global float4 *v,
+                             __global float4 *ke)
 {
     int i = get_global_id(0);
 
@@ -92,63 +92,63 @@ __kernel void kernel_energy(__global float *m, __global float *E)
 }
 
 int gravity_averaging(__global float *m,
-					  __global float4 *p,
- 					  __global float4 *a,
- 					  int num)
+                      __global float4 *p,
+                      __global float4 *a,
+                      int num)
 {
-	int i = get_global_id(0);
-	float G = 0.00000000006673;
-	float4 sum;
-	int j = 0;
+    int i = get_global_id(0);
+    float G = 0.00000000006673;
+    float4 sum;
+    int j = 0;
 
-	sum.x = 0;
-	sum.y = 0;
-	sum.z = 0;
-	sum.w = 0;
+    sum.x = 0;
+    sum.y = 0;
+    sum.z = 0;
+    sum.w = 0;
 
-	// calculate gravity between each object and this object.
-	for (j = 0; j < num; j++)
-	{
-		// if it's this object, skip it
-		if (i == j) continue;
+    // calculate gravity between each object and this object.
+    for (j = 0; j < num; j++)
+    {
+        // if it's this object, skip it
+        if (i == j) continue;
 
-		// generate the difference vectors
-		float dx = p[i].x - p[j].x;
-		float dy = p[i].y - p[j].y;
-		float dz = p[i].z - p[j].z;
+        // generate the difference vectors
+        float dx = p[i].x - p[j].x;
+        float dy = p[i].y - p[j].y;
+        float dz = p[i].z - p[j].z;
 
-		// calculate the distance
-		float d = sqrt(dx*dx + dy*dy + dz*dz);
+        // calculate the distance
+        float d = sqrt(dx*dx + dy*dy + dz*dz);
 
-		// this is magnitude of the vector
-		float g = (G * m[i] * m[j])/(d*d);
+        // this is magnitude of the vector
+        float g = (G * m[i] * m[j])/(d*d);
 
-		// combine the gravity vectors together
-		sum.x += (dx/d)*g;
-		sum.y += (dy/d)*g;
-		sum.z += (dz/d)*g;
-	}
+        // combine the gravity vectors together
+        sum.x += (dx/d)*g;
+        sum.y += (dy/d)*g;
+        sum.z += (dz/d)*g;
+    }
 
-	// assign the sum back
-	a[i].x = sum.x;
-	a[i].y = sum.y;
-	a[i].z = sum.z;
+    // assign the sum back
+    a[i].x = sum.x;
+    a[i].y = sum.y;
+    a[i].z = sum.z;
 
-	return 0;
+    return 0;
 }
 
 __kernel void kernel_nbody(__global float *m,
-						   __global float4 *a, // previously calculated gravirty vector per object
-						   __global float4 *v,
-						   __global float4 *p,
-						   __global float *t,
-						   uint num)
+                           __global float4 *a, // previously calculated gravirty vector per object
+                           __global float4 *v,
+                           __global float4 *p,
+                           __global float *t,
+                           uint num)
 {
     int i = get_global_id(0);
 
-	gravity_averaging(m, p, a, num);
+    gravity_averaging(m, p, a, num);
 
-	// position is updated by velocity and some small quantity of acceration
+    // position is updated by velocity and some small quantity of acceration
     p[i].x += v[i].x*t[i] + 0.5*t[i]*t[i]*a[i].x;
     p[i].y += v[i].y*t[i] + 0.5*t[i]*t[i]*a[i].y;
     p[i].z += v[i].z*t[i] + 0.5*t[i]*t[i]*a[i].z;
