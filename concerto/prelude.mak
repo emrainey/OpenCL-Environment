@@ -114,7 +114,7 @@ else
 	-$(Q)touch $@
 endif
 
-dir:: $($(_MODULE)_ODIR)/.gitignore
+dir: $($(_MODULE)_ODIR)/.gitignore
 
 # Clean out common vars
 SYSIDIRS :=

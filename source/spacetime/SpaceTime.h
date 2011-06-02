@@ -104,7 +104,7 @@ extern "C" {
 
 typedef struct _colorb
 {
-    byte r,g,b,a;
+    int8_t r,g,b,a;
 } Colorb;
 
 typedef struct _colorf

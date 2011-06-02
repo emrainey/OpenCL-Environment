@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
         cl_int err = CL_SUCCESS;
 
 #ifdef CL_BUILD_RUNTIME
-        cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_imgfilter.cl", CL_DEVICE_TYPE_GPU, 2, notify, CL_ARGS);
+		cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_imgfilter.cl", CL_DEVICE_TYPE_GPU, 2, notify, CL_ARGS);
 #else       
         cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
 #endif  

@@ -72,17 +72,13 @@ endif
 # COMMANDS
 ###################################################
 
-CLEAN := rm  
-CLEANDIR := rm -rf
-COPY := cp -f
-
 $(_MODULE)_CLEAN_OBJ  := $(CLEAN) $($(_MODULE)_OBJS)
 $(_MODULE)_CLEAN_BIN  := $(CLEAN) $($(_MODULE)_BIN)
 $(_MODULE)_ATTRIB_EXE := chmod a+x $($(_MODULE)_BIN)
 $(_MODULE)_LN_DSO     := ln -s $($(_MODULE)_BIN).1.0 $($(_MODULE)_BIN)
-$(_MODULE)_UNLN_DSO   := rm -f /usr/lib/$(BIN_PRE)$(TARGET)$(BIN_EXT).1.0
+$(_MODULE)_UNLN_DSO   := $(CLEAN) /usr/lib/$(BIN_PRE)$(TARGET)$(BIN_EXT).1.0
 $(_MODULE)_INSTALL_DSO:= install -t /usr/lib $($(_MODULE)_BIN) 
-$(_MODULE)_UNINSTALL_DSO:=rm -f /usr/lib/$(BIN_PRE)$(TARGET)$(BIN_EXT)
+$(_MODULE)_UNINSTALL_DSO:=$(CLEAN) /usr/lib/$(BIN_PRE)$(TARGET)$(BIN_EXT)
 $(_MODULE)_INSTALL_EXE:= install -t /usr/bin $($(_MODULE)_BIN) 
 $(_MODULE)_UNINSTALL_EXE:=rm -f /usr/bin/$(BIN_PRE)$(TARGET)$(BIN_EXT)
 $(_MODULE)_LINK_LIB   := $(AR) -rscu $($(_MODULE)_BIN) $($(_MODULE)_OBJS) $($(_MODULE)_LIBS)
@@ -94,31 +90,27 @@ $(_MODULE)_LINK_DSO   := $(LD) -shared -soname,$($(_MODULE)_BIN).1 -whole-archiv
 ###################################################
 
 define $(_MODULE)_DEPEND_CC
-
 $($(_MODULE)_ODIR)/$(1).d: $($(_MODULE)_SDIR)/$(1).c $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
 	@echo Generating  Dependency Info from $$(notdir $$<)
 	$(Q)$(CC) $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $$< -MM -MF $($(_MODULE)_ODIR)/$(1).d -MT '$($(_MODULE)_ODIR)/$(1).o:' $(LOGGING)
-
-depend:: $($(_MODULE)_ODIR)/$(1).d
-
 -include $($(_MODULE)_ODIR)/$(1).d
-
 endef
 
 define $(_MODULE)_DEPEND_CP
-
 $($(_MODULE)_ODIR)/$(1).d: $($(_MODULE)_SDIR)/$(1).cpp $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
 	@echo Generating  Dependency Info from $$(notdir $$<)
 	$(Q)$(CC) $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $$< -MM -MF $($(_MODULE)_ODIR)/$(1).d -MT '$($(_MODULE)_ODIR)/$(1).o:' $(LOGGING)
-
-depend:: $($(_MODULE)_ODIR)/$(1).d
-
 -include $($(_MODULE)_ODIR)/$(1).d
-
 endef
 
 define $(_MODULE)_DEPEND_AS
-# Do nothing...
+endef
+
+define $(_MODULE)_DEPEND
+$(_MODULE)_depend_cc: $(CSOURCES:%.c=$($(_MODULE)_ODIR)/%.d)
+$(_MODULE)_depend_cp: $(CSOURCES:%.cpp=$($(_MODULE)_ODIR)/%.d)
+$(_MODULE)_depend_as: 
+$(_MODULE)_depend: $(_MODULE)_depend_as $(_MODULE)_depend_cc $(_MODULE)_depend_cp
 endef
 
 define $(_MODULE)_PREBUILT
@@ -131,45 +123,45 @@ ifeq ($(strip $($(_MODULE)_TYPE)),library)
 
 
 define $(_MODULE)_UNINSTALL
-uninstall::
+$(_MODULE)_uninstall:
 	@echo No uninstall step for static libraries
 endef
 
 define $(_MODULE)_INSTALL
-install::
+$(_MODULE)_install:
 	@echo No install step for static libraries
 endef
 
 define $(_MODULE)_BUILD
-build:: $($(_MODULE)_BIN)
+$(_MODULE)_build: $($(_MODULE)_BIN)
 endef
 
 define $(_MODULE)_CLEAN_LNK
-clean::
+$(_MODULE)_clean:
 endef
 
 else ifeq ($(strip $($(_MODULE)_TYPE)),dsmo)
 
 define $(_MODULE)_UNINSTALL
-uninstall::
+$(_MODULE)_uninstall:
 	@echo Uninstalling $$@
 	-$(Q)$(call $(_MODULE)_UNLN_DSO)
 	-$(Q)$(call $(_MODULE)_UNINSTALL_DSO)
 endef
 
 define $(_MODULE)_INSTALL
-install::
+$(_MODULE)_install:
 	@echo Installing $($(_MODULE)_BIN)
 	-$(Q)$(call $(_MODULE)_INSTALL_DSO)
 	-$(Q)$(call $(_MODULE)_LN_DSO)
 endef
 
 define $(_MODULE)_BUILD
-build:: $($(_MODULE)_BIN)
+$(_MODULE)_build: $($(_MODULE)_BIN)
 endef
 
 define $(_MODULE)_CLEAN_LNK
-clean::
+$(_MODULE)_clean:
 	@echo Removing Link for Shared Object $($(_MODULE)_BIN).1.0
 	-$(Q)$(CLEAN) $($(_MODULE)_BIN).1.0
 endef
@@ -177,24 +169,24 @@ endef
 else ifeq ($(strip $($(_MODULE)_TYPE)),exe)
 
 define $(_MODULE)_UNINSTALL
-uninstall::
+$(_MODULE)_uninstall:
 	-$(Q)$(call $(_MODULE)_UNINSTALL_EXE)
 endef
 
 define $(_MODULE)_INSTALL
-install::
+$(_MODULE)_install:
 	@echo Installing $($(_MODULE)_BIN)
 	-$(Q)$(call $(_MODULE)_INSTALL_EXE)
 	-$(Q)$(call $(_MODULE)_ATTRIB_EXE)
 endef
 
 define $(_MODULE)_BUILD
-build:: $($(_MODULE)_BIN)
+$(_MODULE)_build: $($(_MODULE)_BIN)
 	@echo Building for $($(_MODULE)_BIN)
 endef
 
 define $(_MODULE)_CLEAN_LNK
-clean::
+$(_MODULE)_clean:
 endef
 
 endif

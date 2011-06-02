@@ -114,12 +114,17 @@ $(eval $(call $(_MODULE)_DEPEND_JAR))
 endif
 
 define $(_MODULE)_CLEAN
-.PHONY: clean_bin clean
-clean_target:: 
+.PHONY: $(_MODULE)_clean_pretarget $(_MODULE)_clean_target $(_MODULE)_clean
+
+ifneq ($(filter $(PRETARGET_MODULES),$(_MODULE)),)
+$(_MODULE)_clean_pretarget:
+endif
+
+$(_MODULE)_clean_target: $(_MODULE)_clean_pretarget
 	@echo Cleaning $($(_MODULE)_BIN)
 	-$(Q)$(call $(_MODULE)_CLEAN_BIN)
 
-clean:: clean_target
+$(_MODULE)_clean: $(_MODULE)_clean_target
 	@echo Cleaning $($(_MODULE)_OBJS)
 	-$(Q)$(call $(_MODULE)_CLEAN_OBJ)
 endef
@@ -130,11 +135,11 @@ $(foreach obj,$(CSOURCES),  $(eval $(call $(_MODULE)_DEPEND_CC,$(basename $(obj)
 $(foreach obj,$(CPPSOURCES),$(eval $(call $(_MODULE)_DEPEND_CP,$(basename $(obj)))))
 $(foreach obj,$(ASSEMBLY),  $(eval $(call $(_MODULE)_DEPEND_AS,$(basename $(obj)))))
 $(foreach cls,$(JSOURCES),  $(eval $(call $(_MODULE)_DEPEND_CLS,$(basename $(cls)))))
-
+$(eval $(call $(_MODULE)_DEPEND))
 $(eval $(call $(_MODULE)_COMPILE_TOOLS))
 
 define $(_MODULE)_VARDEF
-$(_MODULE)_vars::
+$(_MODULE)_vars:
 	@echo =============================================
 	@echo _MODULE=$(_MODULE)
 	@echo $(_MODULE)_BIN =$($(_MODULE)_BIN)

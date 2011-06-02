@@ -20,7 +20,7 @@ ifeq ($(OS),Windows_NT)
 		HOST_OS=CYGWIN
 		HOST_COMPILER=GCC
 	else	
-		PATH_CONV=$(subst /,\,$(1))
+		#PATH_CONV=$(subst /,\,$(1))
         HOST_OS=Windows_NT
 		HOST_COMPILER=CL
 		CL_ROOT?=$(VCINSTALLDIR)

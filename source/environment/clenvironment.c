@@ -437,42 +437,51 @@ char **clLoadSources(char *filename, cl_uint *pNumLines)
     return lines;
 }
 
-void cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
+int cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
 {
     FILE *fo = NULL;
-    if (filename[0] == '\0')
-        return;
+	size_t bw = 0;
+	if (filename[0] == '\0')
+	{
+		printf("ERROR: Filename is empty!\n");
+        return 0;
+	}
     fo = fopen(filename, "w+");
     if (fo != NULL)
     {
         cl_uint d, b;
-        fprintf(fo, "// PRECOMPILED HEADER, DO NOT MODIFY!\n");
-        fprintf(fo, "#ifndef _PRECOMPILED_KERNEL_H_\n");
-        fprintf(fo, "#define _PRECOMPILED_KERNEL_H_\n");
-        fprintf(fo, "#include <clenvironment.h>\n");
-        fprintf(fo, "static size_t gKernelBinarySizes[%lu] = {\n",bins->numDevices);
+        bw += fprintf(fo, "// PRECOMPILED HEADER, DO NOT MODIFY!\n");
+        bw += fprintf(fo, "#ifndef _PRECOMPILED_KERNEL_H_\n");
+        bw += fprintf(fo, "#define _PRECOMPILED_KERNEL_H_\n");
+        bw += fprintf(fo, "#include <clenvironment.h>\n");
+        bw += fprintf(fo, "static size_t gKernelBinarySizes[%lu] = {\n",bins->numDevices);
         for (d = 0; d < bins->numDevices; d++)
-            fprintf(fo, "\t%lu,\n", bins->sizes[d]);
-        fprintf(fo, "};\n");
+            bw += fprintf(fo, "\t%lu,\n", bins->sizes[d]);
+        bw += fprintf(fo, "};\n");
         for (d = 0; d < bins->numDevices; d++)
         {
-            fprintf(fo, "static cl_byte gKernelBinaryData%09u[%lu] = {\n", d, bins->sizes[d]);
+            bw += fprintf(fo, "static cl_byte gKernelBinaryData%09u[%lu] = {\n", d, bins->sizes[d]);
             for (b= 0 ; b < bins->sizes[d]; b++)
             {
-                fprintf(fo, "\t0x%02x,\n", bins->data[d][b]);
+                bw += fprintf(fo, "\t0x%02x,\n", bins->data[d][b]);
             }
-            fprintf(fo, "};\n");
+            bw += fprintf(fo, "};\n");
         }
-        fprintf(fo, "static cl_byte *gKernelBinaries[%lu] = {\n", bins->numDevices);
+        bw += fprintf(fo, "static cl_byte *gKernelBinaries[%lu] = {\n", bins->numDevices);
         for (d = 0; d < bins->numDevices; d++)
         {
-            fprintf(fo, "\t(cl_byte *)&gKernelBinaryData%09u,\n", d);
+            bw += fprintf(fo, "\t(cl_byte *)&gKernelBinaryData%09u,\n", d);
         }
-        fprintf(fo, "};\n");
-        fprintf(fo, "static cl_kernel_bin_t gKernelBins = { 0x%08x, %luL, %luL, %luL, (size_t *)&gKernelBinarySizes, (cl_byte **)&gKernelBinaries };\n", bins->deviceTypes, bins->numDevices, bins->numBytesSizes, bins->numBytesData);
-        fprintf(fo, "#endif\n");
-        fclose(fo);
-    }
+        bw += fprintf(fo, "};\n");
+        bw += fprintf(fo, "static cl_kernel_bin_t gKernelBins = { 0x%08x, %luL, %luL, %luL, (size_t *)&gKernelBinarySizes, (cl_byte **)&gKernelBinaries };\n", bins->deviceTypes, bins->numDevices, bins->numBytesSizes, bins->numBytesData);
+        bw += fprintf(fo, "#endif\n");
+        bw += fclose(fo);
+		printf("Wrote %zu bytes to precompiled header\n", bw);
+		return 1;
+    } else {
+		printf("ERROR: Failed to open %s for writing\n", filename);
+		return 0;
+	}
 }
 
 cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
@@ -490,12 +499,14 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
     pEnv->queues  = cl_malloc_array(cl_command_queue, pEnv->numDevices);
     if (pEnv->devices == NULL || pEnv->queues == NULL)
     {
-        clDeleteEnvironment(pEnv);
+        printf("ERROR: Failed allocate data structures for compilation.\n");
+		clDeleteEnvironment(pEnv);
         return NULL;
     }
     err = clGetPlatformIDs(1, &pEnv->platform, &numPlatforms);
     if (err != CL_SUCCESS)
     {
+		printf("ERROR: Failed to get any platform ID for OpenCL (%d)\n", err);
         clDeleteEnvironment(pEnv);
         return NULL;
     }
