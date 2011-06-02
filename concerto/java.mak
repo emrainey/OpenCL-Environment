@@ -58,9 +58,9 @@ $($(_MODULE)_ODIR)/$(1).class: $($(_MODULE)_SDIR)/$(1).java $($(_MODULE)_SDIR)/$
 endef
 
 define $(_MODULE)_DEPEND_JAR
-uninstall:: 
+$(_MODULE)_uninstall:
 
-install:: $($(_MODULE)_BIN)
+$(_MODULE)_install: $($(_MODULE)_BIN)
 
 $($(_MODULE)_BIN): $($(_MODULE)_OBJS) 
 	@echo Jar-ing Classes $($(_MODULE)_CLASSES)
@@ -68,4 +68,6 @@ $($(_MODULE)_BIN): $($(_MODULE)_OBJS)
 endef
 
 endif
+
+
 

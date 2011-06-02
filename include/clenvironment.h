@@ -48,7 +48,11 @@
 
 #ifndef KDIR
 /** Use this incase you don't define the path to your kernels */
-#define KDIR 
+#ifdef Windows_NT
+#define KDIR ".\\"
+#else
+#define KDIR "./"
+#endif
 #endif
 
 #ifndef CL_USER_DEVICE_TYPE
@@ -192,8 +196,11 @@ void cl_dump_kernels(char *filename, cl_kernel_bin_t *bins);
  * @see cl_extract_kernels
  * @param filename The name of the header to create. 
  * @param bins The kernel binaries. 
+ * @return int
+ * @retval 1 on Success.
+ * @retval 0 on Failure.
  */
-void cl_precompiled_header(char *filename, cl_kernel_bin_t *bins);
+int cl_precompiled_header(char *filename, cl_kernel_bin_t *bins);
 
 /**
  * This function takes the kernel binary structure and flattens it to a single 1D buffer. 

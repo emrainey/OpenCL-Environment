@@ -11,14 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
--include $(PRELUDE)
 
-TARGET     := spacetime
-TARGETTYPE := exe
-CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c vector.c
-STATIC_LIBS := clenvironment
+ifeq ($(HOST_OS),Windows_NT) # cmd.exe
+CLEAN    := cmd.exe /C del /Q
+CLEANDIR := cmd.exe /C del /Q /S
+COPY     := cmd.exe /C copy /Y /Z /V
+PRINT    := cmd.exe /C echo
+SET_RW	 := cmd.exe /C attrib -R
+SET_EXEC := cmd.exe /C echo 
+else # Bash variants
+CLEAN 	 := rm
+CLEANDIR := rm -rf
+COPY     := cp -f
+PRINT    := echo
+SET_RW	 := chmod a+rw
+SET_EXEC := chmod a+x
+endif
 
-include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
-include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
 
--include $(FINALE)
+

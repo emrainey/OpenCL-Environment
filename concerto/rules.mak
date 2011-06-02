@@ -14,7 +14,7 @@
 
 # Define all but don't do anything with it yet.
 .PHONY: all
-all::
+all:
 
 # Define our pathing
 HOST_ROOT?=$(abspath .)
@@ -28,6 +28,7 @@ endif
 include $(HOST_ROOT)/$(BUILD_FOLDER)/os.mak
 include $(HOST_ROOT)/$(BUILD_FOLDER)/machine.mak
 include $(HOST_ROOT)/$(BUILD_FOLDER)/target.mak
+include $(HOST_ROOT)/$(BUILD_FOLDER)/shell.mak
 
 # Define the prelude and finale files so that SUBMAKEFILEs know what they are
 # And if the users go and make -f concerto.mak then it will not work right.
@@ -66,22 +67,36 @@ else
 endif
 #$(info MODULES=$(MODULES))
 
+PRETARGET_MODULES :=
+
 include $(TARGET_MAKEFILES)
 
-.PHONY: all dir depend build install uninstall clean clean_target $(_MODULE) targets scrub vars test
+.PHONY: all dir depend build install uninstall clean preprocessor pretarget targets scrub vars test
 
-depend::
+depend: $(foreach mod, $(MODULES), $(mod)_depend)
 
-all:: build
+all: build
 
-build:: dir depend
+build: pretarget $(foreach mod, $(MODULES), $(mod)_build)
+	@echo $< stage complete
 
-install:: build
+pretarget: dir depend preprocessor $(foreach mod, $(PRETARGET_MODULES), $(mod)_pretarget)
+	@echo $< stage complete
 
-uninstall::
+preprocessor: $(foreach mod, $(MODULES), $(mod)_preprocessor)
+	@echo $< stage complete
 
-targets::
-	@echo all, build, install, uninstall, scrub, test, vars
+install: build $(foreach mod, $(MODULES), $(mod)_install)
+	@echo $< stage complete
+
+uninstall: $(foreach mod, $(MODULES), $(mod)_uninstall)
+	@echo $< stage complete
+	
+clean: $(foreach mod, $(MODULES), $(mod)_clean)
+	@echo $< stage complete
+	
+targets:
+	@echo all, build, install, uninstall, scrub, test, vars, clean
 	@echo TARGETS=$(MODULES)
 
 scrub:
@@ -103,7 +118,7 @@ else
 endif
 endif
 
-vars:: $(foreach mod,$(MODULES),$(mod)_vars)
+vars: $(foreach mod,$(MODULES),$(mod)_vars)
 	@echo HOST_ROOT=$(HOST_ROOT)
 	@echo HOST_OS=$(HOST_OS)
 	@echo HOST_COMPILER=$(HOST_COMPILER)
@@ -111,6 +126,6 @@ vars:: $(foreach mod,$(MODULES),$(mod)_vars)
 	@echo MAKEFILE_LIST=$(MAKEFILE_LIST)
 	@echo TARGET_MAKEFILES=$(TARGET_MAKEFILES)
 
-test:: $(foreach mod,$(MODULES),$(mod)_test)
+test: $(foreach mod,$(MODULES),$(mod)_test)
 	@echo Executing Unit tests
 

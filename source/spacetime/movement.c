@@ -59,7 +59,7 @@ void movesystem(void)
         body1.p.z += body1.v.z;
         body1.p.w = 0;
 
-        printf("Body: {%lf,%lf,%lf} => %{%lf,%lf,%lf}\n",
+        printf("Body: {%lf,%lf,%lf} => {%lf,%lf,%lf}\n",
                 body1.p.x,body1.p.y,body1.p.z,
                 body1.v.x,body1.v.y,body1.v.z);
 

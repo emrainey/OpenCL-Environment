@@ -135,6 +135,9 @@ int main(int argc, char *argv[])
 		
 		if (verbose && cl_args[0] != '\0')
             printf("CL ARGS: %s\n",cl_args);
+			
+		if (verbose && precomp[0] != '\0')
+			printf("Precompiled Header: %s\n", precomp);
 	
 		dev_type = clGetTypeFromString(cl_device_types);
 		if (verbose)
@@ -142,6 +145,10 @@ int main(int argc, char *argv[])
 
         // process the kernel
         pEnv = clCreateEnvironment(filename, dev_type, numDevices, notify, cl_args);
+		if (pEnv == NULL)
+		{
+			printf("ERROR: Failed to compile %s\n", filename);
+		}
         clDeleteEnvironment(pEnv);
     }
     else

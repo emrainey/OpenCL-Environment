@@ -73,19 +73,15 @@ endif
 # COMMANDS
 ###################################################
 
-CLEAN    := cmd.exe /C del /Q 
-CLEANDIR := cmd.exe /C del /Q /S
-COPY     := cmd.exe /C copy /Y /Z /V
-
 $(_MODULE)_CLEAN_OBJ     := $(CLEAN) $(call PATH_CONV,$($(_MODULE)_ODIR))\\*.obj
 $(_MODULE)_CLEAN_BIN     := $(CLEAN) $(call PATH_CONV,$($(_MODULE)_BIN))
-$(_MODULE)_ATTRIB_EXE    := cmd.exe /C attrib -R $(call PATH_CONV,$($(_MODULE)_BIN))
-$(_MODULE)_LN_DSO	     := cmd.exe /C attrib -R $(call PATH_CONV,$($(_MODULE)_BIN))
-$(_MODULE)_UNLN_DSO      := cmd.exe /C attrib -R $(call PATH_CONV,$($(_MODULE)_BIN))
-$(_MODULE)_INSTALL_DSO   := cmd.exe /C echo $(call PATH_CONV,$($(_MODULE)_BIN)) 
-$(_MODULE)_UNINSTALL_DSO := cmd.exe /C echo $(call PATH_CONV,$($(_MODULE)_BIN)) 
-$(_MODULE)_INSTALL_EXE   := cmd.exe /C attrib -R $(call PATH_CONV,$($(_MODULE)_BIN))
-$(_MODULE)_UNINSTALL_EXE := cmd.exe /C attrib -R $(call PATH_CONV,$($(_MODULE)_BIN))
+$(_MODULE)_ATTRIB_EXE    := $(SET_RW) $(call PATH_CONV,$($(_MODULE)_BIN))
+$(_MODULE)_LN_DSO	     := $(SET_RW) $(call PATH_CONV,$($(_MODULE)_BIN))
+$(_MODULE)_UNLN_DSO      := $(SET_RW) $(call PATH_CONV,$($(_MODULE)_BIN))
+$(_MODULE)_INSTALL_DSO   := $(PRINT) $(call PATH_CONV,$($(_MODULE)_BIN)) 
+$(_MODULE)_UNINSTALL_DSO := $(PRINT) $(call PATH_CONV,$($(_MODULE)_BIN)) 
+$(_MODULE)_INSTALL_EXE   := $(SET_RW) $(call PATH_CONV,$($(_MODULE)_BIN))
+$(_MODULE)_UNINSTALL_EXE := $(SET_RW) $(call PATH_CONV,$($(_MODULE)_BIN))
 $(_MODULE)_LINK_LIB  := $(AR) $($(_MODULE)_ARFLAGS) /OUT:$(call PATH_CONV,$($(_MODULE)_BIN)) $(call PATH_CONV,$($(_MODULE)_OBJS)) $(call PATH_CONV,$($(_MODULE)_LIBS))
 $(_MODULE)_LINK_EXE  := $(LD) $($(_MODULE)_LDFLAGS) $(call PATH_CONV,$($(_MODULE)_OBJS)) $($(_MODULE)_LIBRARIES) /OUT:$(call PATH_CONV,$($(_MODULE)_BIN))
 $(_MODULE)_LINK_DSO  := $(LD) $($(_MODULE)_LDFLAGS) $(call PATH_CONV,$($(_MODULE)_OBJS)) $($(_MODULE)_LIBRARIES) /DLL $($(_MODULE)_DEF) /OUT:$(call PATH_CONV,$($(_MODULE)_BIN))
@@ -95,18 +91,19 @@ $(_MODULE)_LINK_DSO  := $(LD) $($(_MODULE)_LDFLAGS) $(call PATH_CONV,$($(_MODULE
 ###################################################
 
 define $(_MODULE)_DEPEND_CC 
-depend:: $($(_MODULE)_SDIR)/$(1).c $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
-	@echo No dependency management in Windows!
 endef
 
 define $(_MODULE)_DEPEND_CP
-depend:: $($(_MODULE)_SDIR)/$(1).cpp $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
-	@echo No dependency management in Windows!	
 endef
 
 define $(_MODULE)_DEPEND_AS
-depend:: $($(_MODULE)_SDIR)/$(1).S $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
-	@echo No dependency management in Windows!	
+endef
+
+define $(_MODULE)_DEPEND
+$(_MODULE)_depend_cc: $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
+$(_MODULE)_depend_cp: $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
+$(_MODULE)_depend_as: $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
+$(_MODULE)_depend: $(_MODULE)_depend_as $(_MODULE)_depend_cc $(_MODULE)_depend_cp
 endef
 
 define $(_MODULE)_PREBUILT
@@ -121,45 +118,45 @@ ifeq ($(strip $($(_MODULE)_TYPE)),library)
 
 
 define $(_MODULE)_UNINSTALL
-uninstall::
+$(_MODULE)_uninstall:
 	@echo No uninstall step for static libraries
 endef
 
 define $(_MODULE)_INSTALL
-install::
+$(_MODULE)_install:
 	@echo No install step for static libraries
 endef
 
 define $(_MODULE)_BUILD
-build:: $($(_MODULE)_BIN)
+$(_MODULE)_build: $($(_MODULE)_BIN)
 endef
 
 define $(_MODULE)_CLEAN_LNK
-clean::
+$(_MODULE)_clean:
 endef
 
 else ifeq ($(strip $($(_MODULE)_TYPE)),dsmo)
 
 define $(_MODULE)_UNINSTALL
-uninstall::
+$(_MODULE)_uninstall:
 	@echo Uninstalling $$@
 	-$(Q)$(call $(_MODULE)_UNLN_DSO)
 	-$(Q)$(call $(_MODULE)_UNINSTALL_DSO)
 endef
 
 define $(_MODULE)_INSTALL
-install::
+$(_MODULE)_install:
 	@echo Installing $($(_MODULE)_BIN)
 	-$(Q)$(call $(_MODULE)_INSTALL_DSO)
 	-$(Q)$(call $(_MODULE)_LN_DSO)
 endef
 
 define $(_MODULE)_BUILD
-build:: $($(_MODULE)_BIN)
+$(_MODULE)_build: $($(_MODULE)_BIN)
 endef
 
 define $(_MODULE)_CLEAN_LNK
-clean::
+$(_MODULE)_clean:
 	@echo Removing Link for Shared Object $($(_MODULE)_BIN).1.0
 	-$(Q)$(CLEAN) $($(_MODULE)_BIN).1.0
 endef
@@ -167,38 +164,38 @@ endef
 else ifeq ($(strip $($(_MODULE)_TYPE)),exe)
 
 define $(_MODULE)_UNINSTALL
-uninstall::
+$(_MODULE)_uninstall:
 	-$(Q)$(call $(_MODULE)_UNINSTALL_EXE)
 endef
 
 define $(_MODULE)_INSTALL
-install::
+$(_MODULE)_install:
 	@echo Installing $($(_MODULE)_BIN)
 	-$(Q)$(call $(_MODULE)_INSTALL_EXE)
 	-$(Q)$(call $(_MODULE)_ATTRIB_EXE)
 endef
 
 define $(_MODULE)_BUILD
-build:: $($(_MODULE)_BIN)
+$(_MODULE)_build: $($(_MODULE)_BIN)
 	@echo Building for $($(_MODULE)_BIN)
 endef
 
 define $(_MODULE)_CLEAN_LNK
-clean::
+$(_MODULE)_clean:
 endef
 
 endif
 
 define $(_MODULE)_COMPILE_TOOLS
-$($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.c
+$($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.c 
 	@echo [PURE] Compiling C99 $$(notdir $$<)
 	$(Q)$(CC) $($(_MODULE)_CFLAGS) $(call PATH_CONV,$$<) /Fo$(call PATH_CONV,$$@) /Fd$(call PATH_CONV,$($(_MODULE)_PDB)) $(LOGGING)
 
-$($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.cpp
+$($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.cpp 
 	@echo [PURE] Compiling C++ $$(notdir $$<)
 	$(Q)$(CP) $($(_MODULE)_CFLAGS) $(call PATH_CONV,$$<) /Fo$(call PATH_CONV,$$@) /Fd$(call PATH_CONV,$($(_MODULE)_PDB)) $(LOGGING)
 
-$($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.S
+$($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.S 
 	@echo [PURE] Assembling $$(notdir $$<)
 	$(Q)$(AS) $($(_MODULE)_AFLAGS) $(call PATH_CONV,$$<) /Fo$(call PATH_CONV,$$@) /Fd$(call PATH_CONV,$($(_MODULE)_PDB))  $(LOGGING)
 endef

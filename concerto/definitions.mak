@@ -17,3 +17,11 @@ all-type-files = $(notdir $(wildcard $($(_MODULE)_SDIR)/$(1)))
 all-java-files = $(call all-type-files,*.java)
 all-c-files    = $(call all-type-files,*.c)
 all-cpp-files  = $(call all-type-files,*.cpp)
+
+ifeq ($(HOST_OS),Windows_NT)
+PATH_CONV=$(subst /,\,$(1))
+else
+PATH_CONV=$(subst \,/,$(1))
+endif
+P2W_CONV=$(patsubst \cygdrive\c\%,c:\%,$(subst /,\,$(1)))
+W2P_CONV=$(subst \,/,$(patsubst C:\%,\cygdrive\c\% $(1)))

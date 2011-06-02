@@ -13,17 +13,17 @@
 # limitations under the License.
 
 ifeq ($(OS),Windows_NT)
-	ifeq ($(TERM),cygwin)
-		HOST_OS=CYGWIN
-		HOST_COMPILER=GCC
-	else ifeq ($(TERM),xterm)
-		HOST_OS=CYGWIN
-		HOST_COMPILER=GCC
-	else	
-		PATH_CONV=$(subst /,\,$(1))
+    ifeq ($(TERM),cygwin)
+        HOST_OS=CYGWIN
+        HOST_COMPILER=GCC
+    else ifeq ($(TERM),xterm)
+        HOST_OS=CYGWIN
+        HOST_COMPILER=GCC
+    else    
+        #PATH_CONV=$(subst /,\,$(1))
         HOST_OS=Windows_NT
-		HOST_COMPILER=CL
-		CL_ROOT?=$(VCINSTALLDIR)
+        HOST_COMPILER=CL
+        CL_ROOT?=$(VCINSTALLDIR)
     endif
 else
     OS=$(shell uname -s)
@@ -34,9 +34,9 @@ else
         HOST_OS=DARWIN
         HOST_COMPILER=GCC
     else ifeq ($(OS),CYGWIN_NT-5.1)
-    	HOST_OS=CYGWIN
-    	HOST_COMPILER=GCC
-   	else
+        HOST_OS=CYGWIN
+        HOST_COMPILER=GCC
+    else
         HOST_OS=POSIX
         HOST_COMPILER=GCC
     endif
