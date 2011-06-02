@@ -108,7 +108,7 @@ endef
 
 define $(_MODULE)_DEPEND
 $(_MODULE)_depend_cc: $(CSOURCES:%.c=$($(_MODULE)_ODIR)/%.d)
-$(_MODULE)_depend_cp: $(CSOURCES:%.cpp=$($(_MODULE)_ODIR)/%.d)
+$(_MODULE)_depend_cp: $(CPPSOURCES:%.cpp=$($(_MODULE)_ODIR)/%.d)
 $(_MODULE)_depend_as: 
 $(_MODULE)_depend: $(_MODULE)_depend_as $(_MODULE)_depend_cc $(_MODULE)_depend_cp
 endef
@@ -200,7 +200,7 @@ $($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.cpp
 	@echo [PURE] Compiling C++ $$(notdir $$<)
 	$(Q)$(CP) $($(_MODULE)_CFLAGS) $$< -o $$@  $(LOGGING)
 
-$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.S 
+$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.S
 	@echo [PURE] Assembling $$(notdir $$<)
 	$(Q)$(AS) $($(_MODULE)_AFLAGS) $$< -o $$@ $(LOGGING)
 endef

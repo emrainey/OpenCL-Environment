@@ -12,17 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(GLUT_ROOT),)
-$(error GLUT_ROOT must be defined to use GLUT)
-endif
-
-IDIRS += $(GLUT_ROOT)/include
 ifeq ($(HOST_OS),Windows_NT)
-	SYSLDIRS += $(GLUT_ROOT)/lib
-	SYS_SHARED_LIBS := glut32 glu32
+	ifeq ($(GLUT_HOME),)
+		$(error GLUT_HOME must be defined to use GLUT)
+	endif
+	SYSIDIRS += $(GLUT_HOME)/include
+	SYSLDIRS += $(GLUT_HOME)/lib
+	SYS_SHARED_LIBS += glut32 glu32
 else ifeq ($(HOST_OS),LINUX)
+	# User should install GLUT/Mesa via package system
+	SYS_SHARED_LIBS += glut GLU GL
 else ifeq ($(HOST_OS),DARWIN)
+	# User should have XCode install GLUT/OpenGL
 	SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenGL.framework/Headers
 	SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/GLUT.framework/Headers
 	LDFLAGS+=-framework OpenGL -framework GLUT
 endif
+

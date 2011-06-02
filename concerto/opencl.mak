@@ -49,7 +49,7 @@ ifeq ($(HOST_OS),Windows_NT)
 	SYS_SHARED_LIBS += OpenCL
 else ifeq ($(HOST_OS),LINUX)
 	CL_USER_DEVICE_TYPE=gpu
-	SYSDIRS += $(OPENCL_ROOT)/inc
+	SYSIDIRS += $(OPENCL_ROOT)/inc
 	ifeq ($(HOST_CPU),X86)
 		SYSLDIRS += $(OPENCL_ROOT)/lib/Linux32
 	else ifeq ($(HOST_CPU),X64)
@@ -70,10 +70,10 @@ endif
 # OpenCL-Environment Compiler Support
 ifeq ($(HOST_OS),Windows_NT)
 CL:=$($(_MODULE)_TDIR)/clcompiler.exe
-else ifeq ($(HOST_OS)/CYGWIN)
+else ifeq ($(HOST_OS),CYGWIN)
 CL:=$($(_MODULE)_TDIR)/clcompiler.exe
 else
-$($(_MODULE)_TDIR)/clcompiler
+CL:=$($(_MODULE)_TDIR)/clcompiler
 endif
 
 # OpenCL-Environment Defines
@@ -142,7 +142,7 @@ endef
 define $(_MODULE)_COMPILE_CL
 $($(_MODULE)_ODIR)/$(1).h: $(KDIR)/$(1).cl $(CL)
 	@echo [PURE] Compiling OpenCL Kernel $$(notdir $$<)
-	$$(call PATH_CONV,$(CL)) -v -n -f $$(call PATH_CONV,$$<) -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $$(call PATH_CONV,$$@) -W "$($(_MODULE)_KFLAGS)"
+	$$(call PATH_CONV,$(CL)) -n -f $$(call PATH_CONV,$$<) -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $$(call PATH_CONV,$$@) -W "$($(_MODULE)_KFLAGS)"
 endef
 
 $(eval $(call $(_MODULE)_KERNEL_BUILDS))

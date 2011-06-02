@@ -71,29 +71,32 @@ PRETARGET_MODULES :=
 
 include $(TARGET_MAKEFILES)
 
-.PHONY: all dir depend build install uninstall clean clean_target preprocessor pretarget $(_MODULE) targets scrub vars test
+.PHONY: all dir depend build install uninstall clean preprocessor pretarget targets scrub vars test
 
 depend: $(foreach mod, $(MODULES), $(mod)_depend)
 
 all: build
 
 build: pretarget $(foreach mod, $(MODULES), $(mod)_build)
-	@echo Build Stage
+	@echo $< stage complete
 
 pretarget: dir depend preprocessor $(foreach mod, $(PRETARGET_MODULES), $(mod)_pretarget)
-	@echo Pretarget Stage
+	@echo $< stage complete
 
 preprocessor: $(foreach mod, $(MODULES), $(mod)_preprocessor)
-	@echo Preprocessor Stage
+	@echo $< stage complete
 
 install: build $(foreach mod, $(MODULES), $(mod)_install)
+	@echo $< stage complete
 
 uninstall: $(foreach mod, $(MODULES), $(mod)_uninstall)
-
+	@echo $< stage complete
+	
 clean: $(foreach mod, $(MODULES), $(mod)_clean)
-
+	@echo $< stage complete
+	
 targets:
-	@echo all, build, install, uninstall, scrub, test, vars
+	@echo all, build, install, uninstall, scrub, test, vars, clean
 	@echo TARGETS=$(MODULES)
 
 scrub:

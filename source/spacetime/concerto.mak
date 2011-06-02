@@ -15,7 +15,7 @@
 
 TARGET     := spacetime
 TARGETTYPE := exe
-CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c Vec.c
+CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c vector.c
 STATIC_LIBS := clenvironment
 
 include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak

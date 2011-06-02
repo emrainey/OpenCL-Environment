@@ -102,6 +102,13 @@
 extern "C" {
 #endif
 
+typedef struct _vec {
+    double x;
+    double y;
+    double z;
+    double w;
+} Vec;
+
 typedef struct _colorb
 {
     int8_t r,g,b,a;
