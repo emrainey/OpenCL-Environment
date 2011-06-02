@@ -13,9 +13,9 @@
 # limitations under the License.
 
 ifeq ($(HOST_OS),Windows_NT)
-	ifeq ($(GLUT_HOME),)
-		$(error GLUT_HOME must be defined to use GLUT)
-	endif
+ifeq ($(GLUT_HOME),)
+$(error GLUT_HOME must be defined to use GLUT)
+endif
 	SYSIDIRS += $(GLUT_HOME)/include
 	SYSLDIRS += $(GLUT_HOME)/lib
 	SYS_SHARED_LIBS += glut32 glu32
