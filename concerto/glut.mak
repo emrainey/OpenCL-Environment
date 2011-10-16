@@ -18,7 +18,7 @@ $(error GLUT_HOME must be defined to use GLUT)
 endif
 	SYSIDIRS += $(GLUT_HOME)/include
 	SYSLDIRS += $(GLUT_HOME)/lib
-	SYS_SHARED_LIBS += glut32 glu32
+	SYS_SHARED_LIBS += glut32 glut
 else ifeq ($(HOST_OS),LINUX)
 	# User should install GLUT/Mesa via package system
 	SYS_SHARED_LIBS += glut GLU GL

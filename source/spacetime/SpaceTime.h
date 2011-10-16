@@ -102,6 +102,11 @@
 extern "C" {
 #endif
 
+#ifdef Windows_NT
+typedef unsigned char uint8_t;
+typedef   signed char  int8_t;
+#endif
+
 typedef struct _vec {
     double x;
     double y;
