@@ -24,7 +24,7 @@ ALL_MAKEFILES := $(filter %/$(SUBMAKEFILE),$(MAKEFILE_LIST))
 endif
 #$(info ALL_MAKEFILES=$(ALL_MAKEFILES))
 
-# Take the resulting list and remove the pathing and Makefile each entry and 
+# Take the resulting list and remove the pathing and Makefile each entry and
 # then you have the modules list.
 
 # get this makefile
@@ -51,7 +51,11 @@ _MODPATH := $(subst $(SPACE),\,$(_PARTS))
 else
 _MODPATH := $(subst /$(SUBMAKEFILE),,$(THIS_MAKEFILE))
 endif
-#$(info _MODPATH=$(_MODPATH))
+
+ifdef BUILD_DEBUG
+$(info _MODPATH=$(_MODPATH))
+endif
+
 ifeq ($(_MODPATH),)
 $(error $(THIS_MAKEFILE) failed to get module path)
 endif
@@ -64,7 +68,7 @@ endif
 
 # If we're calling this from our directory we need to figure out the path
 ifeq ($(_MODDIR),./)
-ifeq ($(HOST_OS),Windows_NT) 
+ifeq ($(HOST_OS),Windows_NT)
 _MODDIR := $(lastword $(subst /, ,$(abspath .)))
 else
 _MODDIR := $(lastword $(subst /, ,$(abspath .)))
@@ -84,29 +88,45 @@ $(error Failed to create module name!)
 endif
 
 # Print some info to show that we're processing the makefiles
-ifeq ($(BUILD_DEBUG),1)
-$(info Adding Module $(_MODULE))
+ifdef BUILD_DEBUG
+$(info Adding Module $(_MODULE) to MODULES)
 endif
+
+# Add the current module to the modules list
+MODULES+=$(_MODULE)
 
 # Define the Path to the Source Files (always use the directory) and Header Files
 $(_MODULE)_SDIR := $(HOST_ROOT)/$(_MODPATH)
 $(_MODULE)_IDIRS:= $(HOST_ROOT)/include $($(_MODULE)_SDIR)
 
 # Route the output for each module into it's own folder
-ifdef DEBUG
-$(_MODULE)_ODIR := $(HOST_ROOT)/out/$(TARGET_CPU)/debug/module_$(_MODULE)
-$(_MODULE)_TDIR := $(HOST_ROOT)/out/$(TARGET_CPU)/debug
-else
-$(_MODULE)_ODIR := $(HOST_ROOT)/out/$(TARGET_CPU)/release/module_$(_MODULE)
-$(_MODULE)_TDIR := $(HOST_ROOT)/out/$(TARGET_CPU)/release
-endif
+$(_MODULE)_ODIR := $(HOST_ROOT)/out/$(TARGET_OS)/$(TARGET_CPU)/module_$(_MODULE)
+$(_MODULE)_TDIR := $(HOST_ROOT)/out/$(TARGET_OS)/$(TARGET_CPU)
 
-# Set the initial linking directories to the target directory 
+# Set the initial linking directories to the target directory
 $(_MODULE)_LDIRS := $($(_MODULE)_TDIR)
+
+# Set the install directory if it's not set already
+ifndef INSTALL_LIB
+$(_MODULE)_INSTALL_LIB := $($(_MODULE)_TDIR)
+else
+$(_MODULE)_INSTALL_LIB := $(INSTALL_LIB)
+endif
+ifndef INSTALL_BIN
+$(_MODULE)_INSTALL_BIN := $($(_MODULE)_TDIR)
+else
+$(_MODULE)_INSTALL_BIN := $(INSTALL_BIN)
+endif
+ifndef INSTALL_INC
+$(_MODULE)_INSTALL_INC := $($(_MODULE)_TDIR)/include
+else
+$(_MODULE)_INSTALL_INC := $(INSTALL_INC)
+endif
 
 # Define a ".gitignore" file which will help in making sure the module's output folder always exists.
 $($(_MODULE)_ODIR)/.gitignore:
 ifeq ($(HOST_OS),Windows_NT)
+	-@echo Making $@
 	-$(Q)mkdir $(subst /,\,$(patsubst %/.gitignore,%,$@))
 	-$(Q)echo > $(subst /,\,$@)
 else
@@ -114,12 +134,13 @@ else
 	-$(Q)touch $@
 endif
 
-dir: $($(_MODULE)_ODIR)/.gitignore
+dir:: $($(_MODULE)_ODIR)/.gitignore
 
 # Clean out common vars
+ENTRY :=
 SYSIDIRS :=
 SYSLDIRS :=
-DEFS  :=
+DEFS :=
 STATIC_LIBS :=
 SHARED_LIBS :=
 SYS_STATIC_LIBS :=

@@ -27,6 +27,9 @@ $(_MODULE)_TYPE := $(TARGETTYPE)
 $(_MODULE)_DEFS := $(SYSDEFS) $(DEFS)
 $(_MODULE)_TEST := $(TESTCASE)
 
+# Set the Install Path
+$(_MODULE)_INSTALL_PATH = $(INSTALL_PATH)
+
 # For debugging the build system
 $(_MODULE)_SRCS := $(CSOURCES) $(CPPSOURCES) $(ASSEMBLY) $(JSOURCES)
 
@@ -38,14 +41,17 @@ else ifeq ($(HOST_COMPILER),CL)
 	include $(HOST_ROOT)/$(BUILD_FOLDER)/cl.mak
 else ifeq ($(HOST_COMPILER),CGT6X)
 	include $(HOST_ROOT)/$(BUILD_FOLDER)/cgt6x.mak
+else ifeq ($(HOST_COMPILER),QCC)
+	include $(HOST_ROOT)/$(BUILD_FOLDER)/qcc.mak
 endif
 
 include $(HOST_ROOT)/$(BUILD_FOLDER)/java.mak
 
 else
 
+$(info Build Skipped for $(_MODULE))
+
 all %::
-	@echo Build is skipped for $($(_MODULE)_BIN)
 
 endif  # ifndef SKIPBUILD
 
@@ -92,6 +98,7 @@ define $(_MODULE)_BUILD_DSO
 $($(_MODULE)_BIN): $($(_MODULE)_OBJS) $($(_MODULE)_STATIC_LIBS) $($(_MODULE)_SHARED_LIBS)
 	@echo Linking $$@
 	$(Q)$(call $(_MODULE)_LINK_DSO) $(LOGGING)
+	-$(Q)$(call $(_MODULE)_LN_DSO)
 endef
 
 $(eval $(call $(_MODULE)_BUILD_DSO))
@@ -114,17 +121,12 @@ $(eval $(call $(_MODULE)_DEPEND_JAR))
 endif
 
 define $(_MODULE)_CLEAN
-.PHONY: $(_MODULE)_clean_pretarget $(_MODULE)_clean_target $(_MODULE)_clean
-
-ifneq ($(filter $(PRETARGET_MODULES),$(_MODULE)),)
-$(_MODULE)_clean_pretarget:
-endif
-
-$(_MODULE)_clean_target: $(_MODULE)_clean_pretarget
+.PHONY: clean_bin clean
+clean_target::
 	@echo Cleaning $($(_MODULE)_BIN)
 	-$(Q)$(call $(_MODULE)_CLEAN_BIN)
 
-$(_MODULE)_clean: $(_MODULE)_clean_target
+clean:: clean_target
 	@echo Cleaning $($(_MODULE)_OBJS)
 	-$(Q)$(call $(_MODULE)_CLEAN_OBJ)
 endef
@@ -135,11 +137,11 @@ $(foreach obj,$(CSOURCES),  $(eval $(call $(_MODULE)_DEPEND_CC,$(basename $(obj)
 $(foreach obj,$(CPPSOURCES),$(eval $(call $(_MODULE)_DEPEND_CP,$(basename $(obj)))))
 $(foreach obj,$(ASSEMBLY),  $(eval $(call $(_MODULE)_DEPEND_AS,$(basename $(obj)))))
 $(foreach cls,$(JSOURCES),  $(eval $(call $(_MODULE)_DEPEND_CLS,$(basename $(cls)))))
-$(eval $(call $(_MODULE)_DEPEND))
+
 $(eval $(call $(_MODULE)_COMPILE_TOOLS))
 
 define $(_MODULE)_VARDEF
-$(_MODULE)_vars:
+$(_MODULE)_vars::
 	@echo =============================================
 	@echo _MODULE=$(_MODULE)
 	@echo $(_MODULE)_BIN =$($(_MODULE)_BIN)

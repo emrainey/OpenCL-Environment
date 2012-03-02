@@ -14,7 +14,7 @@
 
 # Define all but don't do anything with it yet.
 .PHONY: all
-all:
+all::
 
 # Define our pathing
 HOST_ROOT?=$(abspath .)
@@ -22,7 +22,7 @@ HOST_ROOT?=$(abspath .)
 $(info HOST_ROOT=$(HOST_ROOT))
 
 ifndef BUILD_FOLDER
-BUILD_FOLDER=concerto
+BUILD_FOLDER:=concerto
 endif
 
 include $(HOST_ROOT)/$(BUILD_FOLDER)/os.mak
@@ -46,79 +46,60 @@ else
 Q=@
 endif
 
+# Initialize Build Variables
+SKIPBUILD:=
+
+ifeq ($(NO_OPTIMIZE),1)
+TARGET_BUILD:=debug
+else
+TARGET_BUILD:=release
+endif
+$(info TARGET_BUILD=$(TARGET_BUILD))
+
 # If no directories were specified, then assume "source"
 ifeq ($(DIRECTORIES),)
-DIRECTORIES=source
+DIRECTORIES:=source
 endif
 
-# Find all the Makfiles in the subfolders, these will be pulled in to make 
+# Find all the Makfiles in the subfolders, these will be pulled in to make
 ifeq ($(HOST_OS),Windows_NT)
-    TARGET_MAKEFILES:=$(foreach dir,$(DIRECTORIES),$(shell cd $(dir) && dir /b /s $(SUBMAKEFILE)))
+TARGET_MAKEFILES:=$(foreach dir,$(DIRECTORIES),$(shell cd $(dir) && dir /b /s $(SUBMAKEFILE)))
 else
-    TARGET_MAKEFILES:=$(foreach dir,$(DIRECTORIES),$(shell find $(dir)/ -name $(SUBMAKEFILE)))
+TARGET_MAKEFILES:=$(foreach dir,$(DIRECTORIES),$(shell find $(dir)/ -name $(SUBMAKEFILE)))
 endif
 #$(info TARGET_MAKEFILES=$(TARGET_MAKEFILES))
 
-# Now determine the MODULE names from this list
-ifeq ($(HOST_OS),Windows_NT)
-    MODULES:=$(foreach target,$(TARGET_MAKEFILES),$(lastword $(filter-out $(SUBMAKEFILE),$(subst \, ,$(target)))))
-else
-    MODULES:=$(foreach target,$(TARGET_MAKEFILES),$(lastword $(filter-out $(SUBMAKEFILE),$(subst /, ,$(target)))))
-endif
-#$(info MODULES=$(MODULES))
-
-PRETARGET_MODULES :=
-
+# Create the MODULES list by parsing the makefiles.
+MODULES:=
 include $(TARGET_MAKEFILES)
+$(info MODULES=$(MODULES))
 
-.PHONY: all dir depend build install uninstall clean preprocessor pretarget targets scrub vars test
+ifndef NO_TARGETS
+.PHONY: all dir depend build install uninstall clean clean_target targets scrub vars test
 
-depend: $(foreach mod, $(MODULES), $(mod)_depend)
+depend::
 
-all: build
+all:: build
 
-build: pretarget $(foreach mod, $(MODULES), $(mod)_build)
-	@echo $< stage complete
+build:: dir depend
 
-pretarget: dir depend preprocessor $(foreach mod, $(PRETARGET_MODULES), $(mod)_pretarget)
-	@echo $< stage complete
+install:: build
 
-preprocessor: $(foreach mod, $(MODULES), $(mod)_preprocessor)
-	@echo $< stage complete
+uninstall::
 
-install: build $(foreach mod, $(MODULES), $(mod)_install)
-	@echo $< stage complete
-
-uninstall: $(foreach mod, $(MODULES), $(mod)_uninstall)
-	@echo $< stage complete
-	
-clean: $(foreach mod, $(MODULES), $(mod)_clean)
-	@echo $< stage complete
-	
-targets:
-	@echo all, build, install, uninstall, scrub, test, vars, clean
+targets::
 	@echo TARGETS=$(MODULES)
 
 scrub:
 ifeq ($(HOST_OS),Windows_NT)
-ifdef DEBUG
-	@echo [ROOT] Deleting $(HOST_ROOT)\out\$(TARGET_CPU)\debug
-	-@$(CLEAN) $(call PATH_CONV,$(HOST_ROOT))\out\$(TARGET_CPU)\debug
+	@echo [ROOT] Deleting $(HOST_ROOT)\out\$(TARGET_OS)\$(TARGET_CPU)\$(TARGET_BUILD)
+	-@$(CLEAN) $(call PATH_CONV,$(HOST_ROOT))\out\$(TARGET_OS)\$(TARGET_CPU)
 else
-	@echo [ROOT] Deleting $(HOST_ROOT)\out\$(TARGET_CPU)\release
-	-@$(CLEAN) $(call PATH_CONV,$(HOST_ROOT))\out\$(TARGET_CPU)\release
-endif
-else
-ifdef DEBUG
-	@echo [ROOT] Deleting $(HOST_ROOT)/out/$(TARGET_CPU)/debug
-	-@$(CLEANDIR) $(HOST_ROOT)/out/$(TARGET_CPU)/debug
-else
-	@echo [ROOT] Deleting $(HOST_ROOT)/out/$(TARGET_CPU)/release
-	-@$(CLEANDIR) $(HOST_ROOT)/out/$(TARGET_CPU)/release
-endif
+	@echo [ROOT] Deleting $(HOST_ROOT)/out/$(TARGET_OS)/$(TARGET_CPU)/$(TARGET_BUILD)
+	-@$(CLEANDIR) $(HOST_ROOT)/out/$(TARGET_OS)/$(TARGET_CPU)
 endif
 
-vars: $(foreach mod,$(MODULES),$(mod)_vars)
+vars:: $(foreach mod,$(MODULES),$(mod)_vars)
 	@echo HOST_ROOT=$(HOST_ROOT)
 	@echo HOST_OS=$(HOST_OS)
 	@echo HOST_COMPILER=$(HOST_COMPILER)
@@ -126,6 +107,7 @@ vars: $(foreach mod,$(MODULES),$(mod)_vars)
 	@echo MAKEFILE_LIST=$(MAKEFILE_LIST)
 	@echo TARGET_MAKEFILES=$(TARGET_MAKEFILES)
 
-test: $(foreach mod,$(MODULES),$(mod)_test)
+test:: $(foreach mod,$(MODULES),$(mod)_test)
 	@echo Executing Unit tests
+endif
 

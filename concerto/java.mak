@@ -23,22 +23,22 @@ $(_MODULE)_BIN		 := $($(_MODULE)_TDIR)/$(TARGET).jar
 $(_MODULE)_CLASSES   := $(patsubst %.java,%.class,$(JSOURCES))
 $(_MODULE)_OBJS      := $(foreach cls,$($(_MODULE)_CLASSES),$($(_MODULE)_ODIR)/$(cls))
 ifdef CLASSPATH
-$(_MODULE)_CLASSPATH := -classpath $(CLASSPATH) 
-CLASSPATH 			 := 
+$(_MODULE)_CLASSPATH := -classpath $(CLASSPATH)
+CLASSPATH 			 :=
 else
-$(_MODULE)_CLASSPATH := 
+$(_MODULE)_CLASSPATH :=
 endif
 $(_MODULE)_CLEAN_OBJ := $(CLEAN) $($(_MODULE)_OBJS)
 $(_MODULE)_CLEAN_BIN := $(CLEAN) $($(_MODULE)_BIN)
-JC_OPTS             := -deprecation -verbose $($(_MODULE)_CLASSPATH) -sourcepath $($(_MODULE)_SDIR) -d $($(_MODULE)_ODIR) 
+JC_OPTS             := -deprecation -verbose $($(_MODULE)_CLASSPATH) -sourcepath $($(_MODULE)_SDIR) -d $($(_MODULE)_ODIR)
 ifdef DEBUG
 JC_OPTS             += -g
 endif
 ifdef MANIFEST
 $(_MODULE)_MANIFEST := -m $(MANIFEST)
-MANIFEST			:= 
+MANIFEST			:=
 else
-$(_MODULE)_MANIFEST := 
+$(_MODULE)_MANIFEST :=
 endif
 ifdef ENTRY
 $(_MODULE)_ENTRY    := $(ENTRY)
@@ -58,16 +58,14 @@ $($(_MODULE)_ODIR)/$(1).class: $($(_MODULE)_SDIR)/$(1).java $($(_MODULE)_SDIR)/$
 endef
 
 define $(_MODULE)_DEPEND_JAR
-$(_MODULE)_uninstall:
+uninstall::
 
-$(_MODULE)_install: $($(_MODULE)_BIN)
+install:: $($(_MODULE)_BIN)
 
-$($(_MODULE)_BIN): $($(_MODULE)_OBJS) 
+$($(_MODULE)_BIN): $($(_MODULE)_OBJS)
 	@echo Jar-ing Classes $($(_MODULE)_CLASSES)
 	$(Q)$(JAR) $(JAR_OPTS)
 endef
 
 endif
-
-
 
