@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(OS),Windows_NT)
-	$(info Windows Processor Architecture $(PROCESSOR_ARCHITECTURE))
-	$(info Windows Processor Identification $(word 1, $(PROCESSOR_IDENTIFIER)))
+ifeq ($(HOST_OS),Windows_NT)
+$(info Windows Processor Architecture $(PROCESSOR_ARCHITECTURE))
+$(info Windows Processor Identification $(word 1, $(PROCESSOR_IDENTIFIER)))
 	TYPE=$(word 1, $(PROCESSOR_IDENTIFIER))
 	ifeq ($(TYPE),x86)
 		HOST_CPU=X86

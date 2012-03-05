@@ -81,7 +81,7 @@ endif
 $(_MODULE)_CLEAN_OBJ := $(CLEAN) $(call PATH_CONV,$($(_MODULE)_ODIR))\\*.obj
 $(_MODULE)_CLEAN_BIN := $(CLEAN) $(call PATH_CONV,$($(_MODULE)_BIN))
 $(_MODULE)_ATTRIB_EXE := $(ATTRIB) $(call PATH_CONV,$($(_MODULE)_BIN))
-$(_MODULE)_LN_DSO	     := $(SET_RW) $(call PATH_CONV,$($(_MODULE)_BIN))
+$(_MODULE)_LN_DS0 := $(SET_RW) $(call PATH_CONV,$($(_MODULE)_BIN))
 $(_MODULE)_UNLN_DSO      := $(SET_RW) $(call PATH_CONV,$($(_MODULE)_BIN))
 $(_MODULE)_INSTALL_DSO   := $(COPY) $(call PATH_CONV,$($(_MODULE)_TDIR)\\$($(_MODULE)_BIN)) $(call PATH_CONV,$($(_MODULE)_INSTALL_LIB))
 $(_MODULE)_UNINSTALL_DSO := $(CLEAN) $(call PATH_CONV,$($(_MODULE)_INSTALL_LIB)\\$($(_MODULE)_BIN))
@@ -116,7 +116,7 @@ build:: $($(_MODULE)_TDIR)/$(notdir $(1))
 
 install:: $($(_MODULE)_TDIR)/$(1))
 
-$($(_MODULE)_TDIR)/$(notdir $(1)): $($(_MODULE)_SDIR)/$(1)
+$($(_MODULE)_TDIR)/$(notdir $(1)): $($(_MODULE)_SDIR)/$(1) $($(_MODULE)_ODIR)/.gitignore
 	@echo Copying Prebuilt binary to $($(_MODULE)_TDIR)
 	-$(Q)$(COPY) $(call PATH_CONV,$($(_MODULE)_SDIR)/$(1)) $(call PATH_CONV,$($(_MODULE)_TDIR)/$(notdir $(1)))
 endef
@@ -197,13 +197,13 @@ endif
 define $(_MODULE)_COMPILE_TOOLS
 $($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.c $($(_MODULE)_ODIR)/.gitignore
 #	@echo [PURE] Compiling C99 $$(notdir $$<)
-	$(Q)$(CC) $($(_MODULE)_CFLAGS) $(call PATH_CONV,$$<) /Fo$(call PATH_CONV,$$@) /Fd$(call PATH_CONV,$($(_MODULE)_ODIR)/$$(notdir $$(basename $$<)).pdb) $(LOGGING)
+	$(Q)$(CC) $($(_MODULE)_CFLAGS) $$(call PATH_CONV,$$<) /Fo$$(call PATH_CONV,$$@) /Fd$$(call PATH_CONV,$($(_MODULE)_ODIR)/$$(notdir $$(basename $$<)).pdb) $(LOGGING)
 
 $($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.cpp $($(_MODULE)_ODIR)/.gitignore
 #	@echo [PURE] Compiling C++ $$(notdir $$<)
-	$(Q)$(CP) $($(_MODULE)_CFLAGS) $(call PATH_CONV,$$<) /Fo$(call PATH_CONV,$$@) /Fd$(call PATH_CONV,$($(_MODULE)_ODIR)/$$(notdir $$(basename $$<)).pdb) $(LOGGING)
+	$(Q)$(CP) $($(_MODULE)_CFLAGS) $$(call PATH_CONV,$$<) /Fo$$(call PATH_CONV,$$@) /Fd$$(call PATH_CONV,$($(_MODULE)_ODIR)/$$(notdir $$(basename $$<)).pdb) $(LOGGING)
 
 $($(_MODULE)_ODIR)/%.obj: $($(_MODULE)_SDIR)/%.S $($(_MODULE)_ODIR)/.gitignore
 #	@echo [PURE] Assembling $$(notdir $$<)
-	$(Q)$(AS) $($(_MODULE)_AFLAGS) $(call PATH_CONV,$$<) /Fo$(call PATH_CONV,$$@) /Fd$(call PATH_CONV,$($(_MODULE)_ODIR)/$$(notdir $$(basename $$<)).pdb)  $(LOGGING)
+	$(Q)$(AS) $($(_MODULE)_AFLAGS) $$(call PATH_CONV,$$<) /Fo$$(call PATH_CONV,$$@) /Fd$$(call PATH_CONV,$($(_MODULE)_ODIR)/$$(notdir $$(basename $$<)).pdb)  $(LOGGING)
 endef

@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Erik Rainey
+# Copyright (C) 2011 Texas Insruments, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,8 @@ ifeq ($(TARGET_CPU),$(HOST_CPU))
 	CROSS_COMPILE=
 endif
 
-ifeq ($(TARGET_CPU),X86)
-	CROSS_COMPILE=
-endif
-
-CC = $(CROSS_COMPILE)gcc
-CP = $(CROSS_COMPILE)g++
+CC = $(CROSS_COMPILE)clang
+CP = $(CROSS_COMPILE)clang++
 AS = $(CROSS_COMPILE)as
 AR = $(CROSS_COMPILE)ar
 LD = $(CROSS_COMPILE)ld
@@ -53,15 +49,16 @@ $(_MODULE)_OBJS := $(ASSEMBLY:%.S=$($(_MODULE)_ODIR)/%.o) $(CPPSOURCES:%.cpp=$($
 $(_MODULE)_STATIC_LIBS := $(foreach lib,$(STATIC_LIBS),$($(_MODULE)_TDIR)/lib$(lib).a)
 $(_MODULE)_SHARED_LIBS := $(foreach lib,$(SHARED_LIBS),$($(_MODULE)_TDIR)/lib$(lib).so)
 
+
 $(_MODULE)_COPT :=
 $(_MODULE)_LOPT :=
 ifneq ($(TARGET_OS),CYGWIN)
 $(_MODULE)_COPT += -fPIC
 endif
-$(_MODULE)_COPT += -fms-extensions -Wno-write-strings
+$(_MODULE)_COPT += -Wno-write-strings
 
 ifeq ($(TARGET_BUILD),debug)
-$(_MODULE)_COPT += -O0 -ggdb -ggdb3 -Q
+$(_MODULE)_COPT += -O0 -ggdb
 $(_MODULE)_LOPT += -g
 else ifeq ($(TARGET_BUILD),release)
 $(_MODULE)_COPT += -O3
@@ -85,12 +82,8 @@ $(_MODULE)_INCLUDES := $(foreach inc,$($(_MODULE)_IDIRS),-I$(inc))
 $(_MODULE)_DEFINES  := $(foreach def,$($(_MODULE)_DEFS),-D$(def))
 $(_MODULE)_LIBRARIES:= $(foreach ldir,$($(_MODULE)_LDIRS),-L$(ldir)) $(foreach lib,$(STATIC_LIBS),-l$(lib)) $(foreach lib,$(SYS_STATIC_LIBS),-l$(lib)) $(foreach lib,$(SHARED_LIBS),-l$(lib)) $(foreach lib,$(SYS_SHARED_LIBS),-l$(lib))
 $(_MODULE)_AFLAGS   := $($(_MODULE)_INCLUDES)
-ifeq ($(HOST_OS),DARWIN)
-$(_MODULE)_LDFLAGS  := -arch $(TARGET_CPU) $(LDFLAGS) $($(_MODULE)_LOPT)
-else
-$(_MODULE)_LDFLAGS  := $(LDFLAGS) $($(_MODULE)_LOPT)
-endif
-$(_MODULE)_CPLDFLAGS := $(foreach ldf,$($(_MODULE)_LDFLAGS),-Wl,$(ldf)) $($(_MODULE)_COPT)
+$(_MODULE)_LDFLAGS  := $($(_MODULE)_LOPT)
+$(_MODULE)_CPLDFLAGS := $(foreach ldf,$($(_MODULE)_LDFLAGS),-Wl,$(ldf))
 $(_MODULE)_CFLAGS   := -c $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $($(_MODULE)_COPT)
 
 ifdef DEBUG
@@ -100,6 +93,12 @@ endif
 ###################################################
 # COMMANDS
 ###################################################
+
+LINK := ln -s
+CLEAN := rm -f
+CLEANDIR := rm -rf
+COPY := cp -f
+
 ifneq ($(TARGET_OS),CYGWIN)
 EXPORT_FLAG:=--export-dynamic
 else
@@ -108,7 +107,7 @@ endif
 
 $(_MODULE)_CLEAN_OBJ  := $(CLEAN) $($(_MODULE)_OBJS)
 $(_MODULE)_CLEAN_BIN  := $(CLEAN) $($(_MODULE)_BIN)
-$(_MODULE)_ATTRIB_EXE := $(SET_EXEC) $($(_MODULE)_BIN)
+$(_MODULE)_ATTRIB_EXE := chmod a+x $($(_MODULE)_BIN)
 $(_MODULE)_LN_DSO     := $(LINK) $($(_MODULE)_BIN).1.0 $($(_MODULE)_BIN)
 $(_MODULE)_UNLN_DSO   := $(CLEAN) $($(_MODULE)_INSTALL_LIB)/$($(_MODULE)_BIN)
 $(_MODULE)_INSTALL_DSO:= install -C -m 755 $($(_MODULE)_BIN) $($(_MODULE)_INSTALL_LIB)
@@ -117,34 +116,34 @@ $(_MODULE)_INSTALL_EXE:= install -C -m 755 $($(_MODULE)_BIN) $($(_MODULE)_INSTAL
 $(_MODULE)_UNINSTALL_EXE:=$(CLEAN) $($(_MODULE)_INSTALL_BIN)/$($(_MODULE)_BIN)
 $(_MODULE)_LINK_LIB   := $(AR) -rscu $($(_MODULE)_BIN) $($(_MODULE)_OBJS) #$($(_MODULE)_STATIC_LIBS)
 $(_MODULE)_LINK_EXE   := $(CP) -Wl,--cref $($(_MODULE)_CPLDFLAGS) $($(_MODULE)_OBJS) $($(_MODULE)_LIBRARIES) -o $($(_MODULE)_BIN) -Wl,$($(_MODULE)_MAP)
-$(_MODULE)_LINK_DSO   := $(LD) $($(_MODULE)_LDFLAGS) -shared $(EXPORT_FLAG) -soname,$($(_MODULE)_BIN).1 --whole-archive $($(_MODULE)_LIBRARIES) -lm --no-whole-archive -o $($(_MODULE)_BIN).1.0 $($(_MODULE)_OBJS) $($(_MODULE)_MAP)
+$(_MODULE)_LINK_DSO   := $(LD) $($(_MODULE)_LDFLAGS) -shared $(EXPORT_FLAG) -soname,$($(_MODULE)_BIN).1 --whole-archive $($(_MODULE)_LIBRARIES) --no-whole-archive -o $($(_MODULE)_BIN).1.0 $($(_MODULE)_OBJS) $($(_MODULE)_MAP)
 
 ###################################################
 # MACROS FOR COMPILING
 ###################################################
 
 define $(_MODULE)_DEPEND_CC
-
-$($(_MODULE)_ODIR)/$(1).d: $($(_MODULE)_SDIR)/$(1).c $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
-	@echo Generating  Dependency Info from $$(notdir $$<)
-	$(Q)$(CC) $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $$< -MM -MF $($(_MODULE)_ODIR)/$(1).d -MT '$($(_MODULE)_ODIR)/$(1).o:' $(LOGGING)
-
-depend:: $($(_MODULE)_ODIR)/$(1).d
-
--include $($(_MODULE)_ODIR)/$(1).d
-
+#
+#$($(_MODULE)_ODIR)/$(1).d: $($(_MODULE)_SDIR)/$(1).c $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
+#	@echo Generating  Dependency Info from $$(notdir $$<)
+#	$(Q)$(CC) $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $$< -MM -MF $($(_MODULE)_ODIR)/$(1).d -MT '$($(_MODULE)_ODIR)/$(1).o:' $(LOGGING)
+#
+#depend:: $($(_MODULE)_ODIR)/$(1).d
+#
+#-include $($(_MODULE)_ODIR)/$(1).d
+#
 endef
 
 define $(_MODULE)_DEPEND_CP
-
-$($(_MODULE)_ODIR)/$(1).d: $($(_MODULE)_SDIR)/$(1).cpp $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
-	@echo Generating  Dependency Info from $$(notdir $$<)
-	$(Q)$(CC) $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $$< -MM -MF $($(_MODULE)_ODIR)/$(1).d -MT '$($(_MODULE)_ODIR)/$(1).o:' $(LOGGING)
-
-depend:: $($(_MODULE)_ODIR)/$(1).d
-
--include $($(_MODULE)_ODIR)/$(1).d
-
+#
+#$($(_MODULE)_ODIR)/$(1).d: $($(_MODULE)_SDIR)/$(1).cpp $($(_MODULE)_SDIR)/$(SUBMAKEFILE) $($(_MODULE)_ODIR)/.gitignore
+#	@echo Generating  Dependency Info from $$(notdir $$<)
+#	$(Q)$(CC) $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $$< -MM -MF $($(_MODULE)_ODIR)/$(1).d -MT '$($(_MODULE)_ODIR)/$(1).o:' $(LOGGING)
+#
+#depend:: $($(_MODULE)_ODIR)/$(1).d
+#
+#-include $($(_MODULE)_ODIR)/$(1).d
+#
 endef
 
 define $(_MODULE)_DEPEND_AS
@@ -161,7 +160,7 @@ build:: $($(_MODULE)_SDIR)/$(1)
 
 install:: $($(_MODULE)_TDIR)/$(notdir $(1))
 
-$($(_MODULE)_TDIR)/$(notdir $(1)): $($(_MODULE)_SDIR)/$(1) $($(_MODULE)_ODIR)/.gitignore
+$($(_MODULE)_TDIR)/$(notdir $(1)): $($(_MODULE)_SDIR)/$(1)
 	@echo Copying Prebuilt binary $($(_MODULE)_SDIR)/$(1) to $($(_MODULE)_TDIR)/$(notdir $(1))
 	-$(Q)$(COPY) $($(_MODULE)_SDIR)/$(1) $($(_MODULE)_TDIR)/$(notdir $(1))
 endef

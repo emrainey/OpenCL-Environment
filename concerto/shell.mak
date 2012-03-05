@@ -19,6 +19,7 @@ COPY     := cmd.exe /C copy /Y /Z /V
 PRINT    := cmd.exe /C echo
 SET_RW   := cmd.exe /C attrib -R
 SET_EXEC := cmd.exe /C echo
+LINK     := cmd.exe /C junction
 else # Bash variants
 CLEAN    := rm
 CLEANDIR := rm -rf
@@ -26,5 +27,6 @@ COPY     := cp -f
 PRINT    := echo
 SET_RW   := chmod a+rw
 SET_EXEC := chmod a+x
+LINK     := ln -s
 endif
 

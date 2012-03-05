@@ -17,7 +17,7 @@ all-type-files = $(notdir $(wildcard $($(_MODULE)_SDIR)/$(1)))
 all-java-files = $(call all-type-files,*.java)
 all-c-files    = $(call all-type-files,*.c)
 all-cpp-files  = $(call all-type-files,*.cpp)
-
+all-h-files    = $(call all-type-files,include/*.h)
 ifeq ($(HOST_OS),Windows_NT)
 PATH_CONV=$(subst /,\,$(1))
 else

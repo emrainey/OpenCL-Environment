@@ -32,8 +32,11 @@
 #include <clenvironment.h>
 
 /* OPENGL INCLUDES */
+#ifdef DARWIN
+#include <glut.h>
+#else
 #include <GL/glut.h>
-
+#endif
 /*****************************************************************************
  *
  * DEFINES
