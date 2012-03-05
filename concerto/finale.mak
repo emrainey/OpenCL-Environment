@@ -28,6 +28,7 @@ $(_MODULE)_INC_SUBPATH := $(INC_SUBPATH)
 else
 $(_MODULE)_INC_SUBPATH := $(TARGET)
 endif
+$(_MODULE)_HEADERS := $(HEADERS)
 
 # Copy over the rest of the variables
 $(_MODULE)_TYPE := $(TARGETTYPE)
@@ -65,6 +66,7 @@ include $(HOST_ROOT)/$(BUILD_FOLDER)/java.mak
 
 endif
 
+include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
 include $(HOST_ROOT)/$(BUILD_FOLDER)/dpkg.mak
 
 else
@@ -185,5 +187,5 @@ endef
 $(eval $(call $(_MODULE)_VARDEF))
 
 # Now clear out the module variable for repeat definitions
-_MODULE := 
+_MODULE :=
 

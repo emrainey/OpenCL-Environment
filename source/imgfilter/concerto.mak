@@ -13,15 +13,20 @@
 # limitations under the License.
 
 -include $(PRELUDE)
-
-TARGET		:= climgfilter
-TARGETTYPE	:= exe
-CSOURCES	:= imgfilter.c
-CLSOURCES	:= kernel_imgfilter.cl
-STATIC_LIBS	:= clenvironment clquery clmath
-
-include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
-
+TARGET      := climgfilter
+TARGETTYPE  := exe
+CSOURCES    := imgfilter.c
+HEADERS     := kernel_imgfilter
+STATIC_LIBS := clenvironment clquery clmath
 TESTCASE=$(TARGET)
-
 -include $(FINALE)
+
+_MODULE = kernel_imgfilter
+-include $(PRELUDE)
+TARGET      := kernel_imgfilter
+TARGETTYPE  := opencl_kernel
+CLSOURCES   := kernel_imgfilter.cl
+-include $(FINALE)
+
+
+

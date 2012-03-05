@@ -155,6 +155,7 @@ TARGETTYPE :=
 BINS :=
 INCS :=
 INC_SUBPATH :=
+HEADERS :=
 
 # Define a local path for this module's folder that we're processing...
 THIS := $($(_MODULE)_SDIR)

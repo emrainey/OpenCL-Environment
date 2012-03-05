@@ -41,11 +41,11 @@ cl_int range_of_operator(cl_char *op, cl_uint n, cl_uint limit)
     cl_int range;
     cl_uint p,q,r,s;
     cl_int max = 0, min = 0x7FFFFFFF;
-    for (p = 0; p < 2; p++) 
+    for (p = 0; p < 2; p++)
     {
-        for (q = 0; q < n; q++) 
+        for (q = 0; q < n; q++)
         {
-            for (r = 0; r < n; r++) 
+            for (r = 0; r < n; r++)
             {
                 s = (p * n * n) + (q * n) + r;
                 if (op[s] < min)
@@ -59,10 +59,10 @@ cl_int range_of_operator(cl_char *op, cl_uint n, cl_uint limit)
     return range;
 }
 
-cl_int imgfilter1d(cl_environment_t *pEnv, 
+cl_int imgfilter1d(cl_environment_t *pEnv,
                    cl_uint width,
                    cl_uint height,
-                   cl_uchar *pSrc, 
+                   cl_uchar *pSrc,
                    cl_int srcStride,
                    cl_uchar *pDst,
                    cl_int dstStride,
@@ -90,20 +90,20 @@ cl_int imgfilter1d(cl_environment_t *pEnv,
     cl_kernel_call_t call = {
         "kernel_edge_filter",
         params, dimof(params),
-        2, 
+        2,
         {0,0,0},
         {width, height, 0},
         {1,1,1},
         CL_SUCCESS, 0,0,0
-    }; 
+    };
     err = clCallKernel(pEnv, &call,1);
     return err;
 }
 
-cl_int imgfilter1d_opt(cl_environment_t *pEnv, 
+cl_int imgfilter1d_opt(cl_environment_t *pEnv,
                    cl_uint width,
                    cl_uint height,
-                   cl_uchar *pSrc, 
+                   cl_uchar *pSrc,
                    cl_int srcStride,
                    cl_uchar *pDst,
                    cl_int dstStride,
@@ -133,12 +133,12 @@ cl_int imgfilter1d_opt(cl_environment_t *pEnv,
     cl_kernel_call_t call = {
         "kernel_edge_filter_opt",
         params, dimof(params),
-        2, 
+        2,
         {0,0,0},
         {width, height, 0},
         {1,1,1},
         CL_SUCCESS, 0,0,0
-    }; 
+    };
     err = clCallKernel(pEnv, &call,1);
     return err;
 }
@@ -155,17 +155,17 @@ int main(int argc, char *argv[])
 
 #ifdef CL_BUILD_RUNTIME
 		cl_environment_t *pEnv = clCreateEnvironment(KDIR"kernel_imgfilter.cl", CL_DEVICE_TYPE_GPU, 2, notify, CL_ARGS);
-#else       
+#else
         cl_environment_t *pEnv = clCreateEnvironmentFromBins(&gKernelBins, notify, CL_ARGS);
-#endif  
+#endif
         if (!pEnv)
         {
             clDeleteEnvironment(pEnv);
             return -1;
         }
-        
+
         clPrintAllKernelInfo(pEnv->kernels[0]);
-            
+
         fi = fopen(argv[1], "rb");
         fo = fopen(argv[4], "wb+");
         if (fi && fo)
@@ -183,10 +183,10 @@ int main(int argc, char *argv[])
                 if (numBytes == 0)
                     break;
                 c_start = clock();
-                err = imgfilter1d_opt(pEnv, width, height, 
-                                  input_image, width, 
-                                  output_image, width, 
-                                  (cl_char *)sobel, 3, 
+                err = imgfilter1d_opt(pEnv, width, height,
+                                  input_image, width,
+                                  output_image, width,
+                                  (cl_char *)sobel, 3,
                                   range, limit);
                 c_diff = clock() - c_start;
                 printf("Sobel took %lu ticks\n", c_diff);

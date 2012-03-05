@@ -16,7 +16,18 @@ ifndef TARGET_PLATFORM
     TARGET_PLATFORM=PC
 endif
 
+ifeq ($(OPENCL_ROOT),)
+    $(warning OPENCL_ROOT must be defined to use OpenCL)
+endif
+
 SYSIDIRS := $(HOST_ROOT)/include
+
+ifdef CL_DEBUG
+SYSDEFS += CL_DEBUG
+endif
+
+CL_USER_DEVICE_TYPE  ?= all
+CL_USER_DEVICE_COUNT ?= 1
 
 ifeq ($(TARGET_PLATFORM),PC)
     TARGET_OS=$(HOST_OS)
@@ -29,16 +40,48 @@ ifeq ($(TARGET_PLATFORM),PC)
         SYSIDIRS += /usr/include
         SYSLDIRS += /usr/lib
         SYSDEFS+=_XOPEN_SOURCE=700 _BSD_SOURCE=1 _GNU_SOURCE=1
+        ifdef OPENCL_ROOT
+            CL_USER_DEVICE_TYPE ?= gpu
+            SYSIDIRS += $(OPENCL_ROOT)/inc
+            ifeq ($(TARGET_CPU),X86)
+                SYSLDIRS += $(OPENCL_ROOT)/lib/Linux32
+            else ifeq ($(TARGET_CPU),x86_64)
+                SYSLDIRS += $(OPENCL_ROOT)/lib/Linux64
+            endif
+            SYS_SHARED_LIBS += OpenCL
+        endif
     else ifeq ($(TARGET_OS),CYGWIN)
         TARGET_NUM_CORES=1
         SYSDEFS+=_XOPEN_SOURCE=700 _BSD_SOURCE=1 _GNU_SOURCE=1 WINVER=0x501
     else ifeq ($(TARGET_OS),Windows_NT)
         TARGET_NUM_CORES := $(NUMBER_OF_PROCESSORS)
         SYSDEFS+=WIN32_LEAN_AND_MEAN WIN32 _WIN32 _CRT_SECURE_NO_DEPRECATE WINVER=0x0501 _WIN32_WINNT=0x0501
+        ifdef OPENCL_ROOT
+            CL_USER_DEVICE_TYPE ?= gpu
+            SYSIDIRS += $(OPENCL_ROOT)/inc
+            ifeq ($(HOST_CPU),X86)
+                SYSLDIRS += $(OPENCL_ROOT)/lib/Win32
+            else ifeq ($(HOST_CPU),X64)
+                SYSLDIRS += $(OPENCL_ROOT)/lib/x64
+            endif
+            SYS_SHARED_LIBS += OpenCL
+        endif
     endif
 else ifeq ($(TARGET_PLATFORM),MAC)
      TARGET_OS=$(HOST_OS)
      TARGET_CPU=i386
+     ifeq ($(TARGET_OS),DARWIN)
+        ifdef OPENCL_ROOT
+            CL_USER_DEVICE_TYPE ?= cpu
+            SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
+            LDFLAGS+=-framework OpenCL
+            #CFLAGS+=-fPIC
+            SYSDEFS+=__APPLE__
+            ifdef CL_DEBUG
+                SYSDEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
+            endif
+        endif
+     endif
 else
 endif
 
@@ -54,7 +97,7 @@ else ifeq ($(TARGET_CPU),x86_64)
 else ifeq ($(TARGET_CPU),ARM)
     TARGET_ARCH=32
 else ifeq ($(TARGET_CPU),i386)
-        TARGET_ARCH=32
+    TARGET_ARCH=32
 endif
 
 ifndef TARGET_ARCH

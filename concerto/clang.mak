@@ -48,7 +48,7 @@ $(_MODULE)_OBJS := $(ASSEMBLY:%.S=$($(_MODULE)_ODIR)/%.o) $(CPPSOURCES:%.cpp=$($
 # Redefine the local static libs and shared libs with REAL paths and pre/post-fixes
 $(_MODULE)_STATIC_LIBS := $(foreach lib,$(STATIC_LIBS),$($(_MODULE)_TDIR)/lib$(lib).a)
 $(_MODULE)_SHARED_LIBS := $(foreach lib,$(SHARED_LIBS),$($(_MODULE)_TDIR)/lib$(lib).so)
-
+$(_MODULE)_DEP_HEADERS := $(foreach inc,$($(_MODULE)_HEADERS),$($(_MODULE)_SDIR)/$(inc).h)
 
 $(_MODULE)_COPT :=
 $(_MODULE)_LOPT :=
@@ -238,15 +238,15 @@ endef
 endif
 
 define $(_MODULE)_COMPILE_TOOLS
-$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.c $($(_MODULE)_ODIR)/.gitignore
+$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.c $($(_MODULE)_ODIR)/.gitignore $($(_MODULE)_DEP_HEADERS)
 	@echo [PURE] Compiling C99 $$(notdir $$<)
 	$(Q)$(CC) -std=c99 $($(_MODULE)_CFLAGS) $$< -o $$@ $(LOGGING)
 
-$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.cpp $($(_MODULE)_ODIR)/.gitignore
+$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.cpp $($(_MODULE)_ODIR)/.gitignore $($(_MODULE)_DEP_HEADERS)
 	@echo [PURE] Compiling C++ $$(notdir $$<)
 	$(Q)$(CP) $($(_MODULE)_CFLAGS) $$< -o $$@  $(LOGGING)
 
-$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.S $($(_MODULE)_ODIR)/.gitignore
+$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.S $($(_MODULE)_ODIR)/.gitignore $($(_MODULE)_DEP_HEADERS)
 	@echo [PURE] Assembling $$(notdir $$<)
 	$(Q)$(AS) $($(_MODULE)_AFLAGS) $$< -o $$@ $(LOGGING)
 endef
