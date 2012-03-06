@@ -13,16 +13,19 @@
 # limitations under the License.
 
 -include $(PRELUDE)
-
 TARGET     := clyuv
 TARGETTYPE := exe
 CSOURCES   := yuv.c
-CLSOURCES  := kernel_yuv.cl
+HEADERS    := kernel_yuv
 STATIC_LIBS	:= clenvironment clmath clquery
-
-include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
-
 TESTCASE   := $(TARGET)
-
 -include $(FINALE)
+
+_MODULE = kernel_yuv
+-include $(PRELUDE)
+TARGET      := kernel_yuv
+TARGETTYPE  := opencl_kernel
+CLSOURCES   := kernel_yuv.cl
+-include $(FINALE)
+
 

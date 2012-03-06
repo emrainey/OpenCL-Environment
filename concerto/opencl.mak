@@ -32,13 +32,24 @@ else
 DEFS+=KDIR="$(KDIR)" CL_USER_DEVICE_COUNT=$(CL_USER_DEVICE_COUNT) CL_USER_DEVICE_TYPE="$(CL_USER_DEVICE_TYPE)"
 endif
 
+ifeq ($(HOST_OS),CYGWIN)
+# The Clang/LLVM is a Windows Path Compiler
+$(_MODULE)_KFLAGS+=$(foreach inc,$($(_MODULE)_IDIRS),-I$(call P2W_CONV,$(inc))) $(foreach def,$($(_MODULE)_DEFS),-D$(def))
+else
+$(_MODULE)_KFLAGS+=$(foreach inc,$($(_MODULE)_IDIRS),-I$(inc)) $(foreach def,$($(_MODULE)_DEFS),-D$(def))
+endif
+
 $(_MODULE)_TARGET := $(TARGET).h
 $(_MODULE)_BIN    := $($(_MODULE)_SDIR)/$($(_MODULE)_TARGET)
+$(_MODULE)_OBJS   := $($(_MODULE)_BIN)
+
+$(_MODULE)_CLEAN_BIN := -$(Q)$(CLEAN) $($(_MODULE)_BIN)
+$(_MODULE)_CLEAN_OBJS := -$(Q)$(CLEAN) $($(_MODULE)_OBJS)
 
 define $(_MODULE)_COMPILE_TOOLS
 $($(_MODULE)_SDIR)/%.h: $($(_MODULE)_SDIR)/%.cl $(CL)
 	@echo [PURE] Compiling OpenCL Kernel $$(notdir $$<)
-	$$(call PATH_CONV,$(CL)) -n -f $$(call PATH_CONV,$$<) -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $$(call PATH_CONV,$$@) -W "$($(_MODULE)_KFLAGS)"
+	$(Q)$$(call PATH_CONV,$(CL)) -n -f $$(call PATH_CONV,$$<) -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $$(call PATH_CONV,$$@) -W "$($(_MODULE)_KFLAGS)"
 endef
 
 endif

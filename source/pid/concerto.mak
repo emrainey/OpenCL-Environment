@@ -11,17 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
--include $(PRELUDE)
 
+-include $(PRELUDE)
 TARGET		:= clpid
 TARGETTYPE	:= exe
 CSOURCES	:= pid.c
-CLSOURCES	:= kernel_pid.cl
+HEADERS     := kernel_pid
 STATIC_LIBS	:= clenvironment clmath clquery
-
-include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
-
 TESTCASE=$(TARGET)
+-include $(FINALE)
 
+_MODULE = kernel_pid
+-include $(PRELUDE)
+TARGET      := kernel_pid
+TARGETTYPE  := opencl_kernel
+CLSOURCES   := kernel_pid.cl
 -include $(FINALE)
 

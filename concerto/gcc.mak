@@ -80,17 +80,18 @@ $(_MODULE)_COPT += -m32 -fno-stack-protector
 endif
 endif
 
+$(_MODULE)_DEPHDR   := $(foreach hdr,$($(_MODULE)_HEADERS),$($(_MODULE)_SDIR)/$(hdr).h)
 $(_MODULE)_MAP      := -Map=$($(_MODULE)_BIN).map
 $(_MODULE)_INCLUDES := $(foreach inc,$($(_MODULE)_IDIRS),-I$(inc))
 $(_MODULE)_DEFINES  := $(foreach def,$($(_MODULE)_DEFS),-D$(def))
 $(_MODULE)_LIBRARIES:= $(foreach ldir,$($(_MODULE)_LDIRS),-L$(ldir)) $(foreach lib,$(STATIC_LIBS),-l$(lib)) $(foreach lib,$(SYS_STATIC_LIBS),-l$(lib)) $(foreach lib,$(SHARED_LIBS),-l$(lib)) $(foreach lib,$(SYS_SHARED_LIBS),-l$(lib))
 $(_MODULE)_AFLAGS   := $($(_MODULE)_INCLUDES)
 ifeq ($(HOST_OS),DARWIN)
-$(_MODULE)_LDFLAGS  := -arch $(TARGET_CPU) $(LDFLAGS) $($(_MODULE)_LOPT)
+$(_MODULE)_LDFLAGS  := $(LDFLAGS) $($(_MODULE)_LOPT)
 else
 $(_MODULE)_LDFLAGS  := $(LDFLAGS) $($(_MODULE)_LOPT)
 endif
-$(_MODULE)_CPLDFLAGS := $(foreach ldf,$($(_MODULE)_LDFLAGS),-Wl,$(ldf)) $($(_MODULE)_COPT)
+$(_MODULE)_CPLDFLAGS := $(foreach ldf,$($(_MODULE)_LDFLAGS),-Wl,$(ldf))
 $(_MODULE)_CFLAGS   := -c $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $($(_MODULE)_COPT)
 
 ifdef DEBUG
@@ -116,7 +117,7 @@ $(_MODULE)_UNINSTALL_DSO:=$(CLEAN) $($(_MODULE)_INSTALL_LIB)/$($(_MODULE)_BIN)
 $(_MODULE)_INSTALL_EXE:= install -C -m 755 $($(_MODULE)_BIN) $($(_MODULE)_INSTALL_BIN)
 $(_MODULE)_UNINSTALL_EXE:=$(CLEAN) $($(_MODULE)_INSTALL_BIN)/$($(_MODULE)_BIN)
 $(_MODULE)_LINK_LIB   := $(AR) -rscu $($(_MODULE)_BIN) $($(_MODULE)_OBJS) #$($(_MODULE)_STATIC_LIBS)
-$(_MODULE)_LINK_EXE   := $(CP) -Wl,--cref $($(_MODULE)_CPLDFLAGS) $($(_MODULE)_OBJS) $($(_MODULE)_LIBRARIES) -o $($(_MODULE)_BIN) -Wl,$($(_MODULE)_MAP)
+$(_MODULE)_LINK_EXE   := $(CP) $($(_MODULE)_CPLDFLAGS) $($(_MODULE)_OBJS) $($(_MODULE)_LIBRARIES) -o $($(_MODULE)_BIN) 
 $(_MODULE)_LINK_DSO   := $(LD) $($(_MODULE)_LDFLAGS) -shared $(EXPORT_FLAG) -soname,$($(_MODULE)_BIN).1 --whole-archive $($(_MODULE)_LIBRARIES) -lm --no-whole-archive -o $($(_MODULE)_BIN).1.0 $($(_MODULE)_OBJS) $($(_MODULE)_MAP)
 
 ###################################################
@@ -239,15 +240,15 @@ endef
 endif
 
 define $(_MODULE)_COMPILE_TOOLS
-$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.c $($(_MODULE)_ODIR)/.gitignore
+$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.c $($(_MODULE)_DEPHDR) $($(_MODULE)_ODIR)/.gitignore
 	@echo [PURE] Compiling C99 $$(notdir $$<)
 	$(Q)$(CC) -std=c99 $($(_MODULE)_CFLAGS) $$< -o $$@ $(LOGGING)
 
-$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.cpp $($(_MODULE)_ODIR)/.gitignore
+$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.cpp $($(_MODULE)_DEPHDR) $($(_MODULE)_ODIR)/.gitignore
 	@echo [PURE] Compiling C++ $$(notdir $$<)
 	$(Q)$(CP) $($(_MODULE)_CFLAGS) $$< -o $$@  $(LOGGING)
 
-$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.S $($(_MODULE)_ODIR)/.gitignore
+$($(_MODULE)_ODIR)/%.o: $($(_MODULE)_SDIR)/%.S $($(_MODULE)_DEPHDR) $($(_MODULE)_ODIR)/.gitignore
 	@echo [PURE] Assembling $$(notdir $$<)
 	$(Q)$(AS) $($(_MODULE)_AFLAGS) $$< -o $$@ $(LOGGING)
 endef

@@ -16,8 +16,10 @@ ifndef TARGET_PLATFORM
     TARGET_PLATFORM=PC
 endif
 
+ifneq ($(HOST_OS),DARWIN)
 ifeq ($(OPENCL_ROOT),)
     $(warning OPENCL_ROOT must be defined to use OpenCL)
+endif
 endif
 
 SYSIDIRS := $(HOST_ROOT)/include
@@ -66,21 +68,15 @@ ifeq ($(TARGET_PLATFORM),PC)
             endif
             SYS_SHARED_LIBS += OpenCL
         endif
-    endif
-else ifeq ($(TARGET_PLATFORM),MAC)
-     TARGET_OS=$(HOST_OS)
-     TARGET_CPU=i386
-     ifeq ($(TARGET_OS),DARWIN)
-        ifdef OPENCL_ROOT
-            CL_USER_DEVICE_TYPE ?= cpu
-            SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
-            LDFLAGS+=-framework OpenCL
-            #CFLAGS+=-fPIC
-            SYSDEFS+=__APPLE__
-            ifdef CL_DEBUG
-                SYSDEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
-            endif
-        endif
+    else ifeq ($(TARGET_OS),DARWIN)
+	     CL_USER_DEVICE_TYPE ?= cpu
+	     SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
+	     LDFLAGS+=-framework OpenCL
+	     CFLAGS+=-fPIC
+	     #SYSDEFS+=__APPLE__
+	     ifdef CL_DEBUG
+	         SYSDEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
+	     endif
      endif
 else
 endif
