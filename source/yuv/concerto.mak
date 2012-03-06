@@ -17,8 +17,13 @@ TARGET     := clyuv
 TARGETTYPE := exe
 CSOURCES   := yuv.c
 HEADERS    := kernel_yuv
-STATIC_LIBS	:= clenvironment clmath clquery
+STATIC_LIBS := clenvironment clmath clquery
 TESTCASE   := $(TARGET)
+ifeq ($(TARGET_OS),DARWIN)
+LDFLAGS+=-framework OpenCL
+else
+SYS_SHARED_LIBS := OpenCL
+endif
 -include $(FINALE)
 
 _MODULE = kernel_yuv

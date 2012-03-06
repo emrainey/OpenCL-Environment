@@ -11,14 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
--include $(PRELUDE)
 
+-include $(PRELUDE)
 TARGET		:= clcompiler
 TARGETTYPE	:= exe
 CSOURCES    := clcompiler.c
-STATIC_LIBS := clenvironment clquery 
-SHARED_LIBS :=
-
-include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
-
+STATIC_LIBS := clenvironment clquery
+ifeq ($(TARGET_OS),DARWIN)
+LDFLAGS+=-framework OpenCL
+else
+SYS_SHARED_LIBS := OpenCL
+endif
 -include $(FINALE)
+

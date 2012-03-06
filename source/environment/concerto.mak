@@ -11,11 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
--include $(PRELUDE)
 
+-include $(PRELUDE)
 TARGET		:= clenvironment
 TARGETTYPE  := library
 CSOURCES 	:= clenvironment.c
-include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
-
 -include $(FINALE)

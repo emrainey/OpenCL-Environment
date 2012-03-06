@@ -50,7 +50,6 @@ ifeq ($(TARGET_PLATFORM),PC)
             else ifeq ($(TARGET_CPU),x86_64)
                 SYSLDIRS += $(OPENCL_ROOT)/lib/Linux64
             endif
-            SYS_SHARED_LIBS += OpenCL
         endif
     else ifeq ($(TARGET_OS),CYGWIN)
         TARGET_NUM_CORES=1
@@ -66,17 +65,14 @@ ifeq ($(TARGET_PLATFORM),PC)
             else ifeq ($(HOST_CPU),X64)
                 SYSLDIRS += $(OPENCL_ROOT)/lib/x64
             endif
-            SYS_SHARED_LIBS += OpenCL
         endif
     else ifeq ($(TARGET_OS),DARWIN)
-	     CL_USER_DEVICE_TYPE ?= cpu
-	     SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
-	     LDFLAGS+=-framework OpenCL
-	     CFLAGS+=-fPIC
-	     #SYSDEFS+=__APPLE__
-	     ifdef CL_DEBUG
-	         SYSDEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
-	     endif
+         CL_USER_DEVICE_TYPE ?= cpu
+         SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
+         #SYSDEFS+=__APPLE__
+         ifdef CL_DEBUG
+             SYSDEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
+         endif
      endif
 else
 endif

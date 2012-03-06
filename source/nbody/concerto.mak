@@ -19,6 +19,11 @@ CSOURCES	:= nbody.c
 HEADERS 	:= kernel_nbody
 STATIC_LIBS	:= clenvironment clmath clquery
 TESTCASE=$(TARGET)
+ifeq ($(TARGET_OS),DARWIN)
+LDFLAGS+=-framework OpenCL
+else
+SYS_SHARED_LIBS := OpenCL
+endif
 -include $(FINALE)
 
 _MODULE = kernel_nbody

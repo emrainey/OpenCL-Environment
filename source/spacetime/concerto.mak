@@ -11,14 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
--include $(PRELUDE)
 
+-include $(PRELUDE)
 TARGET     := spacetime
 TARGETTYPE := exe
 CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c vector.c
 STATIC_LIBS := clenvironment
-
-include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
+ifeq ($(TARGET_OS),DARWIN)
+LDFLAGS+=-framework OpenCL
+else
+SYS_SHARED_LIBS := OpenCL
+endif
 include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
-
 -include $(FINALE)

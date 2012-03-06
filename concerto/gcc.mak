@@ -86,13 +86,9 @@ $(_MODULE)_INCLUDES := $(foreach inc,$($(_MODULE)_IDIRS),-I$(inc))
 $(_MODULE)_DEFINES  := $(foreach def,$($(_MODULE)_DEFS),-D$(def))
 $(_MODULE)_LIBRARIES:= $(foreach ldir,$($(_MODULE)_LDIRS),-L$(ldir)) $(foreach lib,$(STATIC_LIBS),-l$(lib)) $(foreach lib,$(SYS_STATIC_LIBS),-l$(lib)) $(foreach lib,$(SHARED_LIBS),-l$(lib)) $(foreach lib,$(SYS_SHARED_LIBS),-l$(lib))
 $(_MODULE)_AFLAGS   := $($(_MODULE)_INCLUDES)
-ifeq ($(HOST_OS),DARWIN)
 $(_MODULE)_LDFLAGS  := $(LDFLAGS) $($(_MODULE)_LOPT)
-else
-$(_MODULE)_LDFLAGS  := $(LDFLAGS) $($(_MODULE)_LOPT)
-endif
 $(_MODULE)_CPLDFLAGS := $(foreach ldf,$($(_MODULE)_LDFLAGS),-Wl,$(ldf))
-$(_MODULE)_CFLAGS   := -c $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $($(_MODULE)_COPT)
+$(_MODULE)_CFLAGS   := -c $($(_MODULE)_INCLUDES) $($(_MODULE)_DEFINES) $(CFLAGS) $($(_MODULE)_COPT)
 
 ifdef DEBUG
 $(_MODULE)_AFLAGS += --gdwarf-2

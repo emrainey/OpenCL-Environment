@@ -19,6 +19,11 @@ CSOURCES    := imgfilter.c
 HEADERS     := kernel_imgfilter
 STATIC_LIBS := clenvironment clquery clmath
 TESTCASE=$(TARGET)
+ifeq ($(TARGET_OS),DARWIN)
+LDFLAGS+=-framework OpenCL
+else
+SYS_SHARED_LIBS := OpenCL
+endif
 -include $(FINALE)
 
 _MODULE = kernel_imgfilter

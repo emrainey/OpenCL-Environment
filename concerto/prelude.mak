@@ -139,6 +139,8 @@ dir:: $($(_MODULE)_ODIR)/.gitignore
 # Clean out common vars
 ENTRY :=
 DEFS :=
+CFLAGS :=
+LDFLAGS :=
 STATIC_LIBS :=
 SHARED_LIBS :=
 SYS_STATIC_LIBS :=
