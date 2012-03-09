@@ -74,10 +74,17 @@ int rrand(int low, int hi)
 
 void frand4(cl_float4 f, cl_int l, cl_int h)
 {
+#if defined(DARWIN)
+    f[0] = frand() * ipow(10, rrand(l,h));
+    f[1] = frand() * ipow(10, rrand(l,h));
+    f[2] = frand() * ipow(10, rrand(l,h));
+    f[3] = frand() * ipow(10, rrand(l,h));
+#else
     f.s[0] = frand() * ipow(10, rrand(l,h));
     f.s[1] = frand() * ipow(10, rrand(l,h));
     f.s[2] = frand() * ipow(10, rrand(l,h));
     f.s[3] = frand() * ipow(10, rrand(l,h));
+#endif
 }
 
 void normalize_float(float *a, cl_int low, cl_int hi, cl_uchar *b, cl_uint numPixels)

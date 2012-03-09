@@ -119,10 +119,17 @@ int main(int argc, char *argv[])
         for (j = 0; j < numIterations; j++)
         {
             nbodies(pEnv, m, a, v, p, t, numBodies);
+#if defined(DARWIN)
+            printf("[%6u] p={%lf,%lf,%lf} v={%lf,%lf,%lf} a={%lf,%lf,%lf}\n", i,
+                    p[i][0], p[i][1], p[i][2],
+                    v[i][0], v[i][1], v[i][2],
+                    a[i][0], a[i][1], a[i][2]);
+#else
             printf("[%6u] p={%lf,%lf,%lf} v={%lf,%lf,%lf} a={%lf,%lf,%lf}\n", i,
                     p[i].s[0], p[i].s[1], p[i].s[2],
                     v[i].s[0], v[i].s[1], v[i].s[2],
                     a[i].s[0], a[i].s[1], a[i].s[2]);
+#endif     
         }
         clDeleteEnvironment(pEnv);
         cl_free(t);
