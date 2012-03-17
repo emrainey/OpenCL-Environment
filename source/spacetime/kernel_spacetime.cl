@@ -16,6 +16,22 @@
 
 #include <clspacetime.h>
 
+__kernel void kernel_budge(float4 point1, 
+						   __global float4 *point2,
+						   __global float *pull, 
+						   __global float4 *budge)
+{
+	int i = get_global_id(0); // data fields are 1 dimensional
+	float4 direction;
+	direction.x = point2[i].x - point1.x;
+	direction.y = point2[i].y - point1.y;
+	direction.z = point2[i].z - point1.z;
+	direction = normalize(direction);
+	budge[i].x = direction.x*pull[i];
+	budge[i].y = direction.y*pull[i];
+	budge[i].z = direction.z*pull[i];
+}						
+
 __kernel void kernel_gravity(float mass1,
                              __global float *mass2,
                              __global float *distance,
@@ -31,14 +47,14 @@ __kernel void kernel_gravity(float mass1,
 }
 
 __kernel void kernel_distance(__global float *distance, 
-						      __global float4 *point1, 
+						      float4 point1, 
 						      __global float4 *point2)
 {
 	int i = get_global_id(0); 
 	
-	float dx = point2[i].x - point1[0].x;
-	float dy = point2[i].y - point1[0].y;
-	float dz = point2[i].z - point1[0].z;
+	float dx = point2[i].x - point1.x;
+	float dy = point2[i].y - point1.y;
+	float dz = point2[i].z - point1.z;
 	
 	dx*=dx;
 	dy*=dy;

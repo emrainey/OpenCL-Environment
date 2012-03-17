@@ -113,7 +113,9 @@ void glut_display(void)
 			for (int x = 0; x < GRID_DIM; x++) {
 				uint32_t i = (z*GRID_DIM*GRID_DIM) + (y*GRID_DIM) + (x);
 				cl_float4 position;
-				memcpy(position, spacetime->m_grid.m_position[i], sizeof(cl_float4));
+				position[X] = spacetime->m_grid.m_position[i][X] + spacetime->m_grid.m_budge[i][X];
+				position[Y] = spacetime->m_grid.m_position[i][Y] + spacetime->m_grid.m_budge[i][Y];
+				position[Z] = spacetime->m_grid.m_position[i][Z] + spacetime->m_grid.m_budge[i][Z];
 				glVertex3f(position[X],position[Y],position[Z]);
 			}
 		}
@@ -178,26 +180,63 @@ cl_int kernel_spacetime(cl_environment_t *pEnv,
     cl_int err;
 	cl_float distance[GRID_SIZE];
 	
-    cl_kernel_param_t params[] = {
+    cl_kernel_param_t params1[] = {
 		{CL_KPARAM_BUFFER_1D, sizeof(distance), distance, NULL, CL_MEM_WRITE_ONLY},
-        {CL_KPARAM_BUFFER_1D, sizeof(cl_float4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_WRITE},
-		{CL_KPARAM_BUFFER_1D, sizeof(cl_float4), &body->m_position, NULL, CL_MEM_READ_ONLY},
-    };
-    cl_kernel_call_t call = {
-        "kernel_distance",
-        params, dimof(params),
-		1, 
-		{0, 0, 0},
-        {GRID_SIZE, 0, 0},
-        {1, 1, 1},
-        CL_SUCCESS
+        {CL_KPARAM_BUFFER_0D, sizeof(cl_float4), &body->m_position, NULL, CL_MEM_READ_ONLY},
+    	{CL_KPARAM_BUFFER_1D, sizeof(cl_float4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_ONLY},
+	};
+	cl_kernel_param_t params2[] = {
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_float), &body->m_mass, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_float)*GRID_SIZE, grid->m_mass, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_float)*GRID_SIZE, distance, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_float)*GRID_SIZE, grid->m_pull, NULL, CL_MEM_WRITE_ONLY},
+	};
+	cl_kernel_param_t params3[] = {
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_float4), &body->m_position, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_float4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_float)*GRID_SIZE, grid->m_pull, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_float4)*GRID_SIZE, grid->m_budge, NULL, CL_MEM_WRITE_ONLY},
+	};
+    cl_kernel_call_t calls[] = {
+		{
+        	"kernel_distance",
+	        params1, dimof(params1),
+			1, // num dimensions
+			{0, 0, 0}, //offsets
+	        {GRID_SIZE, 0, 0}, // dimensionality
+	        {1, 1, 1}, // local work size
+	        CL_SUCCESS
+		},
+		{
+			"kernel_gravity",
+			params2, dimof(params2),
+			1, 
+			{0, 0, 0},
+			{GRID_SIZE, 0, 0},
+			{1, 1, 1},
+			CL_SUCCESS
+		},
+		{
+			"kernel_budge",
+			params3, dimof(params3),
+			1, 
+			{0, 0, 0},
+			{GRID_SIZE, 0, 0},
+			{1, 1, 1},
+			CL_SUCCESS
+		}
     };
 
-    err = clCallKernel(pEnv, &call, 1);
+    err = clCallKernel(pEnv, calls, dimof(calls));
+	printf("Distance from grid[0] to body is %lf, pull is %lf\n", distance[0], spacetime->m_grid.m_pull[0]);
     if (err != CL_SUCCESS)
         return err;
     else
-        return call.err;
+	{
+		for (int e = 0; e < dimof(calls); e++)
+			if (calls[e].err != CL_SUCCESS)
+				return calls[e].err;
+	}
 }
 
 void glut_timer(int value)
