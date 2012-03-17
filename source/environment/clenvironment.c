@@ -955,7 +955,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
                         pCall[k].params[j].mem,
                         err);
         #endif
-                cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+                cl_assert((err == CL_SUCCESS), printf("Failed to create 1D cl_mem object of %u bytes!\n", pCall[k].params[j].numBytes));
             }
             else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D)
             {
@@ -970,7 +970,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
                         pCall[k].params[j].mem,
                         err);
         #endif
-                cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+                cl_assert((err == CL_SUCCESS), printf("Failed to create 2D cl_mem object of %u bytes!\n",pCall[k].params[j].numBytes));
             }
             else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
             {

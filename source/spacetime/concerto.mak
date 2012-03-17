@@ -22,5 +22,30 @@ LDFLAGS+=-framework OpenCL
 else
 SYS_SHARED_LIBS := OpenCL
 endif
+HEADERS := kernel_spacetime
 include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
 -include $(FINALE)
+
+_MODULE := kernel_spacetime
+include $(PRELUDE)
+TARGET  := kernel_spacetime
+TARGETTYPE := opencl_kernel
+CLSOURCES := kernel_spacetime.cl
+include $(FINALE)
+
+ifeq ($(DEV),true)
+_MODULE := clspacetime
+include $(PRELUDE)
+TARGET := clspacetime
+TARGETTYPE := exe
+CSOURCES := spacetime.c 
+HEADERS  := kernel_spacetime
+STATIC_LIBS := clenvironment clquery
+ifeq ($(TARGET_OS),DARWIN)
+LDFLAGS+=-framework OpenCL
+else
+SYS_SHARED_LIBS := OpenCL
+endif
+include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
+include $(FINALE)
+endif
