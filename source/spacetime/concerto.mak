@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ifeq ($(DEPRECATED),true)
 -include $(PRELUDE)
 TARGET     := spacetime
 TARGETTYPE := exe
@@ -25,6 +26,7 @@ endif
 HEADERS := kernel_spacetime
 include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
 -include $(FINALE)
+endif
 
 _MODULE := kernel_spacetime
 include $(PRELUDE)
@@ -33,7 +35,6 @@ TARGETTYPE := opencl_kernel
 CLSOURCES := kernel_spacetime.cl
 include $(FINALE)
 
-ifeq ($(DEV),true)
 _MODULE := clspacetime
 include $(PRELUDE)
 TARGET := clspacetime
@@ -48,4 +49,3 @@ SYS_SHARED_LIBS := OpenCL
 endif
 include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
 include $(FINALE)
-endif

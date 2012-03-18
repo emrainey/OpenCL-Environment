@@ -1044,9 +1044,6 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
         for (i = 0; i<pEnv->numDevices; i++)
             clFinish(pEnv->queues[i]);
 		
-		for (i = 0; i < pEnv->numDevices; i++)
-        	clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
-
         err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &pCall[k].start, NULL);
         cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
         err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_END,   sizeof(cl_ulong), &pCall[k].stop, NULL);
@@ -1078,6 +1075,9 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
         // finish
         for (i = 0; i<pEnv->numDevices; i++)
             clFinish(pEnv->queues[i]);
+		
+		for (i = 0; i < pEnv->numDevices; i++)
+        	clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
 
         for (j = 0; j < pCall[k].numParams; j++)
         {

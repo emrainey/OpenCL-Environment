@@ -35,6 +35,10 @@
 #define B Z
 #define A W
 
+#define MASS_IOTA	(1.00f * pow(10.0f,-11.0f))
+#define MASS_MOON	(7.32f * pow(10.0f,22.0f))
+#define MASS_EARTH	(5.9742f * pow(10.0f,24.0f))
+
 #define HOST
 #include <clspacetime.h>
 
@@ -57,10 +61,10 @@ typedef struct _camera_t {
 
 typedef struct _light_t {
 	GLint					m_light;
-	cl_body_t				m_body;
 	cl_float4				m_ambient;
 	cl_float4				m_diffuse;
 	cl_float4				m_specular;
+	cl_float4				m_position;
 } light_t;
 
 typedef struct _spacetime_t {
@@ -112,11 +116,11 @@ void glut_display(void)
 		for (int y = 0; y < GRID_DIM; y++) {
 			for (int x = 0; x < GRID_DIM; x++) {
 				uint32_t i = (z*GRID_DIM*GRID_DIM) + (y*GRID_DIM) + (x);
-				cl_float4 position;
+				cl_double4 position;
 				position[X] = spacetime->m_grid.m_position[i][X] + spacetime->m_grid.m_budge[i][X];
 				position[Y] = spacetime->m_grid.m_position[i][Y] + spacetime->m_grid.m_budge[i][Y];
 				position[Z] = spacetime->m_grid.m_position[i][Z] + spacetime->m_grid.m_budge[i][Z];
-				glVertex3f(position[X],position[Y],position[Z]);
+				glVertex3d(position[X],position[Y],position[Z]);
 			}
 		}
 	}
@@ -165,7 +169,17 @@ void glut_reshape(int width, int height)
 
 void glut_passive(int x, int y)
 {
-	//printf("mouse over %d,%d\n",x,y);
+	// map this x,y unto the x,z axis that we're looking at. 
+	// since we're looking at origin and we're assuming along the y axis,
+	// this map become rather easy;
+	double xscale = tan(spacetime->m_camera.m_fov/2) * spacetime->m_camera.m_ratio * spacetime->m_camera.m_radius;
+	double zscale = tan(spacetime->m_camera.m_fov/2) * spacetime->m_camera.m_radius;
+	printf("mouse over %d,%d\n",x,y); // 0,0 is top left
+	x-=spacetime->m_width/2;
+	y-=spacetime->m_height/2;
+	spacetime->m_body.m_position[X] = x/xscale;
+	spacetime->m_body.m_position[Z] = -y/zscale;
+	spacetime->m_body.m_velocity[X] = 0;
 }
 
 void ocl_notify(cl_program program, void *arg)
@@ -178,24 +192,24 @@ cl_int kernel_spacetime(cl_environment_t *pEnv,
 					   cl_body_t *body)
 {
     cl_int err;
-	cl_float distance[GRID_SIZE];
+	cl_double distance[GRID_SIZE];
 	
     cl_kernel_param_t params1[] = {
-		{CL_KPARAM_BUFFER_1D, sizeof(distance), distance, NULL, CL_MEM_WRITE_ONLY},
-        {CL_KPARAM_BUFFER_0D, sizeof(cl_float4), &body->m_position, NULL, CL_MEM_READ_ONLY},
-    	{CL_KPARAM_BUFFER_1D, sizeof(cl_float4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_double)*GRID_SIZE,  distance, NULL, CL_MEM_WRITE_ONLY},
+        {CL_KPARAM_BUFFER_0D, sizeof(cl_double4),           &body->m_position, NULL, CL_MEM_READ_ONLY},
+    	{CL_KPARAM_BUFFER_1D, sizeof(cl_double4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_ONLY},
 	};
 	cl_kernel_param_t params2[] = {
-		{CL_KPARAM_BUFFER_0D, sizeof(cl_float), &body->m_mass, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_1D, sizeof(cl_float)*GRID_SIZE, grid->m_mass, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_1D, sizeof(cl_float)*GRID_SIZE, distance, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_1D, sizeof(cl_float)*GRID_SIZE, grid->m_pull, NULL, CL_MEM_WRITE_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_double),            &body->m_mass, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_double)*GRID_SIZE,  grid->m_mass, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_double)*GRID_SIZE,  distance, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_double)*GRID_SIZE,  grid->m_pull, NULL, CL_MEM_WRITE_ONLY},
 	};
 	cl_kernel_param_t params3[] = {
-		{CL_KPARAM_BUFFER_0D, sizeof(cl_float4), &body->m_position, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_1D, sizeof(cl_float4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_1D, sizeof(cl_float)*GRID_SIZE, grid->m_pull, NULL, CL_MEM_READ_ONLY},
-		{CL_KPARAM_BUFFER_1D, sizeof(cl_float4)*GRID_SIZE, grid->m_budge, NULL, CL_MEM_WRITE_ONLY},
+		{CL_KPARAM_BUFFER_0D, sizeof(cl_double4),           &body->m_position, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_double4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_double)*GRID_SIZE,  grid->m_pull, NULL, CL_MEM_READ_ONLY},
+		{CL_KPARAM_BUFFER_1D, sizeof(cl_double4)*GRID_SIZE, grid->m_budge, NULL, CL_MEM_WRITE_ONLY},
 	};
     cl_kernel_call_t calls[] = {
 		{
@@ -291,12 +305,12 @@ int main(int argc, char *argv[])
 
 		// initialize the spacetime info
 		spacetime->m_fps = 30;
-		spacetime->m_body.m_mass = pow(7.32f,22.0f); // the mass of the moon in kg
+		spacetime->m_body.m_mass = MASS_MOON;
 		spacetime->m_body.m_radius = 2.0f;
 		spacetime->m_body.m_position[X] = -GRID_DIM/2;
 		spacetime->m_body.m_velocity[X] = 1;
 		spacetime->m_camera.m_radius = 20.0f;
-		spacetime->m_camera.m_theta = M_PI/2;
+		spacetime->m_camera.m_theta = -M_PI/2;
 		spacetime->m_camera.m_phi = M_PI/2;
 		spacetime->m_camera.m_up[Z] = 1.0f;
 		spacetime->m_width = 640;
@@ -310,9 +324,10 @@ int main(int argc, char *argv[])
 			for (int iy = 0; iy < GRID_DIM; iy++) {
 				for (int ix = 0; ix < GRID_DIM; ix++) {
 					uint32_t i = (iz*GRID_DIM*GRID_DIM) + (iy*GRID_DIM) + (ix);
-					spacetime->m_grid.m_position[i][X] = (cl_float)(ix - GRID_DIM/2);
-					spacetime->m_grid.m_position[i][Y] = (cl_float)(iy - GRID_DIM/2);
-					spacetime->m_grid.m_position[i][Z] = (cl_float)(iz - GRID_DIM/2);
+					spacetime->m_grid.m_position[i][X] = (cl_double)(ix - GRID_DIM/2);
+					spacetime->m_grid.m_position[i][Y] = (cl_double)(iy - GRID_DIM/2);
+					spacetime->m_grid.m_position[i][Z] = (cl_double)(iz - GRID_DIM/2);
+					spacetime->m_grid.m_mass[i] = MASS_IOTA;
 				}
 			}
 		}
@@ -348,13 +363,13 @@ int main(int argc, char *argv[])
 			spacetime->m_lights[i].m_diffuse[G] = 1.0f;
 			spacetime->m_lights[i].m_diffuse[B] = 1.0f;
 			spacetime->m_lights[i].m_diffuse[A] = 1.0f;
-			spacetime->m_lights[i].m_body.m_position[X] = 20.0f;
-			spacetime->m_lights[i].m_body.m_position[Y] = 20.0f;
-			spacetime->m_lights[i].m_body.m_position[Z] = 20.0f;
+			spacetime->m_lights[i].m_position[X] = 20.0f;
+			spacetime->m_lights[i].m_position[Y] = 20.0f;
+			spacetime->m_lights[i].m_position[Z] = 20.0f;
 			spacetime->m_lights[i].m_light = GL_LIGHT0 + i;
 			glLightfv(spacetime->m_lights[i].m_light, GL_AMBIENT, spacetime->m_lights[i].m_ambient);
 		    glLightfv(spacetime->m_lights[i].m_light, GL_DIFFUSE, spacetime->m_lights[i].m_diffuse);
-		    glLightfv(spacetime->m_lights[i].m_light, GL_POSITION, spacetime->m_lights[i].m_body.m_position);
+		    glLightfv(spacetime->m_lights[i].m_light, GL_POSITION, spacetime->m_lights[i].m_position);
 		}
 		// install the hooks
 		glutDisplayFunc(glut_display);
