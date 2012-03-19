@@ -144,7 +144,7 @@ void drawscreen(void)
 void frameratelimiter(int value)
 {
     GLenum err = glGetError();
-    GLubyte *pErr = gluErrorString(err);
+    const GLubyte *pErr = gluErrorString(err);
     //if (err != 0)
     {
         GLfloat v;

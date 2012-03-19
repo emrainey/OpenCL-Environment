@@ -955,7 +955,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
                         pCall[k].params[j].mem,
                         err);
         #endif
-                cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+                cl_assert((err == CL_SUCCESS), printf("Failed to create 1D cl_mem object of %u bytes!\n", pCall[k].params[j].numBytes));
             }
             else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D)
             {
@@ -970,7 +970,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
                         pCall[k].params[j].mem,
                         err);
         #endif
-                cl_assert((err == CL_SUCCESS), printf("Failed to create cl_mem object!\n"));
+                cl_assert((err == CL_SUCCESS), printf("Failed to create 2D cl_mem object of %u bytes!\n",pCall[k].params[j].numBytes));
             }
             else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
             {
@@ -1013,10 +1013,8 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
         }
 
         // finish
-        for (i = 0; i<pEnv->numDevices; i++)
+        for (i = 0; i < pEnv->numDevices; i++)
             clFinish(pEnv->queues[i]);
-
-        clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
 
         // enqueue the kernel
         for (i = 0; i < pEnv->numDevices; i++) {
@@ -1045,7 +1043,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
         // finish
         for (i = 0; i<pEnv->numDevices; i++)
             clFinish(pEnv->queues[i]);
-
+		
         err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &pCall[k].start, NULL);
         cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
         err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_END,   sizeof(cl_ulong), &pCall[k].stop, NULL);
@@ -1077,6 +1075,9 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
         // finish
         for (i = 0; i<pEnv->numDevices; i++)
             clFinish(pEnv->queues[i]);
+		
+		for (i = 0; i < pEnv->numDevices; i++)
+        	clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
 
         for (j = 0; j < pCall[k].numParams; j++)
         {
