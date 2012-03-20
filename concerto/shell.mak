@@ -20,6 +20,7 @@ PRINT    := cmd.exe /C echo
 SET_RW   := cmd.exe /C attrib -R
 SET_EXEC := cmd.exe /C echo
 LINK     := cmd.exe /C junction
+TOUCH    := cmd.exe /C copy /b $1 +,,
 else # Bash variants
 CLEAN    := rm
 CLEANDIR := rm -rf
@@ -28,5 +29,6 @@ PRINT    := echo
 SET_RW   := chmod a+rw
 SET_EXEC := chmod a+x
 LINK     := ln -s
+TOUCH    := touch $1
 endif
 

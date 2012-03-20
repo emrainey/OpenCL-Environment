@@ -52,6 +52,8 @@ else ifeq ($($(_MODULE)_TYPE),exe)
 	NEEDS_COMPILER=1
 endif
 
+include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
+
 ifeq ($(NEEDS_COMPILER),1)
 
 ifeq ($(HOST_COMPILER),GCC)
@@ -66,7 +68,6 @@ include $(HOST_ROOT)/$(BUILD_FOLDER)/java.mak
 
 endif
 
-include $(HOST_ROOT)/$(BUILD_FOLDER)/opencl.mak
 include $(HOST_ROOT)/$(BUILD_FOLDER)/dpkg.mak
 
 else

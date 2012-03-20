@@ -33,19 +33,25 @@ include $(PRELUDE)
 TARGET  := kernel_spacetime
 TARGETTYPE := opencl_kernel
 CLSOURCES := kernel_spacetime.cl
+ifeq ($(NO_DOUBLE),1)
+DEFS+=GPGPU_NO_DOUBLE_SUPPORT
+endif
 include $(FINALE)
 
 _MODULE := clspacetime
 include $(PRELUDE)
 TARGET := clspacetime
 TARGETTYPE := exe
-CSOURCES := spacetime.c 
+CSOURCES := spacetime.c
 HEADERS  := kernel_spacetime
 STATIC_LIBS := clenvironment clquery
 ifeq ($(TARGET_OS),DARWIN)
 LDFLAGS+=-framework OpenCL
 else
 SYS_SHARED_LIBS := OpenCL
+endif
+ifeq ($(NO_DOUBLE),1)
+DEFS+=GPGPU_NO_DOUBLE_SUPPORT
 endif
 include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
 include $(FINALE)

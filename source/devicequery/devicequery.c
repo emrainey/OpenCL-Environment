@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
                 cl_context_properties props[] = {(cl_context_properties)CL_CONTEXT_PLATFORM,
                                                  (cl_context_properties)platform_id[p],
                                                  (cl_context_properties)0};
-				printf("There are %u devices present.\n",numDevices);
+                printf("There are %u devices present.\n",numDevices);
                 for (d = 0; d < numDevices; d++)
                 {
                     clPrintAllDeviceInfo(device_id[d]);

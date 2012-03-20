@@ -1,11 +1,8 @@
 Supported Build Platforms:
 
 1.) Mac OSX
-2.) Windows with Visual Studio 2005 (in command window only)
-	a.) Currently configured for x64 only.
-3.) Cygwin (with restrictions)
-	a.) export CL_BUILD_RUNTIME=1 
-	b.) Currently configured for x64 only.
+2.) Windows with Visual Studio 2005 (in command window only) + MinGW Make
+3.) LINUX
 
 What does this environment does:
 This clEnvironment API allows you to precompile your OpenCL kernels into
@@ -19,13 +16,11 @@ also allows you to completely specify a generic OpenCL Kernel call via predefine
 structures, thus freeing you to not worry about how to queue/call/pass args/etc.
 
 Required:
-In Cygwin and in Windows builds, you must define the path to the OpenCL developer tools. 
+In Linux/Windows builds, you must define the path to the OpenCL developer tools. 
 I only have NVidia cards so the paths will be biased in that direction. First you'll have to 
 install the tools then in your .bashrc or in some setup batch file define your OPENCL_ROOT
-$ export OPENCL_ROOT=/cygdrive/<path to sdk>/OpenCL/common
+$ export OPENCL_ROOT=/<path to sdk>/OpenCL/common
 C:\> SET OPENCL_ROOT=<path to sdk>\OpenCL\common
-
-LOCAL_ROOT is used as the base of the build system but it's set automatically. 
 
 If you would like some extra debug to see what's going on:
 $ export CL_DEBUG=1
@@ -34,6 +29,17 @@ C:\> SET CL_DEBUG=1
 If you don't want to pre-build your OpenCL binaries. 
 $ export CL_BUILD_RUNTIME=1
 C:\> SET CL_BUILD_RUNTIME=1
+
+If your graphics card doesn't have double support (like some NVIDIA Quadro's)
+$ export NO_DOUBLE=1
+C:\> SET NO_DOUBLE=1
+
+If you have more than one OpenCL implementation, choose the target with
+$ export CL_USER_DEVICE_TYPE=<gpu|cpu|acc|all>
+C:\> SET CL_USER_DEVICE_TYPE=<gpu|cpu|acc|all>
+
+There is a variable to use more than one device, though the logic internally
+is not correct for this. Please leave it to 1 device.
 
 Compiling:
 
@@ -55,6 +61,8 @@ What's contained herein:
 6.) clImgFilter - Implements a 3x3 edge filter on input LUMA (B/W) images.
 7.) clNBody - an implementation of the famous N-body gravity simulator.
 8.) clDeviceQuery - queries all Platform and per device information.
+9.) clSpacetime - a GLUT/OpenGL + OpenCL demo of the curvature of space
+(exagerated).
 
 Locations to Get RAW HD Video Files for clYUV and clImgFilter
 Small YUV video files: http://dsplab.diei.unipg.it/~baruffa/dvbt/binaries/player/seqs/

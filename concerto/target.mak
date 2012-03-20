@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifndef TARGET_PLATFORM
-    TARGET_PLATFORM=PC
-endif
+TARGET_PLATFORM ?= PC
 
 ifneq ($(HOST_OS),DARWIN)
 ifeq ($(OPENCL_ROOT),)
@@ -28,7 +26,11 @@ ifdef CL_DEBUG
 SYSDEFS += CL_DEBUG
 endif
 
-CL_USER_DEVICE_TYPE  ?= all
+ifdef CL_BUILD_RUNTIME
+SYSDEFS += CL_BUILD_RUNTIME
+endif
+
+#CL_USER_DEVICE_TYPE  ?= all
 CL_USER_DEVICE_COUNT ?= 1
 
 ifeq ($(TARGET_PLATFORM),PC)
@@ -67,12 +69,12 @@ ifeq ($(TARGET_PLATFORM),PC)
             endif
         endif
     else ifeq ($(TARGET_OS),DARWIN)
-         CL_USER_DEVICE_TYPE ?= cpu
-         SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
-         #SYSDEFS+=__APPLE__
-         ifdef CL_DEBUG
-             SYSDEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
-         endif
+        # default to the CPU model unless the user knows there's another
+        CL_USER_DEVICE_TYPE ?= cpu
+        SYSIDIRS+=/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/OpenCL.framework/Headers
+        ifdef CL_DEBUG
+            SYSDEFS+=VECLIB DEBUG _GLIBCXX_DEBUG=1 _GLIBCXX_DEBUG_PEDANTIC=1
+        endif
      endif
 else
 endif
