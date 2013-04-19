@@ -5,13 +5,19 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*! \file
+ * \brief The "OpenCL Environment" core features header.
+ * \see http://github.com/emrainey/OpenCL-Environment
+ * \author Erik Rainey <erik.rainey@gmail.com>
  */
 
 #ifndef _CL_ENVIRONMENT_H_
@@ -29,7 +35,9 @@
 #define cl_malloc_array(type, num) (type *)cl_malloc(sizeof(type) * num)
 
 /** Macro to create strings from types/enums */
+#ifndef STRINGERIZE
 #define STRINGERIZE(x)          (#x)
+#endif
 
 /** This pulls the define list and includes from the makefile into the C/C++ files for compilation with the OpenCL kernels at run/compile time */
 #if defined(DEFINES) && defined(INCLUDES)
@@ -62,6 +70,12 @@
 
 #if defined(ARCH_64)
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
+#endif
+
+#if defined(WIN32)
+#define FMT_SIZE_T      "%llu"
+#else
+#define FMT_SIZE_T      "%zu"
 #endif
 
 /** A byte type */
@@ -145,6 +159,9 @@ typedef struct _cl_environemnt_t
     cl_uint           numKernels;   /**< The number of kernel handles in kernels */
     cl_int           *retCodes;     /**< The array of return codes */
 } cl_environment_t;
+
+void clPrintEnvironment(cl_environment_t *pEnv);
+
 
 /**< Build Callback Notifier Typedef */
 typedef void (*clnotifier_f)(cl_program program, void *args);
@@ -244,7 +261,7 @@ void cl_free(void *ptr);
 cl_uint clGetTypeFromString(char *typestring);
 
 /** Converts an error to a printout */
-cl_int clPrintError(cl_int err, char *label, char *function, char *file, int line);
+cl_int clPrintError(cl_int err, char *label, const char *function, const char *file, int line);
 
 /** A macro to use to indicate the error */
 #define CL_ERROR(err, label)    clPrintError(err, label, __FUNCTION__, __FILE__, __LINE__)
@@ -253,4 +270,3 @@ cl_int clPrintError(cl_int err, char *label, char *function, char *file, int lin
 #define cl_assert(expr, action) { if (!(expr)) {printf("ERROR! "#expr" is false! %s:%u\n",__FILE__,__LINE__); action;} }
 
 #endif
-

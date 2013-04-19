@@ -1,17 +1,23 @@
-/**
- * Copyright (C) 2010 Erik Rainey
+/*
+ *  Copyright (C) 2009-2012 Texas Instruments, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*! \file
+ * \brief The "OpenCL Environment" core features.
+ * \see http://github.com/emrainey/OpenCL-Environment
+ * \author Erik Rainey <erik.rainey@gmail.com>
  */
 
 #include <stdio.h>
@@ -93,7 +99,7 @@ static char *strlastitem(char *str, char item)
         fprintf(stderr, "%s: OpenCL error "#err" at %s in %s:%d\n", label, function, file, line); \
         break
 
-cl_int clBuildError(cl_int build_status, char *label, char *function, char *file, int line)
+cl_int clBuildError(cl_int build_status, char *label, const char *function, const char *file, int line)
 {
     switch (build_status)
     {
@@ -109,7 +115,7 @@ cl_int clBuildError(cl_int build_status, char *label, char *function, char *file
     return build_status;
 }
 
-cl_int clPrintError(cl_int err, char *label, char *function, char *file, int line)
+cl_int clPrintError(cl_int err, char *label, const char *function, const char *file, int line)
 {
     switch (err)
     {
@@ -166,6 +172,16 @@ cl_int clPrintError(cl_int err, char *label, char *function, char *file, int lin
     return err;
 }
 
+void clPrintEnvironment(cl_environment_t *pEnv)
+{
+    if (pEnv)
+    {
+        printf("Environment: %p\n"
+               "\t%u devices\n"
+               "\t%u kernels\n",
+               pEnv, pEnv->numDevices, pEnv->numKernels);
+    }
+}
 
 void clDeleteEnvironment(cl_environment_t *pEnv)
 {
@@ -236,7 +252,10 @@ cl_byte *cl_load_bin(char *filename, size_t *pNumBytes)
         bin = (cl_byte *)cl_malloc(numBytes);
         if (bin)
         {
-            fread(bin, 1, numBytes, fp);
+            size_t b = fread(bin, 1, numBytes, fp);
+#ifdef CL_DEBUG
+            printf("Read "FMT_SIZE_T" bytes\n", b);
+#endif
             fclose(fp);
         }
     }
@@ -357,7 +376,7 @@ cl_kernel_bin_t *cl_unserialize_kernels(cl_byte *bin, size_t numBytes)
     offset += sizeof(cl_uint);
     memcpy(&numDevices, &bin[offset], sizeof(size_t));
     offset += sizeof(size_t);
-    printf("There are %lu device kernels in the flat binary\n", numDevices);
+    printf("There are "FMT_SIZE_T" device kernels in the flat binary\n", numDevices);
     bins = cl_create_kernel_bin(numDevices);
     if (bins)
     {
@@ -468,7 +487,7 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
             char *log = malloc(CL_LOG_SIZE);
             clBuildError(build_status, "clGetProgramBuildInfo", __FUNCTION__, __FILE__, __LINE__);
             clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, logSize, log, &logSize);
-            printf("BUILD INFO [%lu]:\n%s<<BUILD INFO\n", logSize, log);
+            printf("BUILD INFO ["FMT_SIZE_T"]:\n%s<<BUILD INFO\n", logSize, log);
             return NULL;
         }
 
@@ -532,7 +551,8 @@ char **clLoadSources(char *filename, cl_uint *pNumLines)
                 lines[i] = (char *)cl_malloc(lineSize);
                 if (lines[i])
                 {
-                    fgets(lines[i], lineSize, fp);
+                    if (fgets(lines[i], lineSize, fp) == NULL)
+                        printf("End of %s\n", filename);
                 }
                 else
                 {
@@ -544,6 +564,8 @@ char **clLoadSources(char *filename, cl_uint *pNumLines)
                 }
             }
         }
+        fclose(fp);
+        fp = NULL;
     }
     return lines;
 }
@@ -565,28 +587,29 @@ int cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
         bw += fprintf(fo, "#ifndef _PRECOMPILED_KERNEL_H_\n");
         bw += fprintf(fo, "#define _PRECOMPILED_KERNEL_H_\n");
         bw += fprintf(fo, "#include <clenvironment.h>\n");
-        bw += fprintf(fo, "static size_t gKernelBinarySizes[%lu] = {\n",bins->numDevices);
+        bw += fprintf(fo, "static size_t gKernelBinarySizes["FMT_SIZE_T"] = {\n",bins->numDevices);
         for (d = 0; d < bins->numDevices; d++)
-            bw += fprintf(fo, "\t%lu,\n", bins->sizes[d]);
+            bw += fprintf(fo, "\t"FMT_SIZE_T",\n", bins->sizes[d]);
         bw += fprintf(fo, "};\n");
         for (d = 0; d < bins->numDevices; d++)
         {
-            bw += fprintf(fo, "static cl_byte gKernelBinaryData%09u[%lu] = {\n", d, bins->sizes[d]);
+            bw += fprintf(fo, "static cl_byte gKernelBinaryData%09u["FMT_SIZE_T"] = {\n", d, bins->sizes[d]);
             for (b= 0 ; b < bins->sizes[d]; b++)
             {
                 bw += fprintf(fo, "\t0x%02x,\n", bins->data[d][b]);
             }
             bw += fprintf(fo, "};\n");
         }
-        bw += fprintf(fo, "static cl_byte *gKernelBinaries[%lu] = {\n", bins->numDevices);
+        bw += fprintf(fo, "static cl_byte *gKernelBinaries["FMT_SIZE_T"] = {\n", bins->numDevices);
         for (d = 0; d < bins->numDevices; d++)
         {
             bw += fprintf(fo, "\t(cl_byte *)&gKernelBinaryData%09u,\n", d);
         }
         bw += fprintf(fo, "};\n");
-        bw += fprintf(fo, "static cl_kernel_bin_t gKernelBins = { 0x%08x, %luL, %luL, %luL, (size_t *)&gKernelBinarySizes, (cl_byte **)&gKernelBinaries };\n", bins->deviceTypes, bins->numDevices, bins->numBytesSizes, bins->numBytesData);
+        bw += fprintf(fo, "static cl_kernel_bin_t gKernelBins = { 0x%08x, "FMT_SIZE_T", "FMT_SIZE_T", "FMT_SIZE_T", (size_t *)&gKernelBinarySizes, (cl_byte **)&gKernelBinaries };\n", (uint32_t)bins->deviceTypes, bins->numDevices, bins->numBytesSizes, bins->numBytesData);
         bw += fprintf(fo, "#endif\n");
         bw += fclose(fo);
+        fo = NULL;
         printf("Wrote %zu bytes to precompiled header\n", bw);
         return 1;
     } else {
@@ -707,7 +730,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
 
                             err = clGetProgramBuildInfo(pEnv->program, pEnv->devices[0], CL_PROGRAM_BUILD_LOG, logSize, log, &logSize);
                             if (err == CL_SUCCESS)
-                                printf("Log[%04lu]: %s\n", logSize,log);
+                                printf("Log["FMT_SIZE_T"]: %s\n", logSize,log);
                             else
                                 printf("Could not get build log! Error=%d\n",err);
                             cl_free(log);
@@ -820,6 +843,7 @@ cl_environment_t *clCreateEnvironment(char *filename,
         clDeleteEnvironment(pEnv);
         return NULL;
     }
+    printf("Environment: %p\n", pEnv);
     err = clGetPlatformIDs(1, &pEnv->platform, &numPlatforms);
     if (err == CL_SUCCESS && pEnv->platform)
     {
@@ -920,7 +944,7 @@ cl_environment_t *clCreateEnvironment(char *filename,
 
                             err = clGetProgramBuildInfo(pEnv->program, pEnv->devices[0], CL_PROGRAM_BUILD_LOG, logSize, log, &logSize);
                             if (err == CL_SUCCESS)
-                                printf("Log[%04lu]: %s\n", logSize,log);
+                                printf("Log["FMT_SIZE_T"]: %s\n", logSize,log);
                             else
                                 printf("Could not get build log! Error=%d\n",err);
                             cl_free(log);
@@ -1024,7 +1048,7 @@ cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name)
     char name[CL_MAX_STRING];
     size_t len = CL_MAX_STRING * sizeof(cl_char);
 #ifdef CL_DEBUG
-    printf("Looking for kernel %s\n", func_name);
+    printf("Looking for kernel %s out of %u\n", func_name, pEnv->numKernels);
 #endif
     for (i = 0; i < pEnv->numKernels; i++)
     {
@@ -1045,6 +1069,9 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
     cl_int err = CL_SUCCESS;
     cl_uint i = 0, j = 0, k = 0;
 
+    if (pEnv == NULL || pEnv->kernels == NULL)
+        return CL_INVALID_ARG_VALUE;
+
     for (k = 0; k < numCalls; k++)
     {
         cl_kernel kernel = clGetKernelByName(pEnv, pCall[k].kernel_name);
@@ -1061,14 +1088,14 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
             {
                 pCall[k].params[j].mem = clCreateBuffer(pEnv->context, pCall[k].params[j].flags, pCall[k].params[j].numBytes, NULL, &err);
         #ifdef CL_DEBUG
-                printf("Create Buffer from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
+                printf("Create Buffer from %p for "FMT_SIZE_T" bytes with 0x%08x flags (mem=%p, err=%d)\n",
                         pCall[k].params[j].data,
                         pCall[k].params[j].numBytes,
                         (cl_uint)pCall[k].params[j].flags,
                         pCall[k].params[j].mem,
                         err);
         #endif
-                cl_assert((err == CL_SUCCESS), printf("Failed to create 1D cl_mem object of %u bytes!\n", pCall[k].params[j].numBytes));
+                cl_assert((err == CL_SUCCESS), printf("Failed to create 1D cl_mem object of "FMT_SIZE_T" bytes!\n", pCall[k].params[j].numBytes));
             }
             else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D)
             {
@@ -1076,14 +1103,14 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
                 cl_image_format *pIf = &pBuf->format;
                 pCall[k].params[j].mem = clCreateImage2D(pEnv->context, pCall[k].params[j].flags, pIf, pBuf->dim[X_DIM], pBuf->dim[Y_DIM], pBuf->strides[Y_DIM], NULL, &err);
         #ifdef CL_DEBUG
-                printf("Create Image2D from %p for %lu bytes with 0x%08x flags (mem=%p, err=%d)\n",
+                printf("Create Image2D from %p for "FMT_SIZE_T" bytes with 0x%08x flags (mem=%p, err=%d)\n",
                         pCall[k].params[j].data,
                         pCall[k].params[j].numBytes,
                         (cl_uint)pCall[k].params[j].flags,
                         pCall[k].params[j].mem,
                         err);
         #endif
-                cl_assert((err == CL_SUCCESS), printf("Failed to create 2D cl_mem object of %u bytes!\n",pCall[k].params[j].numBytes));
+                cl_assert((err == CL_SUCCESS), printf("Failed to create 2D cl_mem object of "FMT_SIZE_T" bytes!\n",pCall[k].params[j].numBytes));
             }
             else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
             {

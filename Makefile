@@ -1,3 +1,3 @@
-DIRECTORIES:=source
-BUILD_FOLDER:=concerto
-include concerto/rules.mak
+DIRECTORIES:=source docs
+CONCERTO_ROOT=concerto
+include $(CONCERTO_ROOT)/rules.mak

@@ -143,7 +143,6 @@ cl_int imgfilter1d_opt(cl_environment_t *pEnv,
     return err;
 }
 
-#ifdef CL_UNITTEST
 int main(int argc, char *argv[])
 {
     if (argc >= 5)
@@ -208,5 +207,6 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
-#endif
+
+
 
