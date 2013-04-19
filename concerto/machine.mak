@@ -13,44 +13,45 @@
 # limitations under the License.
 
 ifeq ($(HOST_OS),Windows_NT)
-$(info Windows Processor Architecture $(PROCESSOR_ARCHITECTURE))
-$(info Windows Processor Identification $(word 1, $(PROCESSOR_IDENTIFIER)))
-	TYPE=$(word 1, $(PROCESSOR_IDENTIFIER))
-	ifeq ($(TYPE),x86)
-		HOST_CPU=X86
-		HOST_ARCH=32
-	else ifeq ($(TYPE),Intel64)
-		HOST_CPU=X64
-		HOST_ARCH=64
-	else
-		$(error Unknown Processor Architecture on Windows!)
-	endif
+    $(info Windows Processor Architecture $(PROCESSOR_ARCHITECTURE))
+    $(info Windows Processor Identification $(word 1, $(PROCESSOR_IDENTIFIER)))
+    TYPE=$(word 1, $(PROCESSOR_IDENTIFIER))
+    ifeq ($(TYPE),x86)
+        HOST_CPU=X86
+        HOST_ARCH=32
+    else ifeq ($(TYPE),Intel64)
+        HOST_CPU=X64
+        HOST_ARCH=64
+    else
+        $(error Unknown Processor Architecture on Windows!)
+    endif
 else
-	HOST_CPU=$(shell uname -m)
-	ifeq ($(HOST_CPU),Power Macintosh)
-		HOST_CPU=PPC
-		HOST_ARCH=32
-	else ifeq ($(HOST_CPU),x86_64)
-		HOST_CPU=x86_64
-		HOST_ARCH=64
-	else ifeq ($(HOST_CPU),i686)
-		HOST_CPU=X86
-		HOST_ARCH=32
-	else ifeq ($(HOST_CPU),i586)
-		HOST_CPU=X86
-		HOST_ARCH=32
-	else ifeq ($(HOST_CPU),i486)
-		HOST_CPU=X86
-		HOST_ARCH=32
-	else ifeq ($(HOST_CPU),i386)
-		HOST_CPU=X86
-		HOST_ARCH=32
-	else ifeq ($(HOST_CPU),ARM)
-		HOST_CPU=ARM
-		HOST_ARCH=32
-	endif
+    HOST_CPU=$(shell uname -m)
+    ifeq ($(HOST_CPU),Power Macintosh)
+        HOST_CPU=PPC
+        HOST_ARCH=32
+    else ifeq ($(HOST_CPU),x86_64)
+        HOST_CPU=x86_64
+        HOST_ARCH=64
+    else ifeq ($(HOST_CPU),i686)
+        HOST_CPU=X86
+        HOST_ARCH=32
+    else ifeq ($(HOST_CPU),i586)
+        HOST_CPU=X86
+        HOST_ARCH=32
+    else ifeq ($(HOST_CPU),i486)
+        HOST_CPU=X86
+        HOST_ARCH=32
+    else ifeq ($(HOST_CPU),i386)
+        HOST_CPU=X86
+        HOST_ARCH=32
+    else ifeq ($(HOST_CPU),ARM)
+        HOST_CPU=ARM
+        HOST_ARCH=32
+    else ifeq ($(HOST_CPU),armv7l)
+        HOST_CPU=ARM
+        HOST_ARCH=32
+    endif
 endif
 
-$(info HOST_CPU=$(HOST_CPU))
-$(info HOST_ARCH=$(HOST_ARCH))
 

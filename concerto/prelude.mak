@@ -100,8 +100,8 @@ $(_MODULE)_SDIR := $(HOST_ROOT)/$(_MODPATH)
 $(_MODULE)_IDIRS:= $($(_MODULE)_SDIR)
 
 # Route the output for each module into it's own folder
-$(_MODULE)_ODIR := $(HOST_ROOT)/out/$(TARGET_OS)/$(TARGET_CPU)/module_$(_MODULE)
-$(_MODULE)_TDIR := $(HOST_ROOT)/out/$(TARGET_OS)/$(TARGET_CPU)
+$(_MODULE)_ODIR := $(TARGET_OUT)/module_$(_MODULE)
+$(_MODULE)_TDIR := $(TARGET_OUT)
 
 # Set the initial linking directories to the target directory
 $(_MODULE)_LDIRS := $($(_MODULE)_TDIR)
@@ -123,16 +123,17 @@ else
 $(_MODULE)_INSTALL_INC := $(INSTALL_INC)
 endif
 
-# Define a ".gitignore" file which will help in making sure the module's output folder always exists.
-$($(_MODULE)_ODIR)/.gitignore:
-ifeq ($(HOST_OS),Windows_NT)
-	-@echo Making $@
-	-$(Q)mkdir $(subst /,\,$(patsubst %/.gitignore,%,$@))
-	-$(Q)echo > $(subst /,\,$@)
-else
-	-$(Q)mkdir -p $(patsubst %/.gitignore,%,$@)
-	-$(Q)touch $@
+# Define a ".gitignore" file which will help in making sure the module's output
+# folder always exists.
+%.gitignore:
+ifeq ($(BUILD_DEBUG),1)
+	$(PRINT) Creating Folder $(dir $@)
 endif
+	-$(Q)$(MKDIR) $(call PATH_CONV,$(dir $@))
+ifeq ($(BUILD_DEBUG),1)
+	$(PRINT) Touching $@
+endif
+	-$(Q)$(TOUCH) $(call PATH_CONV,$@)
 
 dir:: $($(_MODULE)_ODIR)/.gitignore
 
@@ -150,15 +151,20 @@ LDIRS :=
 CSOURCES :=
 CPPSOURCES :=
 ASSEMBLY :=
+JSOURCES :=
+JAVA_LIBS :=
 TARGET :=
 TARGETTYPE :=
 BINS :=
 INCS :=
 INC_SUBPATH :=
 HEADERS :=
+DEFFILE :=
 
-# Define a local path for this module's folder that we're processing...
-THIS := $($(_MODULE)_SDIR)
+# Define convenience variables
+SDIR := $($(_MODULE)_SDIR)
+TDIR := $($(_MODULE)_TDIR)
+ODIR := $($(_MODULE)_ODIR)
 
 # Pull in the definitions which will be redefined for this makefile
-include $(HOST_ROOT)/$(BUILD_FOLDER)/definitions.mak
+include $(CONCERTO_ROOT)/definitions.mak

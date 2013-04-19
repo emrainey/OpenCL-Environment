@@ -14,6 +14,7 @@
 
 ifeq ($(DEPRECATED),true)
 -include $(PRELUDE)
+SKIPBUILD:=1
 TARGET     := spacetime
 TARGETTYPE := exe
 CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c vector.c
@@ -30,6 +31,7 @@ endif
 
 _MODULE := kernel_spacetime
 include $(PRELUDE)
+SKIPBUILD:=1
 TARGET  := kernel_spacetime
 TARGETTYPE := opencl_kernel
 CLSOURCES := kernel_spacetime.cl
@@ -40,6 +42,7 @@ include $(FINALE)
 
 _MODULE := clspacetime
 include $(PRELUDE)
+SKIPBUILD:=1
 TARGET := clspacetime
 TARGETTYPE := exe
 CSOURCES := spacetime.c

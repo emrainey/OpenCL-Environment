@@ -14,21 +14,27 @@
 
 ifeq ($(HOST_OS),Windows_NT) # cmd.exe
 CLEAN    := cmd.exe /C del /Q
-CLEANDIR := cmd.exe /C del /Q /S
+CLEANDIR := cmd.exe /C rmdir /Q /S
 COPY     := cmd.exe /C copy /Y /Z /V
-PRINT    := cmd.exe /C echo
+PRINT    := @echo
 SET_RW   := cmd.exe /C attrib -R
 SET_EXEC := cmd.exe /C echo
 LINK     := cmd.exe /C junction
-TOUCH    := cmd.exe /C copy /b $1 +,,
+TOUCH    := cmd.exe /C type NUL >
+INSTALL  := cmd.exe /C copy /Y /Z /V
+MKDIR    := cmd.exe /C mkdir
+CAT      := cmd.exe /C type
 else # Bash variants
-CLEAN    := rm
+CLEAN    := rm -f
 CLEANDIR := rm -rf
 COPY     := cp -f
-PRINT    := echo
+PRINT    := @echo
 SET_RW   := chmod a+rw
 SET_EXEC := chmod a+x
-LINK     := ln -s
-TOUCH    := touch $1
+LINK     := ln -s -f
+TOUCH    := touch
+INSTALL  := install -C -m 755
+MKDIR    := mkdir -p
+CAT      := cat
 endif
 
