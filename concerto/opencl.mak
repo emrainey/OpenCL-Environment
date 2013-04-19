@@ -20,12 +20,21 @@ $(_MODULE)_BIN    := $($(_MODULE)_SDIR)/$($(_MODULE)_TARGET)
 $(_MODULE)_OBJS   := $($(_MODULE)_BIN)
 
 ifeq ($(CL_BUILD_RUNTIME),)
+else ifeq ($(HOST_OS),CYGWIN)
+	CL_USER_DEVICE_TYPE=gpu
+	SYSIDIRS += $(OPENCL_ROOT)/inc
+	ifeq ($(HOST_CPU),X86)
+		SYSLDIRS += $(OPENCL_ROOT)/lib/Win32
+	else ifeq ($(HOST_CPU),X64)
+		SYSLDIRS += $(OPENCL_ROOT)/lib/x64
+	endif
+	SYS_SHARED_LIBS += OpenCL
 
 # OpenCL-Environment Compiler Support
 ifeq ($(HOST_OS),Windows_NT)
 CL:=$($(_MODULE)_TDIR)/clcompiler.exe
-else ifeq ($(HOST_OS),CYGWIN)
-CL:=$($(_MODULE)_TDIR)/clcompiler.exe
+#else ifeq ($(HOST_OS),CYGWIN)
+#CL:=$($(_MODULE)_TDIR)/clcompiler.exe
 else
 CL:=$($(_MODULE)_TDIR)/clcompiler
 endif
