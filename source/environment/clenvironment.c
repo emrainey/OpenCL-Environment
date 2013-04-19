@@ -852,7 +852,7 @@ cl_environment_t *clCreateEnvironment(char *filename,
                                          (cl_context_properties)0};
 #ifdef CL_DEBUG
         printf("Platform ID %p\n", pEnv->platform);
-        //clPrintAllPlatformInfo(pEnv->platform);
+        clPrintAllPlatformInfo(pEnv->platform);
 #endif
         pEnv->numDevices = numDevices;
 #ifdef CL_DEBUG
