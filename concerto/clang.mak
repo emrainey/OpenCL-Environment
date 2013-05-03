@@ -69,10 +69,11 @@ else ifeq ($(TARGET_BUILD),release)
 $(_MODULE)_COPT += -O3
 endif
 
+# This doesn't appear to do anything with CLANG
 ifeq ($(TARGET_CPU),ARM)
-$(_MODULE)_COPT += -mapcs -mno-sched-prolog -mno-thumb-interwork
+#$(_MODULE)_COPT += -mapcs -mno-sched-prolog -mno-thumb-interwork
 ifeq ($(TARGET_OS),LINUX)
-$(_MODULE)_COPT += -mabi=aapcs-linux
+#$(_MODULE)_COPT += -mabi=aapcs-linux
 endif
 endif
 

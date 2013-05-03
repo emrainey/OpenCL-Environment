@@ -115,11 +115,12 @@ vars:: $(foreach mod,$(MODULES),$(mod)_vars)
 	$(PRINT) HOST_OS=$(HOST_OS)
 	$(PRINT) HOST_COMPILER=$(HOST_COMPILER)
 	$(PRINT) TARGET_CPU=$(TARGET_CPU)
+	$(PRINT) TARGET_BUILD=$(TARGET_BUILD)
+	$(PRINT) TARGET_OS=$(TARGET_OS)
 	$(PRINT) MAKEFILE_LIST=$(MAKEFILE_LIST)
 	$(PRINT) TARGET_MAKEFILES=$(TARGET_MAKEFILES)
 
 test:: $(foreach mod,$(MODULES),$(mod)_test)
-	$(PRINT) Executing Unit tests
 
 todo:
 	$(Q)fgrep -Rn @TODO $(HOST_ROOT) --exclude-dir=.git \

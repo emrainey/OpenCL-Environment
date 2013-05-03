@@ -22,7 +22,7 @@ TESTCASE=$(TARGET)
 ifeq ($(TARGET_OS),DARWIN)
 LDFLAGS+=-framework OpenCL
 else
-SYS_SHARED_LIBS := OpenCL
+SYS_SHARED_LIBS := $(OCL_LIB)
 endif
 -include $(FINALE)
 

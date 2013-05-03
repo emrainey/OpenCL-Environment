@@ -164,7 +164,7 @@ DEFFILE :=
 # Define convenience variables
 SDIR := $($(_MODULE)_SDIR)
 TDIR := $($(_MODULE)_TDIR)
-ODIR := $($(_MODULE)_ODIR)
+ODIR := $(call PATH_CONV,$($(_MODULE)_ODIR))
 
 # Pull in the definitions which will be redefined for this makefile
 include $(CONCERTO_ROOT)/definitions.mak

@@ -22,7 +22,7 @@ STATIC_LIBS := clenvironment
 ifeq ($(TARGET_OS),DARWIN)
 LDFLAGS+=-framework OpenCL
 else
-SYS_SHARED_LIBS := OpenCL
+SYS_SHARED_LIBS := $(OCL_LIB)
 endif
 HEADERS := kernel_spacetime
 include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak

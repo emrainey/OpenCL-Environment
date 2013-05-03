@@ -66,7 +66,7 @@ endif
 $(_MODULE)_COPT += -Wall -fms-extensions -Wno-write-strings
 
 ifeq ($(TARGET_BUILD),debug)
-$(_MODULE)_COPT += -O0 -ggdb -ggdb3 -Q
+$(_MODULE)_COPT += -O0 -ggdb -ggdb3 -gdwarf-2 -Q
 #$(_MODULE)_LOPT += -g
 else ifeq ($(TARGET_BUILD),release)
 $(_MODULE)_COPT += -O3
@@ -126,7 +126,7 @@ ifeq ($(TARGET_OS),DARWIN)
 $(_MODULE)_LINK_DSO   := $(LD) -shared $($(_MODULE)_LDFLAGS) -all_load $($(_MODULE)_LIBRARIES) -lm -o $($(_MODULE)_BIN).1.0 $($(_MODULE)_OBJS)
 $(_MODULE)_LINK_EXE   := $(LD) -rdynamic $($(_MODULE)_CPLDFLAGS) $($(_MODULE)_OBJS) $($(_MODULE)_LIBRARIES) -o $($(_MODULE)_BIN)
 else
-$(_MODULE)_LINK_DSO   := $(LD) $($(_MODULE)_LDFLAGS) -shared -Wl,$(EXPORT_FLAG) -Wl,-soname,$(notdir $($(_MODULE)_BIN)).1.0 -Wl,--whole-archive $($(_MODULE)_LIBRARIES) -lm -Wl,--no-whole-archive -o $($(_MODULE)_BIN).1.0 $($(_MODULE)_OBJS) -Wl,-Map=$($(_MODULE)_MAP)
+$(_MODULE)_LINK_DSO   := $(LD) $($(_MODULE)_LDFLAGS) -shared -Wl,$(EXPORT_FLAG) -Wl,-soname,$(notdir $($(_MODULE)_BIN)).1.0 $($(_MODULE)_OBJS) -Wl,--whole-archive $($(_MODULE)_LIBRARIES) -lm -Wl,--no-whole-archive -o $($(_MODULE)_BIN).1.0 -Wl,-Map=$($(_MODULE)_MAP)
 $(_MODULE)_LINK_EXE   := $(LD) $(EXPORTER) -Wl,--cref $($(_MODULE)_CPLDFLAGS) $($(_MODULE)_OBJS) $($(_MODULE)_LIBRARIES) -o $($(_MODULE)_BIN) -Wl,-Map=$($(_MODULE)_MAP)
 endif
 

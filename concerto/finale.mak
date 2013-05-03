@@ -77,8 +77,6 @@ else
 
 $(info Build Skipped for $(_MODULE):$(TARGET))
 
-all %::
-
 endif  # ifneq SKIPBUILD
 
 # Reset Skipbuild
@@ -180,8 +178,10 @@ clean:: $(_MODULE)_clean
 $(_MODULE)_clean_target:
 	$(PRINT) Cleaning $(_MODULE) target $($(_MODULE)_BIN)
 	-$(Q)$(CLEAN) $(call PATH_CONV,$($(_MODULE)_BIN))
-	$(PRINT) Cleaning $(_MODULE) target $($(_MODULE)_MAP)
+ifneq ($($(_MODULE)_MAP),)
+	$(PRINT) Cleaning $(_MODULE) target mapfile $($(_MODULE)_MAP)
 	-$(Q)$(CLEAN) $(call PATH_CONV,$($(_MODULE)_MAP))
+endif
 
 $(_MODULE)_clean: $(_MODULE)_clean_target
 	$(PRINT) Cleaning $($(_MODULE)_ODIR)

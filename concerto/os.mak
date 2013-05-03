@@ -51,10 +51,16 @@ endif
 
 # PATH_CONV and set HOST_COMPILER if not yet specified
 ifeq ($(HOST_OS),Windows_NT)
+    STRING_ESCAPE=$(subst \,\\,$(1))
     PATH_CONV=$(subst /,\,$(1))
+    PATH_SEP=\\
+    PATH_SEPD=$(strip \)
     HOST_COMPILER?=CL
 else
+    STRING_ESCAPE=$(1)
     PATH_CONV=$(1)
+    PATH_SEP=/
+    PATH_SEPD=/
     HOST_COMPILER?=GCC
 endif
 

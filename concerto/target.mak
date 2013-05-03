@@ -50,7 +50,8 @@ ifeq ($(TARGET_PLATFORM),PC)
         SYSIDIRS += /usr/include
         SYSLDIRS += /usr/lib
         SYSDEFS+=_XOPEN_SOURCE=700 _BSD_SOURCE=1 _GNU_SOURCE=1
-        ifdef OPENCL_ROOT
+        ifneq (,$(OPENCL_ROOT))
+            OCL_LIB := OpenCL
             CL_USER_DEVICE_TYPE ?= gpu
             SYSIDIRS += $(OPENCL_ROOT)/include $(OPENCL_ROOT)/inc
             ifeq ($(TARGET_CPU),X86)
@@ -77,6 +78,18 @@ ifeq ($(TARGET_PLATFORM),PC)
         INSTALL_INC := /usr/include
         TARGET_NUM_CORES=1
         SYSDEFS+=_XOPEN_SOURCE=700 _BSD_SOURCE=1 _GNU_SOURCE=1 WINVER=0x501
+        ifdef OPENCL_ROOT
+            OCL_LIB := OpenCL
+            CL_USER_DEVICE_TYPE ?= gpu
+            SYSDEFS += CL_USE_DEPRECATED_OPENCL_1_0_APIS=1
+            SYSDEFS += CL_USE_DEPRECATED_OPENCL_1_1_APIS=1
+            SYSIDIRS += $(OPENCL_ROOT)/inc $(OPENCL_ROOT)/include
+            ifeq ($(HOST_CPU),X86)
+                SYSLDIRS += $(OPENCL_ROOT)/lib/Win32
+            else ifeq ($(HOST_CPU),X64)
+                SYSLDIRS += $(OPENCL_ROOT)/lib/x64
+            endif
+        endif
     else ifeq ($(TARGET_OS),Windows_NT)
         INSTALL_LIB := "${windir}\\system32"
         INSTALL_BIN := "${windir}\\system32"
@@ -84,8 +97,11 @@ ifeq ($(TARGET_PLATFORM),PC)
         TARGET_NUM_CORES := $(NUMBER_OF_PROCESSORS)
         SYSDEFS+=WIN32_LEAN_AND_MEAN WIN32 _WIN32 _CRT_SECURE_NO_DEPRECATE WINVER=0x0501 _WIN32_WINNT=0x0501
         ifdef OPENCL_ROOT
+            OCL_LIB := OpenCL
             CL_USER_DEVICE_TYPE ?= gpu
-            SYSIDIRS += $(OPENCL_ROOT)/inc
+            SYSDEFS += CL_USE_DEPRECATED_OPENCL_1_0_APIS=1
+            SYSDEFS += CL_USE_DEPRECATED_OPENCL_1_1_APIS=1
+            SYSIDIRS += $(OPENCL_ROOT)/inc $(OPENCL_ROOT)/include
             ifeq ($(HOST_CPU),X86)
                 SYSLDIRS += $(OPENCL_ROOT)/lib/Win32
             else ifeq ($(HOST_CPU),X64)
@@ -93,8 +109,19 @@ ifeq ($(TARGET_PLATFORM),PC)
             endif
         endif
     endif
-endif
+else
+    ifeq ($(TARGET_PLATFORM),PANDA)
+        INSTALL_LIB := /usr/lib
+        INSTALL_BIN := /usr/bin
+        INSTALL_INC := /usr/include
+        SYSDEFS += _XOPEN_SOURCE=700 _BSD_SOURCE=1 _GNU_SOURCE=1
+        OCL_LIB := PVROCL
+        TARGET_NUM_CORES := 2
+        TARGET_OS := LINUX
+        TARGET_CPU := ARM
 
+    endif
+endif
 
 SYSDEFS += $(TARGET_OS) $(TARGET_CPU) $(TARGET_PLATFORM) TARGET_NUM_CORES=$(TARGET_NUM_CORES)
 
