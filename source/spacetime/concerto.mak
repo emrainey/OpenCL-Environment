@@ -14,6 +14,7 @@
 
 ifeq ($(DEPRECATED),true)
 -include $(PRELUDE)
+SKIPBUILD:=1
 TARGET     := spacetime
 TARGETTYPE := exe
 CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c vector.c
@@ -30,22 +31,30 @@ endif
 
 _MODULE := kernel_spacetime
 include $(PRELUDE)
+SKIPBUILD:=1
 TARGET  := kernel_spacetime
 TARGETTYPE := opencl_kernel
 CLSOURCES := kernel_spacetime.cl
+ifeq ($(NO_DOUBLE),1)
+DEFS+=GPGPU_NO_DOUBLE_SUPPORT
+endif
 include $(FINALE)
 
 _MODULE := clspacetime
 include $(PRELUDE)
+SKIPBUILD:=1
 TARGET := clspacetime
 TARGETTYPE := exe
-CSOURCES := spacetime.c 
+CSOURCES := spacetime.c
 HEADERS  := kernel_spacetime
 STATIC_LIBS := clenvironment clquery
 ifeq ($(TARGET_OS),DARWIN)
 LDFLAGS+=-framework OpenCL
 else
 SYS_SHARED_LIBS := OpenCL
+endif
+ifeq ($(NO_DOUBLE),1)
+DEFS+=GPGPU_NO_DOUBLE_SUPPORT
 endif
 include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
 include $(FINALE)

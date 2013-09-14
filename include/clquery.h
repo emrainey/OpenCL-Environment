@@ -24,6 +24,5 @@ void clPrintAllQueueInfo(cl_command_queue queue);
 void clPrintAllKernelInfo(cl_kernel kernel);
 void clPrintAllEventInfo(cl_event event);
 void clPrintAllKernelWorkInfo(cl_kernel kernel, cl_device_id device);
-void clPrintError(cl_uint err);
 
 #endif

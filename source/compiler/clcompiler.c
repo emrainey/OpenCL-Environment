@@ -95,6 +95,9 @@ void clOptions(int argc, char *argv[])
 
 void notify(cl_program program, void *arg)
 {
+#ifdef CL_DEBUG
+    printf("Notified of change in program %p, arg %p\n", program, arg);
+#endif
     cl_kernel_bin_t *bins = cl_extract_kernels(program);
     if (bins)
     {
@@ -126,40 +129,40 @@ int main(int argc, char *argv[])
     if (argc > 1)
     {
         cl_environment_t *pEnv = NULL;
-		cl_uint dev_type = CL_DEVICE_TYPE_DEFAULT;
+        cl_uint dev_type = CL_DEVICE_TYPE_DEFAULT;
         clOptions(argc, argv);
         print_logo();
 
         if (verbose && filename[0] != '\0')
-			printf("Compiling File: %s\n",filename);
-		
-		if (verbose && cl_args[0] != '\0')
+            printf("Compiling File: %s\n",filename);
+
+        if (verbose && cl_args[0] != '\0')
             printf("CL ARGS: %s\n",cl_args);
-			
-		if (verbose && precomp[0] != '\0')
-			printf("Precompiled Header: %s\n", precomp);
-	
-		dev_type = clGetTypeFromString(cl_device_types);
-		if (verbose)
-			printf("%u devices as type 0x%08x\n",numDevices,dev_type);
+
+        if (verbose && precomp[0] != '\0')
+            printf("Precompiled Header: %s\n", precomp);
+
+        dev_type = clGetTypeFromString(cl_device_types);
+        if (verbose)
+            printf("%u devices as type 0x%08x\n",numDevices,dev_type);
 
         // process the kernel
         pEnv = clCreateEnvironment(filename, dev_type, numDevices, notify, cl_args);
-		if (pEnv == NULL)
-		{
-			printf("ERROR: Failed to compile %s\n", filename);
-		}
+        if (pEnv == NULL)
+        {
+            printf("ERROR: Failed to compile %s\n", filename);
+        }
         clDeleteEnvironment(pEnv);
     }
     else
     {
-		cl_uint i;
+        cl_uint i;
         print_logo();
         printf("Usage:\n$ %s [OPTIONS] \n", argv[0]);
-		for (i = 0; i < numOpts; i++)
-		{
-			printf("Option %s\t\t%s\n",options[i].arg, options[i].description);
-		}
+        for (i = 0; i < numOpts; i++)
+        {
+            printf("Option %s\t\t%s\n",options[i].arg, options[i].description);
+        }
         printf("Example:\n$ %s -f %s -d %u -o %s\n",argv[0],filename,numDevices,outfile);
     }
     return 0;

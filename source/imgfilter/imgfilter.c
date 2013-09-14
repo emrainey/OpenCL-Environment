@@ -31,7 +31,7 @@
 #include <kernel_imgfilter.h>
 #endif
 
-void notify(cl_program program, void *arg)
+static void notify(cl_program program, void *arg)
 {
     //printf("Program %p Arg %p\n",program, arg);
 }
@@ -143,6 +143,7 @@ cl_int imgfilter1d_opt(cl_environment_t *pEnv,
     return err;
 }
 
+#ifdef CL_UNITTEST
 int main(int argc, char *argv[])
 {
     if (argc >= 5)
@@ -207,3 +208,5 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+#endif
+

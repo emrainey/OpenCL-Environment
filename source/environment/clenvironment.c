@@ -25,10 +25,12 @@
 #include <clquery.h>
 #include <clenvironment.h>
 
+#define CL_LOG_SIZE     (1024*1024)
+
 void cl_free(void *ptr)
 {
 #ifdef CL_DEBUG
-    printf("Freeing %p\n",ptr);
+    //printf("Freeing %p\n",ptr);
 #endif
     free(ptr);
 }
@@ -40,7 +42,7 @@ void *cl_malloc(size_t numBytes)
         printf("WARNING: ALLOCATING A BUFFER OF ZERO BYTES!!\n");
     ptr = malloc(numBytes);
 #ifdef CL_DEBUG
-    printf("Malloc'd %p for %lu bytes\n",ptr,numBytes);
+    //printf("Malloc'd %p for %lu bytes\n",ptr,numBytes);
 #endif
     if (ptr)
         memset(ptr, 0, numBytes);
@@ -70,6 +72,100 @@ size_t flines(FILE *fp)
     fseek(fp, 0, SEEK_SET);
     return numLines;
 }
+
+/*
+static char *strlastitem(char *str, char item)
+{
+    int last = 0, i = 0;
+    char *s = str;
+    do {
+        if (s[i] == item)
+            last = i;
+    } while (s[i++] != '\0');
+    if (s[] != item)
+        s = str;
+    return s;
+}
+*/
+
+#define CASE_STRINGERIZE(err, label, function, file, line) \
+    case err: \
+        fprintf(stderr, "%s: OpenCL error "#err" at %s in %s:%d\n", label, function, file, line); \
+        break
+
+cl_int clBuildError(cl_int build_status, char *label, char *function, char *file, int line)
+{
+    switch (build_status)
+    {
+        case CL_BUILD_SUCCESS:
+            break;
+        CASE_STRINGERIZE(CL_BUILD_NONE, label, function, file, line);
+        CASE_STRINGERIZE(CL_BUILD_ERROR, label, function, file, line);
+        CASE_STRINGERIZE(CL_BUILD_IN_PROGRESS, label, function, file, line);
+        default:
+            fprintf(stderr, "%s: Unknown build error %d at %s in %s:%d\n", label, build_status, function, file, line);
+            break;
+    }
+    return build_status;
+}
+
+cl_int clPrintError(cl_int err, char *label, char *function, char *file, int line)
+{
+    switch (err)
+    {
+        case CL_SUCCESS:
+            break;
+        CASE_STRINGERIZE(CL_BUILD_PROGRAM_FAILURE, label, function, file, line);
+        CASE_STRINGERIZE(CL_COMPILER_NOT_AVAILABLE, label, function, file, line);
+        CASE_STRINGERIZE(CL_DEVICE_NOT_AVAILABLE, label, function, file, line);
+        CASE_STRINGERIZE(CL_DEVICE_NOT_FOUND, label, function, file, line);
+        CASE_STRINGERIZE(CL_IMAGE_FORMAT_MISMATCH, label, function, file, line);
+        CASE_STRINGERIZE(CL_IMAGE_FORMAT_NOT_SUPPORTED, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_ARG_INDEX, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_ARG_SIZE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_ARG_VALUE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_BINARY, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_BUFFER_SIZE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_BUILD_OPTIONS, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_COMMAND_QUEUE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_CONTEXT, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_DEVICE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_DEVICE_TYPE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_EVENT, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_EVENT_WAIT_LIST, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_GL_OBJECT, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_GLOBAL_OFFSET, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_HOST_PTR, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_IMAGE_SIZE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_KERNEL_NAME, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_KERNEL, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_KERNEL_ARGS, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_KERNEL_DEFINITION, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_MEM_OBJECT, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_OPERATION, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_PLATFORM, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_PROGRAM, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_PROGRAM_EXECUTABLE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_QUEUE_PROPERTIES, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_SAMPLER, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_VALUE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_WORK_DIMENSION, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_WORK_GROUP_SIZE, label, function, file, line);
+        CASE_STRINGERIZE(CL_INVALID_WORK_ITEM_SIZE, label, function, file, line);
+        CASE_STRINGERIZE(CL_MAP_FAILURE, label, function, file, line);
+        CASE_STRINGERIZE(CL_MEM_OBJECT_ALLOCATION_FAILURE, label, function, file, line);
+        CASE_STRINGERIZE(CL_MEM_COPY_OVERLAP, label, function, file, line);
+        CASE_STRINGERIZE(CL_OUT_OF_HOST_MEMORY, label, function, file, line);
+        CASE_STRINGERIZE(CL_OUT_OF_RESOURCES, label, function, file, line);
+        CASE_STRINGERIZE(CL_PROFILING_INFO_NOT_AVAILABLE, label, function, file, line);
+        default:
+            fprintf(stderr, "%s: Unknown error %d at %s in %s:%d\n", label, err, function, file, line);
+            break;
+    }
+    return err;
+}
+
 
 void clDeleteEnvironment(cl_environment_t *pEnv)
 {
@@ -321,15 +417,18 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
     cl_kernel_bin_t *bins = NULL;
     cl_device_id devices[CL_MAX_DEVICES];
     cl_device_type deviceTypes = 0;
+    cl_build_status build_status = 0;
 
     err = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(size_t), &numDevices, NULL);
+    CL_ERROR(err, "clGetProgramInfo");
     if (err == CL_SUCCESS)
     {
 #ifdef CL_DEBUG
         printf("There are %lu devices associated with this program %p.\n", numDevices, program);
 #endif
         // get the devices
-        clGetProgramInfo(program, CL_PROGRAM_DEVICES, sizeof(devices), devices, &numDevices);
+        err = clGetProgramInfo(program, CL_PROGRAM_DEVICES, sizeof(devices), devices, &numDevices);
+        CL_ERROR(err, "clGetProgramInfo");
         numDevices /= sizeof(cl_device_id);
 #ifdef CL_DEBUG
         printf("%u devices retrieved!\n",numDevices);
@@ -341,6 +440,7 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
             // query each device and ask it what type it is. OR that into a singe bit field
 
             err = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(tmp), &tmp, &bytes);
+            CL_ERROR(err, "clGetDeviceInfo");
             if (bytes == sizeof(tmp))
             {
                 deviceTypes |= tmp;
@@ -355,10 +455,20 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
         printf("CL_DEVICE_TYPE(s) = 0x%08x\n",deviceTypes);
 #endif
         // did it compile successfully?
-        clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(cl_int), &err, NULL);
+        err = clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(cl_int), &build_status, NULL);
+        CL_ERROR(err, "clGetProgramBuildInfo");
         if (err != CL_SUCCESS)
         {
-            printf("ERROR: Build was not successful! (Error=%d)\n",err);
+            printf("ERROR: Build was not successful! (Error=%d, Build_Status=%d)\n",err, build_status);
+            return NULL;
+        }
+        if (build_status != CL_BUILD_SUCCESS)
+        {
+            size_t logSize = CL_LOG_SIZE;
+            char *log = malloc(CL_LOG_SIZE);
+            clBuildError(build_status, "clGetProgramBuildInfo", __FUNCTION__, __FILE__, __LINE__);
+            clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, logSize, log, &logSize);
+            printf("BUILD INFO [%lu]:\n%s<<BUILD INFO\n", logSize, log);
             return NULL;
         }
 
@@ -370,6 +480,7 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
         bins->deviceTypes = deviceTypes;
 
         err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, bins->numBytesSizes, bins->sizes, &numBinaries);
+        CL_ERROR(err, "clGetProgramInfo");
         if (err != CL_SUCCESS)
         {
             printf("Error: When requesting the number of binary outputs, error %d was returned\n", err);
@@ -390,7 +501,7 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
                 bins->data[i] = (unsigned char *)cl_malloc(bins->sizes[i]);
             }
             err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, bins->numBytesData, bins->data, &numBinaries2);
-            cl_assert(err == CL_SUCCESS,);
+            CL_ERROR(err, "clGetProgramInfo");
             numBinaries2 /= sizeof(unsigned char *);
 #ifdef CL_DEBUG
             printf("Wrote %u pointers to the binary structure!\n", numBinaries);
@@ -440,12 +551,12 @@ char **clLoadSources(char *filename, cl_uint *pNumLines)
 int cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
 {
     FILE *fo = NULL;
-	size_t bw = 0;
-	if (filename[0] == '\0')
-	{
-		printf("ERROR: Filename is empty!\n");
+    size_t bw = 0;
+    if (filename[0] == '\0')
+    {
+        printf("ERROR: Filename is empty!\n");
         return 0;
-	}
+    }
     fo = fopen(filename, "w+");
     if (fo != NULL)
     {
@@ -476,12 +587,12 @@ int cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
         bw += fprintf(fo, "static cl_kernel_bin_t gKernelBins = { 0x%08x, %luL, %luL, %luL, (size_t *)&gKernelBinarySizes, (cl_byte **)&gKernelBinaries };\n", bins->deviceTypes, bins->numDevices, bins->numBytesSizes, bins->numBytesData);
         bw += fprintf(fo, "#endif\n");
         bw += fclose(fo);
-		printf("Wrote %zu bytes to precompiled header\n", bw);
-		return 1;
+        printf("Wrote %zu bytes to precompiled header\n", bw);
+        return 1;
     } else {
-		printf("ERROR: Failed to open %s for writing\n", filename);
-		return 0;
-	}
+        printf("ERROR: Failed to open %s for writing\n", filename);
+        return 0;
+    }
 }
 
 cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
@@ -500,13 +611,14 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
     if (pEnv->devices == NULL || pEnv->queues == NULL)
     {
         printf("ERROR: Failed allocate data structures for compilation.\n");
-		clDeleteEnvironment(pEnv);
+        clDeleteEnvironment(pEnv);
         return NULL;
     }
     err = clGetPlatformIDs(1, &pEnv->platform, &numPlatforms);
+    CL_ERROR(err, "clGetPlatformIDs");
     if (err != CL_SUCCESS)
     {
-		printf("ERROR: Failed to get any platform ID for OpenCL (%d)\n", err);
+        printf("ERROR: Failed to get any platform ID for OpenCL (%d)\n", err);
         clDeleteEnvironment(pEnv);
         return NULL;
     }
@@ -646,7 +758,7 @@ cl_environment_t *clCreateEnvironmentFromBins(cl_kernel_bin_t *bins,
                         err = clCreateKernelsInProgram(pEnv->program, pEnv->numKernels, pEnv->kernels, &pEnv->numKernels);
 #ifdef CL_DEBUG
                         printf("Queried for %u kernels\n", pEnv->numKernels);
-                        clPrintError(err);
+                        CL_ERROR(err, "clCreateKernelsInProgram");
 #endif
                         if (err == CL_SUCCESS)
                         {
@@ -782,7 +894,7 @@ cl_environment_t *clCreateEnvironment(char *filename,
                 err = clBuildProgram(pEnv->program, pEnv->numDevices, pEnv->devices, cl_args, notifier, NULL);
                 if (err != CL_SUCCESS)
                 {
-                    printf("Error building kernels! Error=%d: ",err);
+                    CL_ERROR(err, "clBuildProgram");
                     switch (err)
                     {
                         case CL_INVALID_VALUE:
@@ -827,6 +939,7 @@ cl_environment_t *clCreateEnvironment(char *filename,
 #ifndef CL_ITERATIVE_QUERY
                 // do the initial query to find the exact number of kernels
                 err = clCreateKernelsInProgram(pEnv->program, 0, NULL, &pEnv->numKernels);
+                CL_ERROR(err, "clCreateKernelsInProgram");
                 if (err != CL_SUCCESS || pEnv->numKernels == 0)
                 {
                     printf("ERROR! Failed to retreived the number of compiled kernels! (%u)\n",pEnv->numKernels);
@@ -860,7 +973,7 @@ cl_environment_t *clCreateEnvironment(char *filename,
                         err = clCreateKernelsInProgram(pEnv->program, pEnv->numKernels, pEnv->kernels, &pEnv->numKernels);
 #ifdef CL_DEBUG
                         printf("Queried for %u kernels\n", pEnv->numKernels);
-                        clPrintError(err);
+                        CL_ERROR(err, "clCreateKernelsInProgram");
 #endif
                         if (err == CL_SUCCESS)
                         {
@@ -1043,7 +1156,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
         // finish
         for (i = 0; i<pEnv->numDevices; i++)
             clFinish(pEnv->queues[i]);
-		
+
         err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &pCall[k].start, NULL);
         cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
         err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_END,   sizeof(cl_ulong), &pCall[k].stop, NULL);
@@ -1075,9 +1188,9 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
         // finish
         for (i = 0; i<pEnv->numDevices; i++)
             clFinish(pEnv->queues[i]);
-		
-		for (i = 0; i < pEnv->numDevices; i++)
-        	clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
+
+        for (i = 0; i < pEnv->numDevices; i++)
+            clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
 
         for (j = 0; j < pCall[k].numParams; j++)
         {

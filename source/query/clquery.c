@@ -41,43 +41,6 @@ typedef enum _cl_type_e {
 
 #define L_STRINGERIZE(x)    #x, x
 
-typedef struct _cl_error_strings_t {
-    char *string;
-    cl_uint err;
-} cl_error_string_t;
-
-cl_error_string_t errors[] = {
-    {L_STRINGERIZE(CL_INVALID_VALUE)},
-    {L_STRINGERIZE(CL_INVALID_DEVICE_TYPE)},
-    {L_STRINGERIZE(CL_INVALID_PLATFORM)},
-    {L_STRINGERIZE(CL_INVALID_DEVICE)},
-    {L_STRINGERIZE(CL_INVALID_CONTEXT)},
-    {L_STRINGERIZE(CL_INVALID_QUEUE_PROPERTIES)},
-    {L_STRINGERIZE(CL_INVALID_COMMAND_QUEUE)},
-    {L_STRINGERIZE(CL_INVALID_HOST_PTR)},
-    {L_STRINGERIZE(CL_INVALID_MEM_OBJECT)},
-    {L_STRINGERIZE(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR)},
-    {L_STRINGERIZE(CL_INVALID_IMAGE_SIZE)},
-    {L_STRINGERIZE(CL_INVALID_SAMPLER)},
-    {L_STRINGERIZE(CL_INVALID_BINARY)},
-    {L_STRINGERIZE(CL_INVALID_BUILD_OPTIONS)},
-    {L_STRINGERIZE(CL_INVALID_KERNEL_DEFINITION)},
-};
-cl_uint numErrors = dimof(errors);
-
-void clPrintError(cl_uint err)
-{
-    cl_uint i = 0;
-    for (i = 0; i < numErrors; i++)
-    {
-        if (err == errors[i].err)
-        {
-            printf("ERROR: %s\n",errors[i].string);
-            break;
-        }
-    }
-}
-
 typedef struct _cl_info_type_t {
     cl_type_e type;
     cl_uint   count;

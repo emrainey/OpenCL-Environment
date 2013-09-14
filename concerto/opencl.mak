@@ -12,13 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 ifeq ($($(_MODULE)_TYPE),opencl_kernel)
+
+$(_MODULE)_TARGET := $(TARGET).h
+$(_MODULE)_BIN    := $($(_MODULE)_SDIR)/$($(_MODULE)_TARGET)
+$(_MODULE)_OBJS   := $($(_MODULE)_BIN)
+
+ifeq ($(CL_BUILD_RUNTIME),)
+else ifeq ($(HOST_OS),CYGWIN)
+	CL_USER_DEVICE_TYPE=gpu
+	SYSIDIRS += $(OPENCL_ROOT)/inc
+	ifeq ($(HOST_CPU),X86)
+		SYSLDIRS += $(OPENCL_ROOT)/lib/Win32
+	else ifeq ($(HOST_CPU),X64)
+		SYSLDIRS += $(OPENCL_ROOT)/lib/x64
+	endif
+	SYS_SHARED_LIBS += OpenCL
 
 # OpenCL-Environment Compiler Support
 ifeq ($(HOST_OS),Windows_NT)
 CL:=$($(_MODULE)_TDIR)/clcompiler.exe
-else ifeq ($(HOST_OS),CYGWIN)
-CL:=$($(_MODULE)_TDIR)/clcompiler.exe
+#else ifeq ($(HOST_OS),CYGWIN)
+#CL:=$($(_MODULE)_TDIR)/clcompiler.exe
 else
 CL:=$($(_MODULE)_TDIR)/clcompiler
 endif
@@ -39,18 +55,18 @@ else
 $(_MODULE)_KFLAGS+=$(foreach inc,$($(_MODULE)_IDIRS),-I$(inc)) $(foreach def,$($(_MODULE)_DEFS),-D$(def))
 endif
 
-$(_MODULE)_TARGET := $(TARGET).h
-$(_MODULE)_BIN    := $($(_MODULE)_SDIR)/$($(_MODULE)_TARGET)
-$(_MODULE)_OBJS   := $($(_MODULE)_BIN)
-
-$(_MODULE)_CLEAN_BIN := -$(Q)$(CLEAN) $($(_MODULE)_BIN)
-$(_MODULE)_CLEAN_OBJS := -$(Q)$(CLEAN) $($(_MODULE)_OBJS)
-
 define $(_MODULE)_COMPILE_TOOLS
 $($(_MODULE)_SDIR)/%.h: $($(_MODULE)_SDIR)/%.cl $(CL)
 	@echo [PURE] Compiling OpenCL Kernel $$(notdir $$<)
 	$(Q)$$(call PATH_CONV,$(CL)) -n -f $$(call PATH_CONV,$$<) -d $(CL_USER_DEVICE_COUNT) -t $(CL_USER_DEVICE_TYPE) -h $$(call PATH_CONV,$$@) -W "$($(_MODULE)_KFLAGS)"
 endef
 
+else
+define $(_MODULE)_COMPILE_TOOLS
+$($(_MODULE)_SDIR)/%.h:
+	@echo Touching $$@
+	$(Q)$$(call $(TOUCH),$$@)
+endef
+endif
 endif
 

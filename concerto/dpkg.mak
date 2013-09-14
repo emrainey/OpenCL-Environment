@@ -1,4 +1,4 @@
-# Copyright (C) 2012 Texas Instruments, Inc.
+# Copyright (C) 2012 Erik Rainey
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ PKG_EXT := .deb
 
 VARS=$(shell "dpkg-architecture")
 $(foreach var,$(VARS),$(if $(findstring DEB_BUILD_ARCH,$(var)),$(eval $(var))))
-$(info DEB_BUILD_ARCH=$(DEB_BUILD_ARCH))
 
 #$(info OUT=$($(_MODULE)_ODIR))
 
