@@ -90,9 +90,7 @@ static void clOptions(int argc, char *argv[])
 
 static void notify(cl_program program, void *arg)
 {
-#ifdef CL_DEBUG
     printf("Notified of change in program %p, arg %p\n", program, arg);
-#endif
     cl_kernel_bin_t *bins = cl_extract_kernels(program);
     if (bins)
     {
@@ -102,9 +100,10 @@ static void notify(cl_program program, void *arg)
     }
 }
 
-void print_logo(void)
+static void print_logo(void)
 {
-    if (no_print_logo == CL_FALSE) {
+    if (no_print_logo == CL_FALSE)
+    {
        printf("OpenCL Test Compiler by Erik Rainey\n");
        printf("Version %lf Compiled on %s at %s\n",0.5,__DATE__,__TIME__);
     }

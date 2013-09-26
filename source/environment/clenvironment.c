@@ -50,7 +50,7 @@ void *cl_malloc(size_t numBytes)
     return ptr;
 }
 
-size_t flen(FILE *fp)
+static size_t flen(FILE *fp)
 {
     size_t len = 0;
     fseek(fp, 0, SEEK_END);
@@ -59,12 +59,12 @@ size_t flen(FILE *fp)
     return len;
 }
 
-size_t flines(FILE *fp)
+static size_t flines(FILE *fp)
 {
     size_t numLines = 0;
     char line[1024];
     fseek(fp, 0, SEEK_SET);
-    while (fgets(line, sizeof(line), fp) > 0) {
+    while (fgets(line, sizeof(line), fp) != NULL) {
         numLines++;
     }
 #ifdef CL_DEBUG

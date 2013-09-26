@@ -17,5 +17,6 @@ TARGET		:= clquery
 TARGETTYPE	:= library
 CSOURCES	:= clquery.c
 TESTCASE	:= $(TARGET)
+USE_OPENCL  := true
 -include $(FINALE)
 
