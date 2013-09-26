@@ -17,12 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef DARWIN
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
 #include <clenvironment.h>
+#include <clquery.h>
 
 typedef enum _cl_type_e {
     CL_STRING_TYPE,     // char[]

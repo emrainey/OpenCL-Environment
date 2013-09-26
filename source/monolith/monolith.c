@@ -6,13 +6,6 @@
 #include <string.h>
 #include <math.h>
 
-/* OPENCL INCLUDES */
-#ifndef DARWIN
-#include <CL/cl.h>
-#else
-#include <OpenCL/opencl.h>
-#endif
-
 /* OPENCL_ENVIRONMENT */
 #include <clenvironment.h>
 #ifndef CL_BUILD_RUNTIME

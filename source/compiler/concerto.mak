@@ -17,10 +17,6 @@ TARGET		:= clcompiler
 TARGETTYPE	:= exe
 CSOURCES    := clcompiler.c
 STATIC_LIBS := clenvironment clquery
-ifeq ($(TARGET_OS),DARWIN)
-LDFLAGS+=-framework OpenCL
-else
-SYS_SHARED_LIBS := OpenCL
-endif
+USE_OPENCL := true
 -include $(FINALE)
 

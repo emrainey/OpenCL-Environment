@@ -19,11 +19,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
-#ifdef DARWIN
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
+#include <clenvironment.h>
 
 int ipow(int x, int n)
 {

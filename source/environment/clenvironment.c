@@ -17,13 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef DARWIN
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
-#include <clquery.h>
 #include <clenvironment.h>
+#include <clquery.h>
 
 #define CL_LOG_SIZE     (1024*1024)
 

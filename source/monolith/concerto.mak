@@ -20,11 +20,7 @@ CSOURCES	:= monolith.c
 HEADERS 	:= 
 STATIC_LIBS	:= 
 TESTCASE=$(TARGET)
-ifeq ($(TARGET_OS),DARWIN)
-LDFLAGS+=-framework OpenCL
-else
-SYS_SHARED_LIBS := OpenCL
-endif
-include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
+USE_OPENCL := true
+USE_GLUT := true
 -include $(FINALE)
 

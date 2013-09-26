@@ -19,13 +19,9 @@ TARGET     := spacetime
 TARGETTYPE := exe
 CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c vector.c
 STATIC_LIBS := clenvironment
-ifeq ($(TARGET_OS),DARWIN)
-LDFLAGS+=-framework OpenCL
-else
-SYS_SHARED_LIBS := OpenCL
-endif
+USE_OPENCL := true
 HEADERS := kernel_spacetime
-include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
+USE_GLUT := true
 -include $(FINALE)
 endif
 
@@ -48,13 +44,9 @@ TARGETTYPE := exe
 CSOURCES := spacetime.c
 HEADERS  := kernel_spacetime
 STATIC_LIBS := clenvironment clquery
-ifeq ($(TARGET_OS),DARWIN)
-LDFLAGS+=-framework OpenCL
-else
-SYS_SHARED_LIBS := OpenCL
-endif
+USE_OPENCL := true
 ifeq ($(NO_DOUBLE),1)
 DEFS+=GPGPU_NO_DOUBLE_SUPPORT
 endif
-include $(HOST_ROOT)/$(BUILD_FOLDER)/glut.mak
+USE_GLUT := true
 include $(FINALE)

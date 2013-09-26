@@ -17,11 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef DARWIN
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
 #include <clenvironment.h>
 
 typedef enum _cl_opt_typee {
@@ -59,7 +54,7 @@ clOpt options[] = {
 };
 cl_uint numOpts = dimof(options);
 
-void clOptions(int argc, char *argv[])
+static void clOptions(int argc, char *argv[])
 {
     int i = 0;
     cl_uint j = 0;
@@ -93,7 +88,7 @@ void clOptions(int argc, char *argv[])
     }
 }
 
-void notify(cl_program program, void *arg)
+static void notify(cl_program program, void *arg)
 {
 #ifdef CL_DEBUG
     printf("Notified of change in program %p, arg %p\n", program, arg);
