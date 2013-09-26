@@ -19,15 +19,7 @@ CSOURCES   := yuv.c
 HEADERS    := kernel_yuv
 STATIC_LIBS := clenvironment clmath clquery
 TESTCASE   := $(TARGET)
-<<<<<<< HEAD
-ifeq ($(TARGET_OS),DARWIN)
-LDFLAGS+=-framework OpenCL
-else
-SYS_SHARED_LIBS := $(OCL_LIB)
-endif
-=======
 USE_OPENCL := true
->>>>>>> develop
 -include $(FINALE)
 
 _MODULE = kernel_yuv
