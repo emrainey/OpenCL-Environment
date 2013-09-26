@@ -19,11 +19,6 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#ifdef DARWIN
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
 #include <clenvironment.h>
 #include <clquery.h>
 #include <clmath.h>

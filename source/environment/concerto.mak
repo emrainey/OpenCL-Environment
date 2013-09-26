@@ -16,4 +16,5 @@
 TARGET		:= clenvironment
 TARGETTYPE  := library
 CSOURCES 	:= clenvironment.c
+USE_OPENCL := true
 -include $(FINALE)

@@ -19,11 +19,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
-#ifdef DARWIN
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
+#include <clenvironment.h>
 
 int ipow(int x, int n)
 {
@@ -74,7 +70,7 @@ int rrand(int low, int hi)
 
 void frand4(cl_float4 f, cl_int l, cl_int h)
 {
-#if defined(DARWIN)
+#if 0 //defined(DARWIN)
     f[0] = frand() * ipow(10, rrand(l,h));
     f[1] = frand() * ipow(10, rrand(l,h));
     f[2] = frand() * ipow(10, rrand(l,h));

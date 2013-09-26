@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Erik Rainey
+# Copyright (C) 2012 Erik Rainey
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +13,14 @@
 # limitations under the License.
 
 -include $(PRELUDE)
-TARGET      := climgfilter
-TARGETTYPE  := exe
-DEFS        := CL_UNITTEST
-CSOURCES    := imgfilter.c
-HEADERS     := kernel_imgfilter
-STATIC_LIBS := clenvironment clquery clmath
+SKIPBUILD := 1
+TARGET		:= monolith
+TARGETTYPE	:= exe
+CSOURCES	:= monolith.c
+HEADERS 	:= 
+STATIC_LIBS	:= 
 TESTCASE=$(TARGET)
 USE_OPENCL := true
+USE_GLUT := true
 -include $(FINALE)
-
-_MODULE = kernel_imgfilter
--include $(PRELUDE)
-TARGET      := kernel_imgfilter
-TARGETTYPE  := opencl_kernel
-CLSOURCES   := kernel_imgfilter.cl
--include $(FINALE)
-
-
 

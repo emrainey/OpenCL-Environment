@@ -23,6 +23,13 @@
 #ifndef _CL_ENVIRONMENT_H_
 #define _CL_ENVIRONMENT_H_
 
+#if defined(DARWIN) || defined(__APPLE__)
+#include <sys/types.h>
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.h>
+#endif
+
 #define CL_MAX_DEVICES                 (30)     // @TODO determine a better way to limit the max number of devices.
 #define CL_MAX_PATHSIZE                (256)    /**< Similar to Window's MAX_PATH */
 #define CL_MAX_STRING                  (1024)   /**< Maximum length of a string from the command line or elsewhere */

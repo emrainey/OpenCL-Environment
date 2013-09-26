@@ -1,2 +1,6 @@
 out/
-
+.cproject
+.project
+.settings
+nbproject/
+.gitignore

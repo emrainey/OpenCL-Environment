@@ -17,17 +17,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#ifdef DARWIN
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
+#include <clenvironment.h>
 #ifndef CL_BUILD_RUNTIME
 #include <kernel_nbody.h>
 #endif
 #include <clmath.h>
-#include <clenvironment.h>
 
 void notify(cl_program program, void *arg)
 {
@@ -119,11 +113,11 @@ int main(int argc, char *argv[])
         for (j = 0; j < numIterations; j++)
         {
             nbodies(pEnv, m, a, v, p, t, numBodies);
-#if defined(DARWIN)
+#if defined(OPENCL_1_1)
             printf("[%6u] p={%lf,%lf,%lf} v={%lf,%lf,%lf} a={%lf,%lf,%lf}\n", i,
-                    p[i][0], p[i][1], p[i][2],
-                    v[i][0], v[i][1], v[i][2],
-                    a[i][0], a[i][1], a[i][2]);
+                    p[i].x, p[i].y, p[i].z,
+                    v[i].x, v[i].y, v[i].z,
+                    a[i].x, a[i].y, a[i].z);
 #else
             printf("[%6u] p={%lf,%lf,%lf} v={%lf,%lf,%lf} a={%lf,%lf,%lf}\n", i,
                     p[i].s[0], p[i].s[1], p[i].s[2],

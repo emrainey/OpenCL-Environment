@@ -16,6 +16,9 @@ also allows you to completely specify a generic OpenCL Kernel call via predefine
 structures, thus freeing you to not worry about how to queue/call/pass args/etc.
 
 Required:
+Download Concerto from github.com/emrainey/Concerto. Export an environment
+variable to it's location, CONCERTO_ROOT.
+
 In Linux/Windows builds, you must define the path to the OpenCL developer tools. 
 I only have NVidia cards so the paths will be biased in that direction. First you'll have to 
 install the tools then in your .bashrc or in some setup batch file define your OPENCL_ROOT

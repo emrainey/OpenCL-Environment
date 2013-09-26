@@ -17,11 +17,7 @@ TARGET      := clDeviceQuery
 TARGETTYPE  := exe
 CSOURCES    := devicequery.c
 STATIC_LIBS += clquery
-ifeq ($(TARGET_OS),DARWIN)
-LDFLAGS+=-framework OpenCL
-else
-SYS_SHARED_LIBS := $(OCL_LIB)
-endif
+USE_OPENCL := true
 TESTCASE=$(TARGET)
 -include $(FINALE)
 
