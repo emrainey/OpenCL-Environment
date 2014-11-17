@@ -16,5 +16,6 @@
 TARGET		:= clmath
 TARGETTYPE	:= library
 CSOURCES	:= clmath.c
+USE_OPENCL      := true
 -include $(FINALE)
 
