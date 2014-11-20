@@ -17,7 +17,7 @@ TARGET      := clDeviceQuery
 TARGETTYPE  := exe
 CSOURCES    := devicequery.c
 STATIC_LIBS += clquery
-USE_OPENCL := true
-TESTCASE=$(TARGET)
+USE_OPENCL  := true
+TESTCASE	:= $(TARGET)
 -include $(FINALE)
 

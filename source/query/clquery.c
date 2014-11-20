@@ -330,10 +330,10 @@ void clPrintKernelWorkInfo(cl_kernel kernel, cl_device_id device, cl_kernel_info
                     }
                     else
                     {
-                        size_t param[3];
-                        err = clGetKernelWorkGroupInfo(kernel, device, info, sizeof(param), &param, &size);
+                        size_t param[3] = {-1, -1, -1};
+                        err = clGetKernelWorkGroupInfo(kernel, device, info, sizeof(param), param, &size);
                         if (size == sizeof(param))
-                            printf("%41s:[%02lu] %llu %llu %llu\n", clKernelWorkInfoType[i].name, size, param[0], param[1], param[2]);
+                            printf("%41s:[%02lu] %zu %zu %zu\n", clKernelWorkInfoType[i].name, size, param[0], param[1], param[2]);
                         else
                             printf("%41s:[00] NO RETURNED VALUE! (err = %d)\n",clKernelWorkInfoType[i].name, err);
                     }

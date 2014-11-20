@@ -26,7 +26,7 @@
 
 void notify(cl_program program, void *arg)
 {
-    //printf("Compiled Program %p Arg %p\n",program, arg);
+    printf("Compiled Program %p Arg %p\n",program, arg);
 }
 
 cl_int cl_convert_rgbf_to_yuvf_bt601(cl_environment_t *pEnv,
@@ -58,7 +58,6 @@ cl_int cl_convert_rgbf_to_yuvf_bt601(cl_environment_t *pEnv,
         CL_SUCCESS,0,0,0
     };
     err = clCallKernel(pEnv, &call,1);
-    printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
     return err;
 }
 
@@ -93,7 +92,6 @@ cl_int cl_convert_rgbf_to_yuvf(cl_environment_t *pEnv,
         CL_SUCCESS,0,0,0
     };
     err = clCallKernel(pEnv, &call, 1);
-    printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
     return err;
 }
 
@@ -118,7 +116,6 @@ cl_int convert_uyvy_to_2bgr(cl_environment_t *pEnv, cl_uchar *pUYVY, cl_uchar *p
         CL_SUCCESS, 0,0,0
     };
     err = clCallKernel(pEnv, &call, 1);
-    printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
     return err;
 }
 
@@ -143,7 +140,6 @@ cl_int convert_yuv420_to_luma(cl_environment_t *pEnv, cl_uchar *pYUV420, cl_ucha
         CL_SUCCESS, 0,0,0
     };
     err = clCallKernel(pEnv, &call, 1);
-    printf("%s took %llu ns\n", call.kernel_name, (call.stop - call.start));
     return err;
 }
 

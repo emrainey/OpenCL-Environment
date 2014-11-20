@@ -45,6 +45,8 @@
 #define CL_ARGS                 NULL
 #endif
 
+#define MAX_PARAMS				(10)
+
 #ifndef dimof
 /** Dimension of */
 #define dimof(x)                (sizeof(x)/sizeof(x[0]))
@@ -119,8 +121,18 @@ typedef struct _cl_kernel_param_t {
     void *data;                     /**< pointer to data type, for 0D, 1D, use normal pointers, for 2+ use cl_nd_buffer_t */
     cl_mem mem;                     /**< OpenCL memory handle. */
     cl_mem_flags flags;             /**< read/write attributes */
-    cl_event event;                 /**< the event handle. This allows the system to time the calls */
 } cl_kernel_param_t;
+
+typedef struct _cl_event_perf_t {
+	cl_ulong queued;
+	cl_ulong submitted;
+	cl_ulong start;
+	cl_ulong stop;
+
+	cl_ulong overhead; 				/**< Enqueuing to submital to device */
+	cl_ulong stall;					/**< Submital to Start */
+	cl_ulong execute;				/**< Start to Stop */
+} cl_event_perf_t;
 
 typedef struct _cl_kernel_call_t {
     char *kernel_name;              /**< The name of OpenCL Kernel function you want to call. */
@@ -132,8 +144,13 @@ typedef struct _cl_kernel_call_t {
     size_t  local_work_size[3];     /**< The local size of each sub-groups dimension limit */
     cl_int err;                     /**< The return code from the kernel call */
     cl_event event;                 /**< The handle to the event which will be used to time the call */
-    cl_ulong start;                 /**< The start time of the call */
-    cl_ulong stop;                  /**< The stop time of the call, subtract start from this too get your diff */
+    cl_event_perf_t	perf;			/**< The performance structure of this call */
+    cl_event dependencies[MAX_PARAMS];/**< The array of the input dependencies */
+    cl_uint  dep_events;			/**< The count of the number of dependent events (previous functions) */
+    cl_event inputs[MAX_PARAMS];	/**< The array of input events */
+    cl_uint	 input_events;			/**< The count of the number of input events */
+    cl_event outputs[MAX_PARAMS];	/**< The array of output events */
+    cl_uint  output_events;			/**< The count of the number of output events */
 } cl_kernel_call_t;
 
 typedef struct _cl_environemnt_t
@@ -151,6 +168,7 @@ typedef struct _cl_environemnt_t
     cl_kernel        *kernels;      /**< The array of kernel handles */
     cl_uint           numKernels;   /**< The number of kernel handles in kernels */
     cl_int           *retCodes;     /**< The array of return codes */
+    cl_int			  supports_images; /**< Determines if the implementation supports images */
 } cl_environment_t;
 
 /**< Build Callback Notifier Typedef */
