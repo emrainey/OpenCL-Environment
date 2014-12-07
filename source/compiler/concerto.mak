@@ -17,6 +17,6 @@ TARGET		:= clcompiler
 TARGETTYPE	:= exe
 CSOURCES    := clcompiler.c
 STATIC_LIBS := clenvironment clquery
-USE_OPENCL := true
+USE_OPENCL  := true
 -include $(FINALE)
 

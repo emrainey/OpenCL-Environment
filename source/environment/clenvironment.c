@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2009-2012 Texas Instruments, Inc.
+ *  Copyright (C) 2009-2012 Erik Rainey
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
 void cl_free(void *ptr)
 {
 #ifdef CL_DEBUG
-    //printf("Freeing %p\n",ptr);
+    printf("Freeing %p\n",ptr);
 #endif
     free(ptr);
 }
@@ -43,7 +43,7 @@ void *cl_malloc(size_t numBytes)
         printf("WARNING: ALLOCATING A BUFFER OF ZERO BYTES!!\n");
     ptr = malloc(numBytes);
 #ifdef CL_DEBUG
-    //printf("Malloc'd %p for %lu bytes\n",ptr,numBytes);
+    printf("Malloc'd %p for %lu bytes\n",ptr,numBytes);
 #endif
     if (ptr)
         memset(ptr, 0, numBytes);
@@ -933,16 +933,19 @@ cl_environment_t *clCreateEnvironment(char *filename,
                             break;
                         case CL_BUILD_PROGRAM_FAILURE:
                         {
-                            size_t logSize = 10*1024;
+                            size_t logSize = CL_LOG_SIZE;
                             char *log = (char *)cl_malloc(logSize);
                             printf("Build failure!\n");
-
-                            err = clGetProgramBuildInfo(pEnv->program, pEnv->devices[0], CL_PROGRAM_BUILD_LOG, logSize, log, &logSize);
-                            if (err == CL_SUCCESS)
-                                printf("Log["FMT_SIZE_T"]: %s\n", logSize,log);
-                            else
-                                printf("Could not get build log! Error=%d\n",err);
-                            cl_free(log);
+                            if (log) {
+                                err = clGetProgramBuildInfo(pEnv->program, pEnv->devices[0], CL_PROGRAM_BUILD_LOG, logSize, log, &logSize);
+                                if (err == CL_SUCCESS)
+                                    printf("Log["FMT_SIZE_T"]: %s\n", logSize,log);
+                                else
+                                    printf("Could not get build log! Error=%d\n",err);
+                                cl_free(log);
+                            } else {
+                                fprintf(stderr, "Failed to allocate enough for the log!\n");
+                            }
                             break;
                         }
                         default:
@@ -1059,6 +1062,21 @@ cl_kernel clGetKernelByName(cl_environment_t *pEnv, char *func_name)
     return NULL;
 }
 
+void clProfileEvent(cl_event event, cl_event_perf_t *perf) {
+    cl_int err = 0;
+    err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &perf->queued, NULL);
+    cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
+    err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &perf->submitted, NULL);
+    cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
+    err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &perf->start, NULL);
+    cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
+    err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END,   sizeof(cl_ulong), &perf->stop, NULL);
+    cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
+    perf->overhead = perf->submitted - perf->queued;
+    perf->stall = perf->start - perf->submitted;
+    perf->execute = perf->stop - perf->start;
+}
+
 cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint numCalls)
 {
     cl_int err = CL_SUCCESS;
@@ -1124,6 +1142,7 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
             }
         }
 
+        pCall[k].input_events = 0;
         // enqueue the writes
         for (i = 0; i < pEnv->numDevices; i++)
         {
@@ -1136,20 +1155,32 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
                     printf("Copying mem %p from ptr %p for %lu bytes\n", pCall[k].params[j].mem, pCall[k].params[j].data, pCall[k].params[j].numBytes);
     #endif
                     if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
-                        err = clEnqueueWriteBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pCall[k].params[j].numBytes, pCall[k].params[j].data, 0, NULL, &pCall[k].params[j].event);
+                    {
+                        err = clEnqueueWriteBuffer(pEnv->queues[i],
+                                                      pCall[k].params[j].mem,
+                                                      CL_TRUE,
+                                                      0,
+                                                      pCall[k].params[j].numBytes,
+                                                      pCall[k].params[j].data,
+                                                      0, NULL,
+                                                      &pCall[k].inputs[pCall[k].input_events++]);
+                    }
                     else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D || pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
                     {
                         cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;
-                        err = clEnqueueWriteBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pBuf->size, pBuf->data[0], 0, NULL, &pCall[k].params[j].event);
+                        err = clEnqueueWriteBuffer(pEnv->queues[i],
+                                                      pCall[k].params[j].mem,
+                                                      CL_TRUE,
+                                                      0,
+                                                      pBuf->size,
+                                                      pBuf->data[0],
+                                                      0, NULL,
+                                                      &pCall[k].inputs[pCall[k].input_events++]);
                     }
                     cl_assert((err == CL_SUCCESS),printf("ERROR: Write Enqueue Error = %d\n",err));
                 }
             }
         }
-
-        // finish
-        for (i = 0; i < pEnv->numDevices; i++)
-            clFinish(pEnv->queues[i]);
 
         // enqueue the kernel
         for (i = 0; i < pEnv->numDevices; i++) {
@@ -1168,25 +1199,15 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
             err = clEnqueueNDRangeKernel(pEnv->queues[i],
                                         kernel,
                                         pCall[k].numDim,
-                                        NULL, //pCall[k].global_work_offset,
+                                        pCall[k].global_work_offset,
                                         pCall[k].global_work_size,
                                         pCall[k].local_work_size,
-                                        0, NULL, &pCall[k].event);
+                                        pCall[k].input_events, pCall[k].inputs,
+                                        &pCall[k].event);
             cl_assert((err == CL_SUCCESS),printf("ERROR: Work Queue Error = %d\n",err));
         }
 
-        // finish
-        for (i = 0; i<pEnv->numDevices; i++)
-            clFinish(pEnv->queues[i]);
-
-        err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &pCall[k].start, NULL);
-        cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
-        err = clGetEventProfilingInfo(pCall[k].event, CL_PROFILING_COMMAND_END,   sizeof(cl_ulong), &pCall[k].stop, NULL);
-        cl_assert(err == CL_SUCCESS,printf("Error=%d\n",err));
-    #ifdef CL_DEBUG
-        printf("Executed kernel %s!\n",pCall[k].kernel_name);
-    #endif
-
+        pCall[k].output_events = 0;
         // read the result memory
         for (i = 0; i<pEnv->numDevices; i++)
         {
@@ -1197,19 +1218,41 @@ cl_int clCallKernel(cl_environment_t *pEnv, cl_kernel_call_t *pCall, cl_uint num
                 {
                     err = CL_SUCCESS;
                     if (pCall[k].params[j].type == CL_KPARAM_BUFFER_1D)
-                        err = clEnqueueReadBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pCall[k].params[j].numBytes, pCall[k].params[j].data, 0, NULL, NULL);
+                    {
+                        err = clEnqueueReadBuffer(pEnv->queues[i],
+                                                     pCall[k].params[j].mem,
+                                                     CL_TRUE,
+                                                     0,
+                                                     pCall[k].params[j].numBytes,
+                                                     pCall[k].params[j].data,
+                                                     1, &pCall[k].event,
+                                                     &pCall[k].outputs[pCall[k].output_events++]);
+                    }
                     else if (pCall[k].params[j].type == CL_KPARAM_BUFFER_2D || pCall[k].params[j].type == CL_KPARAM_BUFFER_3D)
                     {
                         cl_nd_buffer_t *pBuf = (cl_nd_buffer_t *)pCall[k].params[j].data;
-                        err = clEnqueueReadBuffer(pEnv->queues[i], pCall[k].params[j].mem, CL_TRUE, 0, pBuf->size, pBuf->data[0], 0, NULL, &pCall[k].params[j].event);
+                        err = clEnqueueReadBuffer(pEnv->queues[i],
+                                                     pCall[k].params[j].mem,
+                                                     CL_TRUE,
+                                                     0,
+                                                     pBuf->size, pBuf->data[0],
+                                                     1, &pCall[k].event,
+                                                     &pCall[k].outputs[pCall[k].output_events++]);
                     }
                     cl_assert((err == CL_SUCCESS),printf("ERROR: Read Enqueue Error=%d\n",err));
                 }
             }
         }
-        // finish
-        for (i = 0; i<pEnv->numDevices; i++)
-            clFinish(pEnv->queues[i]);
+
+        // This causes a wait until all data is read out of compute core
+        printf("Waiting for %lu event(s)\n", pCall[k].output_events);
+        clWaitForEvents(pCall[k].output_events, pCall[k].outputs);
+
+        clProfileEvent(pCall[k].event, &pCall[k].perf);
+
+    #ifdef CL_DEBUG
+        printf("Executed kernel %s in %lu ticks! (ovr:%lu stl:%lu)\n",pCall[k].kernel_name, pCall[k].perf.execute, pCall[k].perf.overhead, pCall[k].perf.stall);
+    #endif
 
         for (i = 0; i < pEnv->numDevices; i++)
             clPrintAllKernelWorkInfo(kernel, pEnv->devices[i]);
@@ -1238,4 +1281,3 @@ cl_uint clGetTypeFromString(char *typestring)
     else
         return CL_DEVICE_TYPE_DEFAULT;
 }
-
