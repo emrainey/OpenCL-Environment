@@ -20,7 +20,8 @@
 #include <clenvironment.h>
 #include <clquery.h>
 
-#define CL_ITEM_MAX     (10)
+#define CL_PLAT_MAX     (2)
+#define CL_DEV_MAX      (4)
 
 void clQueryNotify(const char *errinfo,
                    const void *private_info,
@@ -33,24 +34,23 @@ void clQueryNotify(const char *errinfo,
 int main(int argc, char *argv[])
 {
     cl_uint        p,d;
-    cl_platform_id platform_id[CL_ITEM_MAX];
-    cl_device_id   device_id[CL_ITEM_MAX];
+    cl_platform_id platform_id[CL_PLAT_MAX];
+    cl_device_id   device_id[CL_PLAT_MAX][CL_DEV_MAX];
     cl_int         err = 0;
     cl_uint        numPlatforms = 0;
-    cl_uint        numDevices = 0;
+    cl_uint        numDevices[CL_PLAT_MAX] = {0, 0};
 
-    err = clGetPlatformIDs(CL_ITEM_MAX, platform_id, &numPlatforms);
+    err = clGetPlatformIDs(CL_PLAT_MAX, &platform_id[0], &numPlatforms);
     if (err != CL_SUCCESS)
     {
-        printf("Error in OpenCL Platform ID API\n");
+        printf("Error in OpenCL Platform ID API (%d)\n", err);
     }
     else
     {
         for (p = 0; p < numPlatforms; p++)
         {
-            cl_uint i = 0;
             clPrintAllPlatformInfo(platform_id[p]);
-            err = clGetDeviceIDs(platform_id[p], CL_DEVICE_TYPE_ALL, CL_ITEM_MAX, device_id, &numDevices);
+            err = clGetDeviceIDs(platform_id[p], CL_DEVICE_TYPE_ALL, CL_DEV_MAX, device_id[p], &numDevices[p]);
             if (err != CL_SUCCESS)
             {
                 printf("Failed to acquire ID of OpenCL Devices\n");
@@ -58,14 +58,10 @@ int main(int argc, char *argv[])
             }
             else
             {
-                cl_context context = 0;
-                cl_context_properties props[] = {(cl_context_properties)CL_CONTEXT_PLATFORM,
-                                                 (cl_context_properties)platform_id[p],
-                                                 (cl_context_properties)0};
-                printf("There are %u devices present.\n",numDevices);
-                for (d = 0; d < numDevices; d++)
+                printf("There are %u devices present.\n",numDevices[p]);
+                for (d = 0; d < numDevices[p]; d++)
                 {
-                    clPrintAllDeviceInfo(device_id[d]);
+                    clPrintAllDeviceInfo(device_id[p][d]);
                 }
             }
         }
