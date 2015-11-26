@@ -38,7 +38,7 @@ include $(FINALE)
 
 _MODULE := clspacetime
 include $(PRELUDE)
-SKIPBUILD:=1
+SKIPBUILD := 0
 TARGET := clspacetime
 TARGETTYPE := exe
 CSOURCES := spacetime.c

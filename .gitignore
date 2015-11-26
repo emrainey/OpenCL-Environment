@@ -1,6 +1,16 @@
+# Build Outputs
 out/
+
+# OpenCL Intermediates
+kernel_*.h
+
+# Eclipse Files
 .cproject
 .project
 .settings
+
+# NetBeans
 nbproject/
+
+# Itself?
 .gitignore

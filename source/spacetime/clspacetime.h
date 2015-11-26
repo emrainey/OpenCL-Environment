@@ -1,29 +1,29 @@
 
-#ifndef _CL_SPACETIME_H_
-#define _CL_SPACETIME_H_
+#ifndef CL_SPACETIME_H
+#define CL_SPACETIME_H
 
 #define GRID_DIM  (32)
 #define GRID_SIZE (GRID_DIM*GRID_DIM*GRID_DIM)
 
-#if defined(ARCH_64)
+#if defined(ARCH_64) || defined(__X86_64__)
 //#pragma OPENCL EXTENSION cl_khr_fp64: enable
 #endif
 
 #if defined(GPGPU_NO_DOUBLE_SUPPORT)
 #if defined(HOST)
-#define precision   cl_float
-#define precision4  cl_float4
+#define precision  cl_float
+#define precision4 cl_float4
 #else
-#define precision   float
-#define precision4  float4
+#define precision  float
+#define precision4 float4
 #endif
 #else
 #if defined(HOST)
-#define precision   cl_double
-#define precision   cl_double4
+#define precision  cl_double
+#define precision4 cl_double4
 #else
-#define precision   double
-#define precision4  double4
+#define precision  double
+#define precision4 double4
 #endif
 #endif
 

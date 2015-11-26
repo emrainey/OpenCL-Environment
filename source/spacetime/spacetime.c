@@ -14,7 +14,7 @@
 
 /* OPENGL INCLUDES */
 #ifdef DARWIN
-#include <glut.h>
+#include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
 #endif
@@ -32,8 +32,8 @@
 #define MASS_MOON   (7.32f * pow(10.0f,22.0f))
 #define MASS_EARTH  (5.9742f * pow(10.0f,24.0f))
 
-#if defined(DARWIN) // OpenCL 1.1?
-#define SUBREF(var,index)   var[index]
+#if defined(DARWIN) // OpenCL 1.2
+#define SUBREF(var,index)   var.s[index]
 #else // OpenCL 1.2?
 #define SUBREF(var,index)   var.s[index]
 #endif
@@ -303,6 +303,15 @@ void clftoglf(GLfloat *glf, cl_float4 clf)
     glf[3] = SUBREF(clf,3);
 }
 
+void glut_keyfunc(unsigned char key, int x, int y) {
+    fprintf(stdout, "Key=%hhu @ %d,%d\n", key, x, y);
+    switch (key) {
+    case 'q':
+        exit(0);
+        break;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     spacetime = (spacetime_t *)calloc(1, sizeof(spacetime_t));
@@ -344,13 +353,11 @@ int main(int argc, char *argv[])
 #else
         spacetime->m_pEnv = clCreateEnvironmentFromBins(&gKernelBins, ocl_notify, CL_ARGS);
 #endif
-        if (!spacetime->m_pEnv)
-        {
+        if (!spacetime->m_pEnv) {
             printf("OpenCL Environment failure!\n");
             free(spacetime);
             return -1;
         }
-
 
         sprintf(title,"Space-Time Warping Due to Mass; Simulation by Erik Rainey");
         glutInitDisplayMode(GLUT_RGBA|GLUT_DEPTH|GLUT_DOUBLE|GLUT_MULTISAMPLE);
@@ -392,6 +399,7 @@ int main(int argc, char *argv[])
         glutIdleFunc(NULL);
         glutTimerFunc(1000/spacetime->m_fps,glut_timer,0); // give initial count as zero
         glutPassiveMotionFunc(glut_passive);
+        glutKeyboardFunc(glut_keyfunc);
 
         // install the main loop, I don't think we return from this until killed
         glutMainLoop();
