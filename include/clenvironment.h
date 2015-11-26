@@ -20,8 +20,8 @@
  * \author Erik Rainey <erik.rainey@gmail.com>
  */
 
-#ifndef _CL_ENVIRONMENT_H_
-#define _CL_ENVIRONMENT_H_
+#ifndef CL_ENVIRONMENT_H
+#define CL_ENVIRONMENT_H
 
 #if defined(DARWIN) || defined(__APPLE__)
 #include <sys/types.h>

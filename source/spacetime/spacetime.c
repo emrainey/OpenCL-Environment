@@ -14,7 +14,7 @@
 
 /* OPENGL INCLUDES */
 #ifdef DARWIN
-#include <glut.h>
+#include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
 #endif
@@ -32,8 +32,8 @@
 #define MASS_MOON   (7.32f * pow(10.0f,22.0f))
 #define MASS_EARTH  (5.9742f * pow(10.0f,24.0f))
 
-#if defined(DARWIN) // OpenCL 1.1?
-#define SUBREF(var,index)   var[index]
+#if defined(DARWIN) // OpenCL 1.2
+#define SUBREF(var,index)   var.s[index]
 #else // OpenCL 1.2?
 #define SUBREF(var,index)   var.s[index]
 #endif
