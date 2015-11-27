@@ -6,7 +6,7 @@
 #define GRID_SIZE (GRID_DIM*GRID_DIM*GRID_DIM)
 
 #if defined(ARCH_64) || defined(__X86_64__)
-//#pragma OPENCL EXTENSION cl_khr_fp64: enable
+#pragma OPENCL EXTENSION cl_khr_fp64: enable
 #endif
 
 #if defined(GPGPU_NO_DOUBLE_SUPPORT)

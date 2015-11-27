@@ -12,22 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ifeq ($(DEPRECATED),true)
--include $(PRELUDE)
-SKIPBUILD:=1
-TARGET     := spacetime
-TARGETTYPE := exe
-CSOURCES   := camera.c display.c init.c keyboard.c main.c movement.c physics.c utils.c vector.c
-STATIC_LIBS := clenvironment
-USE_OPENCL := true
-HEADERS := kernel_spacetime
-USE_GLUT := true
--include $(FINALE)
-endif
-
 _MODULE := kernel_spacetime
 include $(PRELUDE)
-SKIPBUILD:=1
 TARGET  := kernel_spacetime
 TARGETTYPE := opencl_kernel
 CLSOURCES := kernel_spacetime.cl
@@ -38,7 +24,6 @@ include $(FINALE)
 
 _MODULE := clspacetime
 include $(PRELUDE)
-SKIPBUILD := 0
 TARGET := clspacetime
 TARGETTYPE := exe
 CSOURCES := spacetime.c

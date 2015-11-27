@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010 Erik Rainey
+ * Copyright (C) 2015 Erik Rainey
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,50 +16,24 @@
 
 #include <clspacetime.h>
 
-__kernel void kernel_budge(precision4 point1,
-                           __global precision4 *point2,
-                           __global precision  *pull,
-                           __global precision4 *budge)
-{
-    int i = get_global_id(0); // data fields are 1 dimensional
-    precision4 direction;
-    direction.x = point1.x - point2[i].x;
-    direction.y = point1.y - point2[i].y;
-    direction.z = point1.z - point2[i].z;
-    direction = normalize(direction);
-    budge[i].x = direction.x*pull[i];
-    budge[i].y = direction.y*pull[i];
-    budge[i].z = direction.z*pull[i];
-}
+// pointless prototypes
+precision gravity(precision M1, precision M2, precision d);
 
-__kernel void kernel_gravity(precision mass1,
-                             __global precision *mass2,
-                             __global precision *distance,
-                             __global precision *pull)
-{
-    int i = get_global_id(0); // data fields are 1 dimensional
-
+precision gravity(precision M1, precision M2, precision d) {
     // G = gravitational constant = 6.67300 × 10^-11 m^3 kg^-1 s^-2
-    precision G = 0.00000000006673;
-
-    // force of gravity = (M1*M2*G)/d^2
-    pull[i] = (mass1 * mass2[i] * G)/(distance[i] * distance[i]);
+    const precision G = 6.673E-11;
+    return (G * M1 * M2) / (d * d);
 }
 
-__kernel void kernel_distance(__global precision *d,
-                              precision4 point1,
-                              __global precision4 *point2)
-{
+__kernel void kernel_distort(precision4 point1,
+                             precision mass1,
+                             __global precision4 *point2,
+                             __global precision  *mass2,
+                             __global precision4 *budge) {
     int i = get_global_id(0);
-
-    precision dx = point2[i].x - point1.x;
-    precision dy = point2[i].y - point1.y;
-    precision dz = point2[i].z - point1.z;
-
-    dx*=dx;
-    dy*=dy;
-    dz*=dz;
-
-    d[i] = sqrt(dx+dy+dz);
+    precision d = distance(point1, point2[i]);
+    precision g = gravity(mass1, mass2[i], d);
+    precision4 delta = point1 - point2[i];
+    precision4 u = normalize(delta);
+    budge[i] = u * fmin(d,g);
 }
-

@@ -28,9 +28,9 @@
 #define B Z
 #define A W
 
-#define MASS_IOTA   (1.00f * pow(10.0f,-11.0f))
-#define MASS_MOON   (7.32f * pow(10.0f,22.0f))
-#define MASS_EARTH  (5.9742f * pow(10.0f,24.0f))
+#define MASS_IOTA       (1.0E-11)
+#define MASS_MOON       (7.32E22)
+//#define MASS_EARTH      (5.9742E24)
 
 #if defined(DARWIN) // OpenCL 1.2
 #define SUBREF(var,index)   var.s[index]
@@ -40,6 +40,18 @@
 
 #define HOST
 #include <clspacetime.h>
+
+// pointless headers
+void glut_timer(int value);
+void glut_display(void);
+void glut_keyfunc(unsigned char key, int x, int y);
+void glut_passive(int x, int y);
+void glut_reshape(int x, int y);
+cl_int kernel_spacetime(cl_environment_t *pEnv,
+        cl_spacetime_grid_t *grid,
+        cl_body_t *body);
+void ocl_notify(cl_program, void *);
+void clftoglf(GLfloat *glf, cl_float4 clf);
 
 typedef struct _camera_t {
     cl_double4              m_from;         /**< position of camera */
@@ -59,7 +71,7 @@ typedef struct _camera_t {
 } camera_t;
 
 typedef struct _light_t {
-    GLint                   m_light;
+    GLenum                  m_light;
     cl_float4               m_ambient;
     cl_float4               m_diffuse;
     cl_float4               m_specular;
@@ -81,8 +93,7 @@ typedef struct _spacetime_t {
 // file local variable
 static spacetime_t *spacetime;
 
-void glut_display(void)
-{
+void glut_display(void) {
     GLenum err = 0;
     printf("Draw Called!\n");
     // clear the fb
@@ -114,7 +125,7 @@ void glut_display(void)
     for (int z = 0; z < GRID_DIM; z++) {
         for (int y = 0; y < GRID_DIM; y++) {
             for (int x = 0; x < GRID_DIM; x++) {
-                uint32_t i = (z*GRID_DIM*GRID_DIM) + (y*GRID_DIM) + (x);
+                int i = (z*GRID_DIM*GRID_DIM) + (y*GRID_DIM) + (x);
                 cl_double4 position;
                 SUBREF(position,X) = SUBREF(spacetime->m_grid.m_position[i],X) + SUBREF(spacetime->m_grid.m_budge[i],X);
                 SUBREF(position,Y) = SUBREF(spacetime->m_grid.m_position[i],Y) + SUBREF(spacetime->m_grid.m_budge[i],Y);
@@ -128,7 +139,7 @@ void glut_display(void)
 
     // now turn on the lights...
     glEnable(GL_LIGHTING);
-    for (int i = 0; i < dimof(spacetime->m_lights); i++)
+    for (size_t i = 0; i < dimof(spacetime->m_lights); i++)
         glEnable(spacetime->m_lights[i].m_light);
 
     //draw the Mass
@@ -138,7 +149,8 @@ void glut_display(void)
     glutSolidSphere(spacetime->m_body.m_radius,20,20);
     glPopMatrix();
 
-    for (int i = 0; i < dimof(spacetime->m_lights); i++)
+    // turn off the lights
+    for (size_t i = 0; i < dimof(spacetime->m_lights); i++)
         glDisable(spacetime->m_lights[i].m_light);
     glDisable(GL_LIGHTING);
 
@@ -148,8 +160,7 @@ void glut_display(void)
     glutSwapBuffers(); // the magic actually happens here....
 }
 
-void glut_reshape(int width, int height)
-{
+void glut_reshape(int width, int height) {
     printf("reshape(%d,%d) called\n",width,height);
     spacetime->m_width = width;
     spacetime->m_height = height;
@@ -166,8 +177,7 @@ void glut_reshape(int width, int height)
               SUBREF(spacetime->m_camera.m_up,X),  SUBREF(spacetime->m_camera.m_up,Y),  SUBREF(spacetime->m_camera.m_up,Z));
 }
 
-void glut_passive(int x, int y)
-{
+void glut_passive(int x, int y) {
     // map this x,y unto the x,z axis that we're looking at.
     // since we're looking at origin and we're assuming along the y axis,
     // this map become rather easy;
@@ -181,62 +191,33 @@ void glut_passive(int x, int y)
     SUBREF(spacetime->m_body.m_velocity,X) = 0;
 }
 
-void ocl_notify(cl_program program, void *arg)
-{
+void ocl_notify(cl_program program, void *arg) {
     printf("Program %p Arg %p\n",program, arg);
 }
 
 cl_int kernel_spacetime(cl_environment_t *pEnv,
                        cl_spacetime_grid_t *grid,
-                       cl_body_t *body)
-{
+                       cl_body_t *body) {
     cl_int err;
     cl_double distance[GRID_SIZE];
 
-    cl_kernel_param_t params1[] = {
-        {CL_KPARAM_BUFFER_1D, sizeof(precision)*GRID_SIZE,  distance, NULL, CL_MEM_WRITE_ONLY},
-        {CL_KPARAM_BUFFER_0D, sizeof(precision4),           &body->m_position, NULL, CL_MEM_READ_ONLY},
+    cl_kernel_param_t params[] = {
+        {CL_KPARAM_BUFFER_0D, sizeof(precision4), &body->m_position, NULL, CL_MEM_READ_ONLY},
+        {CL_KPARAM_BUFFER_0D, sizeof(precision),  &body->m_mass, NULL, CL_MEM_READ_ONLY},
         {CL_KPARAM_BUFFER_1D, sizeof(precision4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_ONLY},
-    };
-    cl_kernel_param_t params2[] = {
-        {CL_KPARAM_BUFFER_0D, sizeof(precision),            &body->m_mass, NULL, CL_MEM_READ_ONLY},
         {CL_KPARAM_BUFFER_1D, sizeof(precision)*GRID_SIZE,  grid->m_mass, NULL, CL_MEM_READ_ONLY},
-        {CL_KPARAM_BUFFER_1D, sizeof(precision)*GRID_SIZE,  distance, NULL, CL_MEM_READ_ONLY},
-        {CL_KPARAM_BUFFER_1D, sizeof(precision)*GRID_SIZE,  grid->m_pull, NULL, CL_MEM_WRITE_ONLY},
-    };
-    cl_kernel_param_t params3[] = {
-        {CL_KPARAM_BUFFER_0D, sizeof(precision4),           &body->m_position, NULL, CL_MEM_READ_ONLY},
-        {CL_KPARAM_BUFFER_1D, sizeof(precision4)*GRID_SIZE, grid->m_position, NULL, CL_MEM_READ_ONLY},
-        {CL_KPARAM_BUFFER_1D, sizeof(precision)*GRID_SIZE,  grid->m_pull, NULL, CL_MEM_READ_ONLY},
-        {CL_KPARAM_BUFFER_1D, sizeof(precision4)*GRID_SIZE, grid->m_budge, NULL, CL_MEM_WRITE_ONLY},
+        {CL_KPARAM_BUFFER_1D, sizeof(precision4)*GRID_SIZE,  grid->m_budge, NULL, CL_MEM_WRITE_ONLY},
     };
     cl_kernel_call_t calls[] = {
         {
-            "kernel_distance",
-            params1, dimof(params1),
+            "kernel_distort",
+            params, dimof(params),
             1, // num dimensions
-            {0, 0, 0}, //offsets
+            {0, 0, 0}, // offsets
             {GRID_SIZE, 0, 0}, // dimensionality
             {1, 1, 1}, // local work size
-            CL_SUCCESS
-        },
-        {
-            "kernel_gravity",
-            params2, dimof(params2),
-            1,
-            {0, 0, 0},
-            {GRID_SIZE, 0, 0},
-            {1, 1, 1},
-            CL_SUCCESS
-        },
-        {
-            "kernel_budge",
-            params3, dimof(params3),
-            1,
-            {0, 0, 0},
-            {GRID_SIZE, 0, 0},
-            {1, 1, 1},
-            CL_SUCCESS
+            CL_SUCCESS,
+            //0, {}, {}
         }
     };
 
@@ -244,19 +225,19 @@ cl_int kernel_spacetime(cl_environment_t *pEnv,
     printf("Distance from grid[0] to body is %lf, pull is %lf\n", distance[0], spacetime->m_grid.m_pull[0]);
     if (err != CL_SUCCESS)
         return err;
-    else
-    {
-        for (int e = 0; e < dimof(calls); e++)
+    else {
+        for (size_t e = 0; e < dimof(calls); e++)
             if (calls[e].err != CL_SUCCESS)
                 return calls[e].err;
     }
+    return err;
 }
 
 void glut_timer(int value)
 {
     GLenum err = glGetError();
     const GLubyte *pErr = gluErrorString(err);
-    float distance[GRID_SIZE];
+    //float distance[GRID_SIZE];
 
     printf("timer fired %d! (err=%d, %s)\n", value, err, pErr);
     fflush(stdout);
@@ -273,7 +254,7 @@ void glut_timer(int value)
     kernel_spacetime(spacetime->m_pEnv, &spacetime->m_grid, &spacetime->m_body);
 
     // move the camera to the new position
-    //take the "at" location and add the sphereical translated coordinates
+    //take the "at" location and add the spherical translated coordinates
     SUBREF(spacetime->m_camera.m_from,X) = SUBREF(spacetime->m_camera.m_at,X) +
         spacetime->m_camera.m_radius*cos(M_PI/2 - spacetime->m_camera.m_phi)*cos(spacetime->m_camera.m_theta);
     SUBREF(spacetime->m_camera.m_from,Y) = SUBREF(spacetime->m_camera.m_at,Y) +
@@ -292,7 +273,8 @@ void glut_timer(int value)
     glutPostRedisplay();
 
     // reschedule this timer
-    glutTimerFunc(1000/spacetime->m_fps,glut_timer, value+1);
+    unsigned int ms = 1000 / ((unsigned int)spacetime->m_fps);
+    glutTimerFunc(ms, glut_timer, value+1);
 }
 
 void clftoglf(GLfloat *glf, cl_float4 clf)
@@ -308,7 +290,7 @@ void glut_keyfunc(unsigned char key, int x, int y) {
     switch (key) {
     case 'q':
         exit(0);
-        break;
+        //break;
     }
 }
 
@@ -339,7 +321,7 @@ int main(int argc, char *argv[])
         for (int iz = 0; iz < GRID_DIM; iz++) {
             for (int iy = 0; iy < GRID_DIM; iy++) {
                 for (int ix = 0; ix < GRID_DIM; ix++) {
-                    uint32_t i = (iz*GRID_DIM*GRID_DIM) + (iy*GRID_DIM) + (ix);
+                    int i = (iz*GRID_DIM*GRID_DIM) + (iy*GRID_DIM) + (ix);
                     SUBREF(spacetime->m_grid.m_position[i],X) = (cl_double)(ix - GRID_DIM/2);
                     SUBREF(spacetime->m_grid.m_position[i],Y) = (cl_double)(iy - GRID_DIM/2);
                     SUBREF(spacetime->m_grid.m_position[i],Z) = (cl_double)(iz - GRID_DIM/2);
@@ -371,7 +353,7 @@ int main(int argc, char *argv[])
         glClearColor(0,0,0,0); // set the background color to the blackness of space ... !
 
         // initialize each light
-        for (int i = 0; i < dimof(spacetime->m_lights); i++) {
+        for (size_t i = 0; i < dimof(spacetime->m_lights); i++) {
             GLfloat arr[4];
 
             SUBREF(spacetime->m_lights[i].m_ambient,A) = 1.0f;
@@ -382,7 +364,7 @@ int main(int argc, char *argv[])
             SUBREF(spacetime->m_lights[i].m_position,X) = 20.0f;
             SUBREF(spacetime->m_lights[i].m_position,Y) = 20.0f;
             SUBREF(spacetime->m_lights[i].m_position,Z) = 20.0f;
-            spacetime->m_lights[i].m_light = GL_LIGHT0 + i;
+            spacetime->m_lights[i].m_light = GL_LIGHT0 + ((GLenum)i);
 
             clftoglf(arr, spacetime->m_lights[i].m_ambient);
             glLightfv(spacetime->m_lights[i].m_light, GL_AMBIENT, arr);
@@ -397,7 +379,8 @@ int main(int argc, char *argv[])
         glutDisplayFunc(glut_display);
         glutReshapeFunc(glut_reshape);
         glutIdleFunc(NULL);
-        glutTimerFunc(1000/spacetime->m_fps,glut_timer,0); // give initial count as zero
+        uint32_t ms = 1000 / (int)spacetime->m_fps;
+        glutTimerFunc(ms,glut_timer,0); // give initial count as zero
         glutPassiveMotionFunc(glut_passive);
         glutKeyboardFunc(glut_keyfunc);
 

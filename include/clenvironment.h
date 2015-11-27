@@ -240,8 +240,8 @@ void cl_dump_kernels(char *filename, cl_kernel_bin_t *bins);
  * @param filename The name of the header to create.
  * @param bins The kernel binaries.
  * @return int
- * @retval 1 on Success.
- * @retval 0 on Failure.
+ * \retval 1 on Success.
+ * \retval 0 on Failure.
  */
 int cl_precompiled_header(char *filename, cl_kernel_bin_t *bins);
 
