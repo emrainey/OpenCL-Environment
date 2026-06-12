@@ -66,7 +66,7 @@ __kernel void kernel_gravity(float Mg,
 {
     int i = get_global_id(0); // data fields are 1 dimensional
 
-    // G = gravitational constant = 6.67300 × 10^-11 m^3 kg^-1 s^-2
+    // G = gravitational constant = 6.67300 ï¿½ 10^-11 m^3 kg^-1 s^-2
     float G = 0.00000000006673;
 
     // force of gravity = (M1*M2*G)/d^2
@@ -138,7 +138,7 @@ int gravity_averaging(__global float *m,
 }
 
 __kernel void kernel_nbody(__global float *m,
-                           __global float4 *a, // previously calculated gravirty vector per object
+                           __global float4 *a, // previously calculated gravity vector per object
                            __global float4 *v,
                            __global float4 *p,
                            __global float *t,
@@ -148,12 +148,12 @@ __kernel void kernel_nbody(__global float *m,
 
     gravity_averaging(m, p, a, num);
 
-    // position is updated by velocity and some small quantity of acceration
+    // position is updated by velocity and some small quantity of acceleration
     p[i].x += v[i].x*t[i] + 0.5*t[i]*t[i]*a[i].x;
     p[i].y += v[i].y*t[i] + 0.5*t[i]*t[i]*a[i].y;
     p[i].z += v[i].z*t[i] + 0.5*t[i]*t[i]*a[i].z;
 
-    // velocity is updated by acceration and friction (which is zero in space)
+    // velocity is updated by acceleration and friction (which is zero in space)
     v[i].x += a[i].x*t[i];
     v[i].y += a[i].y*t[i];
     v[i].z += a[i].z*t[i];

@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
                     p[i].s[0], p[i].s[1], p[i].s[2],
                     v[i].s[0], v[i].s[1], v[i].s[2],
                     a[i].s[0], a[i].s[1], a[i].s[2]);
-#endif     
+#endif
         }
         clDeleteEnvironment(pEnv);
         cl_free(t);

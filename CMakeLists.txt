@@ -12,13 +12,21 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 find_package(OpenCL REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(GLFW3 REQUIRED)
+find_package(OpenGL REQUIRED)
 
 set(CL_USER_DEVICE_COUNT 1)
 set(CL_USER_DEVICE_TYPE all)
 
+
 add_library(cl-interface INTERFACE)
 target_include_directories(cl-interface INTERFACE include)
 target_compile_definitions(cl-interface INTERFACE CL_USER_DEVICE_COUNT=${CL_USER_DEVICE_COUNT} CL_USER_DEVICE_TYPE=${CL_USER_DEVICE_TYPE} CL_DEBUG=1)
+# Query the device at configure time, or just key off platform
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    target_compile_definitions(cl-interface INTERFACE GPGPU_NO_DOUBLE_SUPPORT)
+endif()
 target_link_libraries(cl-interface INTERFACE OpenCL::OpenCL)
 
 add_library(clquery ${CMAKE_CURRENT_SOURCE_DIR}/source/clquery.c)
@@ -89,35 +97,43 @@ add_kernel_library(
     KERNEL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/source/kernel_spacetime.cl
     CL_USER_DEVICE_COUNT ${CL_USER_DEVICE_COUNT}
     CL_USER_DEVICE_TYPE ${CL_USER_DEVICE_TYPE}
-    LIBRARIES OpenCL::OpenCL clenvironment clmath clquery
+    LIBRARIES OpenCL::OpenCL clenvironment clmath clquery OpenGL::GL GLUT::GLUT
     DEFINES GPGPU_NO_DOUBLE_SUPPORT
-    KFLAGS -I${CMAKE_CURRENT_SOURCE_DIR}/include
+    KFLAGS -I${CMAKE_CURRENT_SOURCE_DIR}/include -DGPGPU_NO_DOUBLE_SUPPORT
 )
 
-# add_executable(clspacetime ${CMAKE_CURRENT_SOURCE_DIR}/source/spacetime.c)
-# target_link_libraries(clspacetime PRIVATE OpenCL::OpenCL OpenGL::GL GLUT::GLUT clenvironment clmath clquery)
+add_kernel_library(
+    TARGET kernel_yuv
+    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/source/yuv.c
+    KERNEL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/source/kernel_yuv.cl
+    CL_USER_DEVICE_COUNT ${CL_USER_DEVICE_COUNT}
+    CL_USER_DEVICE_TYPE ${CL_USER_DEVICE_TYPE}
+    LIBRARIES OpenCL::OpenCL clenvironment clmath clquery OpenGL::GL GLUT::GLUT
+    DEFINES GPGPU_NO_DOUBLE_SUPPORT
+    KFLAGS -I${CMAKE_CURRENT_SOURCE_DIR}/include -DGPGPU_NO_DOUBLE_SUPPORT
+)
 
-# add_executable(clyuv ${CMAKE_CURRENT_SOURCE_DIR}/source/yuv.c)
-# target_link_libraries(clyuv PRIVATE OpenCL::OpenCL clenvironment clmath clquery)
-
-# add_executable(clpid ${CMAKE_CURRENT_SOURCE_DIR}/source/pid.c)
-# target_link_libraries(clpid PRIVATE OpenCL::OpenCL clenvironment clmath clquery)
+add_kernel_library(
+    TARGET kernel_pid
+    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/source/pid.c
+    KERNEL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/source/kernel_pid.cl
+    CL_USER_DEVICE_COUNT ${CL_USER_DEVICE_COUNT}
+    CL_USER_DEVICE_TYPE ${CL_USER_DEVICE_TYPE}
+    LIBRARIES OpenCL::OpenCL clenvironment clmath clquery OpenGL::GL GLUT::GLUT
+    DEFINES GPGPU_NO_DOUBLE_SUPPORT
+    KFLAGS -I${CMAKE_CURRENT_SOURCE_DIR}/include -DGPGPU_NO_DOUBLE_SUPPORT
+)
 
 # add_executable(monolith ${CMAKE_CURRENT_SOURCE_DIR}/source/monolith.c)
 # target_link_libraries(monolith PRIVATE OpenCL::OpenCL)
 
-# add_executable(clnbody ${CMAKE_CURRENT_SOURCE_DIR}/source/nbody.c)
-# target_link_libraries(clnbody PRIVATE OpenCL::OpenCL clenvironment clmath clquery)
-
-# Define the OpenCL kernels
-# add_library(kernel_spacetime ${CMAKE_CURRENT_SOURCE_DIR}/source/kernel_spacetime.cl)
-# target_link_libraries(kernel_spacetime PRIVATE OpenCL::OpenCL)
-
-# add_library(kernel_yuv ${CMAKE_CURRENT_SOURCE_DIR}/source/yuv/kernel_yuv.cl)
-# target_link_libraries(kernel_yuv PRIVATE OpenCL::OpenCL)
-
-# add_library(kernel_pid ${CMAKE_CURRENT_SOURCE_DIR}/source/pid/kernel_pid.cl)
-# target_link_libraries(kernel_pid PRIVATE OpenCL::OpenCL)
-
-# add_library(kernel_nbody ${CMAKE_CURRENT_SOURCE_DIR}/source/nbody/kernel_nbody.cl)
-# target_link_libraries(kernel_nbody PRIVATE OpenCL::OpenCL)
+add_kernel_library(
+    TARGET kernel_nbody
+    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/source/nbody.c
+    KERNEL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/source/kernel_nbody.cl
+    CL_USER_DEVICE_COUNT ${CL_USER_DEVICE_COUNT}
+    CL_USER_DEVICE_TYPE ${CL_USER_DEVICE_TYPE}
+    LIBRARIES OpenCL::OpenCL clenvironment clmath clquery OpenGL::GL GLUT::GLUT
+    DEFINES GPGPU_NO_DOUBLE_SUPPORT
+    KFLAGS -I${CMAKE_CURRENT_SOURCE_DIR}/include -DGPGPU_NO_DOUBLE_SUPPORT
+)
