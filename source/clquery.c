@@ -266,6 +266,11 @@ void clPrintQueryInfo(void *id, cl_uint info, QueryInfo_f query, cl_info_type_t 
                     CL_QUERY_ATOMIC_TYPE(err, cl_device_type, query, id, info, size, infoTypes, i, "0x%08x");
                     break;
                 }
+                default:
+                {
+                    printf("%41s:[%02lu] UNKNOWN TYPE! (err = %d)\n", infoTypes[i].name, size, err);
+                    break;
+                }
             }
         }
     }
@@ -312,7 +317,7 @@ void clPrintKernelWorkInfo(cl_kernel kernel, cl_device_id device, cl_kernel_info
                     cl_ulong param;
                     err = clGetKernelWorkGroupInfo(kernel, device, info, sizeof(param), &param, &size);
                     if (size == sizeof(param))
-                        printf("%41s:[%02lu] %llu\n", clKernelWorkInfoType[i].name, size, param);
+                        printf("%41s:[%02lu] %zu\n", clKernelWorkInfoType[i].name, size, param);
                     else
                         printf("%41s:[00] NO RETURNED VALUE! (err = %d)\n",clKernelWorkInfoType[i].name, err);
                     break;
@@ -324,7 +329,7 @@ void clPrintKernelWorkInfo(cl_kernel kernel, cl_device_id device, cl_kernel_info
                         size_t param;
                         err = clGetKernelWorkGroupInfo(kernel, device, info, sizeof(param), &param, &size);
                         if (size == sizeof(param))
-                            printf("%41s:[%02lu] %llu\n", clKernelWorkInfoType[i].name, size, param);
+                            printf("%41s:[%02lu] %zu\n", clKernelWorkInfoType[i].name, size, param);
                         else
                             printf("%41s:[00] NO RETURNED VALUE! (err = %d)\n",clKernelWorkInfoType[i].name, err);
                     }
@@ -339,6 +344,9 @@ void clPrintKernelWorkInfo(cl_kernel kernel, cl_device_id device, cl_kernel_info
                     }
                     break;
                 }
+                default:
+                    printf("%41s:[00] UNKNOWN TYPE! (err = %d)\n",clKernelWorkInfoType[i].name, err);
+                    break;
             }
         }
     }
@@ -382,6 +390,7 @@ void clPrintAllKernelInfo(cl_kernel kernel)
 void clPrintAllKernelWorkInfo(cl_kernel kernel, cl_device_id device)
 {
     cl_uint i = 0;
-    for (i = 0; i < numKernelWorkInfoTypes; i++)
+    for (i = 0; i < numKernelWorkInfoTypes; i++) {
         clPrintKernelWorkInfo(kernel, device, clKernelWorkInfoType[i].info);
+    }
 }

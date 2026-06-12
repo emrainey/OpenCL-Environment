@@ -42,6 +42,7 @@ cl_bool verbose;
 char cl_args[CL_MAX_STRING];
 char precomp[CL_MAX_PATHSIZE];
 char cl_device_types[CL_MAX_STRING];
+char cl_build_log[CL_MAX_STRING];
 clOpt options[] = {
     {"-f", CL_OPTION_TYPE_STRING, CL_MAX_PATHSIZE, filename,     "The input kernel file."},
     {"-d", CL_OPTION_TYPE_INT,    sizeof(cl_uint), &numDevices,  "The number of devices to target. Max of 10."},
@@ -115,7 +116,8 @@ int main(int argc, char *argv[])
     numDevices = 1;
     verbose = CL_FALSE;
     no_print_logo = CL_FALSE;
-    strncpy(filename, "kernels.cl", CL_MAX_PATHSIZE);
+    // strncpy(filename, "kernels.cl", CL_MAX_PATHSIZE);
+    memset(filename, 0, sizeof(filename));
     //strncpy(outfile,  "a.out", CL_MAX_PATHSIZE);
     memset(outfile, 0, sizeof(outfile));
     //strncpy(precomp,  "kernels.h", CL_MAX_PATHSIZE);

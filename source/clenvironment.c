@@ -478,11 +478,16 @@ cl_kernel_bin_t *cl_extract_kernels(cl_program program)
         }
         if (build_status != CL_BUILD_SUCCESS)
         {
+            // print the arguments and the build log
             size_t logSize = CL_LOG_SIZE;
             char *log = malloc(CL_LOG_SIZE);
+            clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_OPTIONS, logSize, log, NULL);
+            printf("BUILD OPTIONS:\n%s\n<<BUILD OPTIONS\n", log);
+            memset(log, 0, logSize);
             clBuildError(build_status, "clGetProgramBuildInfo", __FUNCTION__, __FILE__, __LINE__);
             clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, logSize, log, &logSize);
             printf("BUILD INFO ["FMT_SIZE_T"]:\n%s<<BUILD INFO\n", logSize, log);
+            free(log);
             return NULL;
         }
 
@@ -605,7 +610,7 @@ int cl_precompiled_header(char *filename, cl_kernel_bin_t *bins)
         bw += fprintf(fo, "#endif\n");
         bw += fclose(fo);
         fo = NULL;
-        printf("Wrote %zu bytes to precompiled header\n", bw);
+        printf("Wrote %zu bytes to precompiled header %s\n", bw, filename);
         return 1;
     } else {
         printf("ERROR: Failed to open %s for writing\n", filename);
